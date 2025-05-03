@@ -31,7 +31,7 @@ public class Notification extends BaseEntity {
 	private String body;
 
 	@Column(nullable = false)
-	private String linkUrl;
+	private String deepLink;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
