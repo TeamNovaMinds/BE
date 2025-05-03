@@ -3,15 +3,12 @@ package novaminds.gradproj.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.common.BaseEntity;
+import novaminds.gradproj.domain.enums.Role;
+import novaminds.gradproj.domain.enums.SocialType;
 
 @Entity
 @Getter
@@ -19,6 +16,7 @@ import novaminds.gradproj.domain.common.BaseEntity;
 public class User extends BaseEntity {
 
 	@Id
+	@Column(name = "login_id", nullable = false, unique = true)
 	private String loginId;
 
 	@Column(nullable = false)
@@ -31,6 +29,17 @@ public class User extends BaseEntity {
 	private String name;
 
 	private String profileImage;
+
+	@Column(name = "provider_id")
+	private String providerId;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Role role;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "social_type", nullable = false)
+	private SocialType socialType;
 
 	// 사용자와 캘린더는 1:1 관계
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
