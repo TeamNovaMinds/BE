@@ -2,16 +2,7 @@ package novaminds.gradproj.domain;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.common.BaseEntity;
@@ -26,11 +17,11 @@ public class RoomParticipant extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "login_id", nullable = false)
 	private User user;
 
-	@ManyToOne
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "meeting_room_id", nullable = false)
 	private MeetingRoom meetingRoom;
 
