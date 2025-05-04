@@ -1,6 +1,8 @@
 package novaminds.gradproj.domain;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -35,6 +37,8 @@ public class RoomParticipant extends BaseEntity {
 	@Lob
 	private String availableTimesJson;
 
+	@OneToMany(mappedBy = "RoomParticipant", cascade = CascadeType.PERSIST)
+	private List<TimeVote> votes = new ArrayList<>();
 
 }
 
