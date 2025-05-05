@@ -37,7 +37,7 @@ public class RoomParticipant extends BaseEntity {
 	@Lob
 	private String availableTimesJson;
 
-	@OneToMany(mappedBy = "RoomParticipant", cascade = CascadeType.PERSIST)
+	@OneToMany(mappedBy = "roomParticipant", cascade = CascadeType.PERSIST)
 	private List<TimeVote> votes = new ArrayList<>();
 
 }
