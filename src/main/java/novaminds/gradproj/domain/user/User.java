@@ -1,18 +1,17 @@
-package novaminds.gradproj.domain;
-
-import java.util.ArrayList;
-import java.util.List;
+package novaminds.gradproj.domain.user;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import novaminds.gradproj.domain.common.BaseEntity;
-import novaminds.gradproj.domain.enums.Role;
-import novaminds.gradproj.domain.enums.SocialType;
+import novaminds.gradproj.domain.BaseEntity;
 
-@Entity
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
 public class User extends BaseEntity {
 
 	@Id
@@ -41,3 +40,4 @@ public class User extends BaseEntity {
 	@Column(name = "social_type", nullable = false)
 	private SocialType socialType;
 }
+

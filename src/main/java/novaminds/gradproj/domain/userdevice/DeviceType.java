@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.enums;
+package novaminds.gradproj.domain.userdevice;
 
 public enum DeviceType {
 	ANDROID, IOS, WEB

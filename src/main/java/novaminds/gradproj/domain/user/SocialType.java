@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.enums;
+package novaminds.gradproj.domain.user;
 
 import lombok.Getter;
 

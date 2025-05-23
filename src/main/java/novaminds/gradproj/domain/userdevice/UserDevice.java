@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain;
+package novaminds.gradproj.domain.userdevice;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,34 +10,38 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import novaminds.gradproj.domain.common.BaseEntity;
-import novaminds.gradproj.domain.enums.NotificationType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.BaseEntity;
+import novaminds.gradproj.domain.user.User;
 
 @Entity
-public class Notification extends BaseEntity {
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserDevice extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "login_id", nullable = false)
 	private User user;
 
-	@Column(nullable = false)
-	private String title;
-
-	@Column(nullable = false)
-	private String body;
-
-	@Column(nullable = false)
-	private String deepLink;
-
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private NotificationType type;
+	private DeviceType deviceType;
 
 	@Column(nullable = false)
-	private boolean isRead = false;
-}
+	private String deviceId;
 
+	@Column(nullable = false)
+	private String fcmToken;
+
+	@Column(nullable = false)
+	private boolean isActive = true;
+}

@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.common;
+package novaminds.gradproj.domain;
 
 import java.time.LocalDateTime;
 
