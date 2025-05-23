@@ -19,17 +19,5 @@ public class NotificationSettings extends BaseEntity {
 	@OneToOne
 	@JoinColumn(name = "login_id", nullable = false)
 	private User user;
-
-	@Column(nullable = false)
-	private boolean eventReminder = true;
-
-	@Column(nullable = false)
-	private boolean friendRequest = true;
-
-	@Column(nullable = false)
-	private boolean meetingRoomInvitation = true;
-
-	@Column(nullable = false)
-	private boolean meetingTimeSuggestion = true;
 }
 
