@@ -16,6 +16,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 @Entity
+@Table(name = "stored_items",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id", "ingredient_id", "expiration_date", "storage_type"})
+        })
 public class StoredItem extends BaseEntity {
 
     @Id
@@ -30,7 +34,10 @@ public class StoredItem extends BaseEntity {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
+    @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "storage_type", nullable = false, length = 20)
     private StorageType storageType;
 }
