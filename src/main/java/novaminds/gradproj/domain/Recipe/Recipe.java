@@ -69,13 +69,25 @@ public class Recipe extends BaseEntity {
     @Builder.Default
     private List<RecipeComment> recipeComments = new ArrayList<>();
 
-    public void increaseLikes() {
+    private void increaseLikes() {
         this.likes++;
     }
 
-    public void decreaseLikes() {
+    private void decreaseLikes() {
         if (this.likes > 0) {
             this.likes--;
         }
+    }
+
+    //좋아요 추가 메서드
+    public void addRecipeLike(RecipeLike recipeLike) {
+        this.recipeLikes.add(recipeLike);
+        this.increaseLikes();
+    }
+
+    //좋아요 제거 메서드
+    public void removeRecipeLike(RecipeLike recipeLike) {
+        this.recipeLikes.remove(recipeLike);
+        this.decreaseLikes();
     }
 }
