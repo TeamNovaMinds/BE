@@ -37,12 +37,14 @@ public class AuthResponse {
     public static class SignupResponse {
         private String loginId;
         private String email;
+        private String name;
         private String nickname;
 
         public static SignupResponse from(User user) {
             return SignupResponse.builder()
                     .loginId(user.getLoginId())
                     .email(user.getEmail())
+                    .name(user.getName())
                     .nickname(user.getNickname())
                     .build();
         }
