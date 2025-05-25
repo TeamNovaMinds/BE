@@ -11,7 +11,6 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 
-//test
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
