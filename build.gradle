@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.5'
+	id 'org.springframework.boot' version '3.4.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -39,15 +39,11 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
 	// QueryDSL 메인 모듈들 (최신 5.1.0 버전)
-	implementation "com.querydsl:querydsl-core"
-	implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"  // Jakarta용 클래스패스
-
-	// QueryDSL Annotation Processor (Jakarta JPA용으로 설정)
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	implementation 'com.querydsl:querydsl-core'
 	annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
-
-	// Jakarta EE API 의존성 (컴파일 및 런타임에 필요)
-	implementation "jakarta.persistence:jakarta.persistence-api"
-	implementation "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 }
 
 tasks.named('test') {
@@ -56,12 +52,9 @@ tasks.named('test') {
 
 // QueryDsl 추가 설정
 def generated = 'src/main/generated'
+
 sourceSets {
-	main {
-		java {
-			srcDirs += generated
-		}
-	}
+	main.java.srcDirs += "$projectDir/build/generated"
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -72,10 +65,3 @@ tasks.withType(JavaCompile).configureEach {
 clean {
 	delete file(generated)
 }
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
