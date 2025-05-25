@@ -54,7 +54,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private User createOAuth2User(String loginId, String email, String name, String providerId, String registrationId) {
         log.info("🆕 [OAuth2 회원가입] 새 사용자 생성 - loginId: {}", loginId);
 
-        // 닉네임 생성 (이메일 @ 앞부분 사용)
+        // TODO : 닉네임 새로 입력받을 수 있게 추가 설정으로 나중에 작업
         String nickname = email.split("@")[0] + "_" + UUID.randomUUID().toString().substring(0, 4);
 
         User newUser = User.builder()
