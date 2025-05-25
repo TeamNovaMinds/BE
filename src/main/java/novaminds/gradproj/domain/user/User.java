@@ -34,6 +34,9 @@ public class User extends BaseEntity {
 	@Column(nullable = false)
 	private String password;
 
+	@Column(nullable = false, unique = true, length = 50)
+	private String nickname;
+
 	@Column(nullable = false, length = 50)
 	private String name;
 
@@ -74,4 +77,8 @@ public class User extends BaseEntity {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<UserDevice> devices = new ArrayList<>();
+
+	public String getRoleKey() {
+		return this.role.getKey();
+	}
 }
