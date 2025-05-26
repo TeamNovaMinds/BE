@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.ingredient.Ingredient;
-
 import java.util.ArrayList;
 import java.util.List;
 
