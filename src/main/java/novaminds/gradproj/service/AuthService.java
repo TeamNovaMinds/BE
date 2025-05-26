@@ -4,10 +4,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import novaminds.gradproj.domain.user.Role;
-import novaminds.gradproj.domain.user.SocialType;
-import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.domain.user.UserRepository;
+import novaminds.gradproj.domain.user.*;
+import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.security.auth.PrincipalDetails;
 import novaminds.gradproj.security.jwt.JwtTokenProvider;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
@@ -15,11 +13,14 @@ import novaminds.gradproj.web.dto.auth.AuthResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -28,12 +29,12 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserInterestCategoryRepository userInterestCategoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // 회원가입
-    public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request) {
+    public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
         log.info("🔄 [회원가입] 시작 - 이메일: {}", request.getEmail());
 
         // 이메일 중복 확인
@@ -42,30 +43,83 @@ public class AuthService {
             throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
         }
 
-        // 닉네임 중복 확인
-        if (userRepository.findByNickname(request.getNickname()).isPresent()) {
-            log.error("❌ [회원가입] 닉네임 중복 - {}", request.getNickname());
-            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
-        }
-
         // loginId 생성 (LOCAL_UUID앞8자리)
         String loginId = generateLoginId(SocialType.LOCAL, null);
         log.info("✓ [회원가입] loginId 생성 완료: {}", loginId);
+
+        // 임시 닉네임 생성
+        String tempNickname = "user_" + UUID.randomUUID().toString().substring(0, 8);
 
         User user = User.builder()
                 .loginId(loginId)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .nickname(request.getNickname())
+                .nickname(tempNickname)
                 .role(Role.USER)
                 .socialType(SocialType.LOCAL)
+                .isProfileCompleted(false)
                 .build();
 
         User savedUser = userRepository.save(user);
-        log.info("✅ [회원가입] 완료 - loginId: {}, email: {}", savedUser.getLoginId(), savedUser.getEmail());
+        log.info("✅ [회원가입] 기본 정보 저장 완료 - loginId: {}, email: {}", savedUser.getLoginId(), savedUser.getEmail());
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                new PrincipalDetails(savedUser), null, new PrincipalDetails(savedUser).getAuthorities()
+        );
+
+        SecurityContextHolderStrategy contextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
+        SecurityContext context = contextHolderStrategy.createEmptyContext();
+        context.setAuthentication(authentication);
+        contextHolderStrategy.setContext(context);
+
+        //SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
+
+        String accessToken = jwtTokenProvider.generateAccessToken(authentication);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
+
+        // Cookie 설정
+        setCookies(response, accessToken, refreshToken);
+        log.info("✅ [회원가입] 토큰 발급 완료");
 
         return AuthResponse.SignupResponse.from(savedUser);
+    }
+
+    // 추가 정보 입력 (닉네임, 관심 카테고리)
+    @Transactional
+    public AuthResponse.AdditionalInfoResponse completeProfile(String loginId, AuthRequest.AdditionalInfoRequest request) {
+        log.info("🔄 [추가 정보 입력] 시작 - loginId: {}", loginId);
+
+        User user = userRepository.findById(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 닉네임 중복 확인 (현재 사용자의 닉네임과 다른 경우에만)
+        if (!user.getNickname().equals(request.getNickname()) &&
+                userRepository.findByNickname(request.getNickname()).isPresent()) {
+            log.error("❌ [추가 정보 입력] 닉네임 중복 - {}", request.getNickname());
+            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+        }
+
+        // 닉네임 업데이트
+        user.updateNickname(request.getNickname());
+
+        // 기존 관심 카테고리 삭제
+        userInterestCategoryRepository.deleteByUserLoginId(loginId);
+
+        // 새로운 관심 카테고리 저장
+        List<RecipeCategory> categories = request.getInterestCategories();
+        for (RecipeCategory category : categories) {
+            UserInterestCategory interestCategory = UserInterestCategory.create(user, category);
+            userInterestCategoryRepository.save(interestCategory);
+        }
+
+        // 프로필 완료 상태로 변경
+        user.completeProfile();
+
+        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 관심 카테고리 수: {}",
+                loginId, request.getNickname(), categories.size());
+
+        return AuthResponse.AdditionalInfoResponse.from(user);
     }
 
     // 로그인
@@ -85,6 +139,13 @@ public class AuthService {
         );
         log.info("✓ [로그인] 인증 성공 - loginId: {}", user.getLoginId());
 
+        SecurityContextHolderStrategy contextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
+        SecurityContext context = contextHolderStrategy.createEmptyContext();
+        context.setAuthentication(authentication);
+        contextHolderStrategy.setContext(context);
+
+        //SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
+
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(authentication);
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
@@ -92,7 +153,8 @@ public class AuthService {
 
         // Cookie 설정
         setCookies(response, accessToken, refreshToken);
-        log.info("✅ [로그인] 완료 - loginId: {}, email: {}", user.getLoginId(), user.getEmail());
+        log.info("✅ [로그인] 완료 - loginId: {}, email: {}, 프로필 완료: {}",
+                user.getLoginId(), user.getEmail(), user.isProfileCompleted());
 
         return AuthResponse.LoginResponse.from(user);
     }
@@ -140,6 +202,13 @@ public class AuthService {
                 new PrincipalDetails(user), null, new PrincipalDetails(user).getAuthorities()
         );
 
+        SecurityContextHolderStrategy contextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
+        SecurityContext context = contextHolderStrategy.createEmptyContext();
+        context.setAuthentication(authentication);
+        contextHolderStrategy.setContext(context);
+
+        //SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
+
         String newAccessToken = jwtTokenProvider.generateAccessToken(authentication);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
@@ -147,6 +216,13 @@ public class AuthService {
         setCookies(response, newAccessToken, newRefreshToken);
 
         log.info("✅ [토큰 재발급] 완료 - loginId: {}", loginId);
+    }
+
+    @Transactional(readOnly = true)
+    public AuthResponse.LoginResponse getProfile(String loginId) {
+        User user = userRepository.findByLoginIdWithInterestCategories(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        return AuthResponse.LoginResponse.from(user);
     }
 
     // loginId 생성 헬퍼 메서드
