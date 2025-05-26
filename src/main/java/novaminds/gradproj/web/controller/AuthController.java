@@ -7,9 +7,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
+import novaminds.gradproj.security.auth.PrincipalDetails;
+import novaminds.gradproj.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.service.AuthService;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
 import novaminds.gradproj.web.dto.auth.AuthResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -22,14 +25,45 @@ import java.io.IOException;
 public class AuthController {
 
     private final AuthService authService;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @PostMapping("/signup")
-    public ApiResponse<AuthResponse.SignupResponse> signup(@Valid @RequestBody AuthRequest.SignupRequest request) {
+    @Operation(summary = "회원가입 (기본 정보)",
+            description = "이메일, 비밀번호, 이름으로 기본 회원가입을 진행합니다. " +
+                    "회원가입 완료 시 JWT 토큰이 발급되며, " +
+                    "isProfileCompleted가 false이므로 추가 정보 입력 페이지로 이동해야 합니다.")
+    public ApiResponse<AuthResponse.SignupResponse> signup(
+            @Valid @RequestBody AuthRequest.SignupRequest request,
+            HttpServletResponse response) {
         log.info("🔸 [API 호출] 회원가입 - email: {}", request.getEmail());
-        return ApiResponse.onSuccess(authService.signup(request));
+        return ApiResponse.onSuccess(authService.signup(request, response));
+    }
+
+    @GetMapping("/additional-info")
+    @Operation(summary = "추가 정보 입력",
+            description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+                    "JWT 토큰이 필요합니다.")
+    public ApiResponse<?> inputAdditionalInfo(
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", principalDetails.getUsername());
+        return ApiResponse.onSuccess(customOAuth2UserService.getAdditionalInfoRequirements());
+    }
+
+    @PostMapping("/additional-info")
+    @Operation(summary = "추가 정보 입력",
+            description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+                    "JWT 토큰이 필요합니다.")
+    public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
+            @AuthenticationPrincipal PrincipalDetails principalDetails,
+            @Valid @RequestBody AuthRequest.AdditionalInfoRequest request) {
+        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", principalDetails.getUsername());
+        return ApiResponse.onSuccess(authService.completeProfile(principalDetails.getUsername(), request));
     }
 
     @PostMapping("/login")
+    @Operation(summary = "로그인",
+            description = "이메일과 비밀번호로 로그인합니다. " +
+                    "isProfileCompleted가 false면 추가 정보 입력 페이지로 이동해야 합니다.")
     public ApiResponse<AuthResponse.LoginResponse> login(
             @Valid @RequestBody AuthRequest.LoginRequest request,
             HttpServletResponse response) {
