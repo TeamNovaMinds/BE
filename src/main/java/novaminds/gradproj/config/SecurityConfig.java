@@ -34,20 +34,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                //기본 보안 설정 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable) // 폼 로그인 비활성화
-                .logout(AbstractHttpConfigurer::disable) // 기본 로그아웃 비활성화
-                .httpBasic(AbstractHttpConfigurer::disable) // HTTP Basic 비활성화
-                //CORS 설정
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                //세션 설정 - STATELESS
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                //URL별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // 공개 접근 허용
                         .requestMatchers(
                                 "/",
                                 "/auth/**",
@@ -59,20 +54,16 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/favicon.ico"
                         ).permitAll()
-                        // 관리자 전용
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
-                //OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login") // 커스텀 로그인 페이지
+                        .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
                 )
-                //JWT 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
