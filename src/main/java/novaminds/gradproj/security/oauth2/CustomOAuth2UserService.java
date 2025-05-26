@@ -14,6 +14,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,7 +48,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = userRepository.findById(loginId)
                 .orElseGet(() -> createOAuth2User(loginId, email, name, providerId, registrationId));
 
-        log.info("✅ [OAuth2 로그인] 성공 - loginId: {}, email: {}", user.getLoginId(), user.getEmail());
+        log.info("✅ [OAuth2 로그인] 성공 - loginId: {}, email: {}, 프로필 완료: {}",
+                user.getLoginId(), user.getEmail(), user.isProfileCompleted());
 
         return new PrincipalDetails(user, attributes);
     }
@@ -54,18 +57,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private User createOAuth2User(String loginId, String email, String name, String providerId, String registrationId) {
         log.info("🆕 [OAuth2 회원가입] 새 사용자 생성 - loginId: {}", loginId);
 
-        // TODO : 닉네임 새로 입력받을 수 있게 추가 설정으로 나중에 작업
-        String nickname = email.split("@")[0] + "_" + UUID.randomUUID().toString().substring(0, 4);
+        String tempNickname = "oauth_" + UUID.randomUUID().toString().substring(0, 8);
 
         User newUser = User.builder()
                 .loginId(loginId)
                 .email(email)
                 .name(name)
-                .nickname(nickname)
+                .nickname(tempNickname)
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                 .providerId(providerId)
                 .role(Role.USER)
                 .socialType(SocialType.valueOf(registrationId.toUpperCase()))
+                .isProfileCompleted(false)
                 .build();
 
         return userRepository.save(newUser);
@@ -73,5 +76,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private String generateLoginId(String provider, String providerId) {
         return provider + "_" + providerId;
+    }
+
+    public Map<String, Object> getAdditionalInfoRequirements() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "추가 정보 입력이 필요합니다");
+        response.put("requiredFields", Arrays.asList(
+                "nickname", "RecipeCategory"
+        ));
+
+        return response;
     }
 }
