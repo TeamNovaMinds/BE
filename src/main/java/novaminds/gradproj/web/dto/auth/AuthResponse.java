@@ -4,7 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.user.User;
+import novaminds.gradproj.domain.user.UserInterestCategory;
+
+import java.util.List;
 
 public class AuthResponse {
 
@@ -18,6 +22,8 @@ public class AuthResponse {
         private String nickname;
         private String name;
         private String role;
+        private boolean isProfileCompleted;
+        private List<RecipeCategory> interestCategories;
 
         public static LoginResponse from(User user) {
             return LoginResponse.builder()
@@ -26,6 +32,10 @@ public class AuthResponse {
                     .nickname(user.getNickname())
                     .name(user.getName())
                     .role(user.getRole().name())
+                    .isProfileCompleted(user.isProfileCompleted())
+                    .interestCategories(user.getInterestCategories().stream()
+                            .map(UserInterestCategory::getCategory)
+                            .toList())
                     .build();
         }
     }
@@ -37,15 +47,41 @@ public class AuthResponse {
     public static class SignupResponse {
         private String loginId;
         private String email;
-        private String name;
         private String nickname;
+        private boolean isProfileCompleted;
+        private List<RecipeCategory> interestCategories;
 
         public static SignupResponse from(User user) {
             return SignupResponse.builder()
                     .loginId(user.getLoginId())
                     .email(user.getEmail())
-                    .name(user.getName())
                     .nickname(user.getNickname())
+                    .isProfileCompleted(user.isProfileCompleted())
+                    .interestCategories(user.getInterestCategories().stream()
+                            .map(UserInterestCategory::getCategory)
+                            .toList())
+                    .build();
+        }
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AdditionalInfoResponse {
+        private String loginId;
+        private String nickname;
+        private List<RecipeCategory> interestCategories;
+        private boolean isProfileCompleted;
+
+        public static AdditionalInfoResponse from(User user) {
+            return AdditionalInfoResponse.builder()
+                    .loginId(user.getLoginId())
+                    .nickname(user.getNickname())
+                    .interestCategories(user.getInterestCategories().stream()
+                            .map(UserInterestCategory::getCategory)
+                            .toList())
+                    .isProfileCompleted(user.isProfileCompleted())
                     .build();
         }
     }
