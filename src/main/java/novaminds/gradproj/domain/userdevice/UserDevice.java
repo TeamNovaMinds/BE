@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
 import novaminds.gradproj.domain.user.User;
 
-@Entity
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
 @Table(name = "user_devices",
 		uniqueConstraints = {
 				@UniqueConstraint(columnNames = {"user_id", "device_id"})
