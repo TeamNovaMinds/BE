@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import novaminds.gradproj.security.auth.PrincipalDetails;
 import novaminds.gradproj.security.jwt.JwtTokenProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -44,7 +45,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         log.info("✅ [OAuth2 로그인 성공] 토큰 발급 완료");
 
-        // 프론트엔드 리다이렉트
-        getRedirectStrategy().sendRedirect(request, response, "/");
+        PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+        boolean isProfileCompleted = principalDetails.getUser().isProfileCompleted();
+
+        if (!isProfileCompleted) {
+            log.info("🔄 [OAuth2 로그인] 추가 정보 입력 페이지로 리다이렉트");
+            getRedirectStrategy().sendRedirect(request, response, "/auth/additional-info");
+        } else {
+            log.info("🔄 [OAuth2 로그인] 메인 페이지로 리다이렉트");
+            getRedirectStrategy().sendRedirect(request, response, "/");
+        }
     }
 }
