@@ -12,6 +12,8 @@ import novaminds.gradproj.domain.Recipe.RecipeLike;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
 import novaminds.gradproj.domain.Notification.Notification;
 import novaminds.gradproj.domain.userdevice.UserDevice;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicInsert
+@DynamicUpdate
 @Builder
 @Entity
 @Table(name = "users")
@@ -54,6 +58,10 @@ public class User extends BaseEntity {
 	@Column(name = "social_type", nullable = false, length = 20)
 	private SocialType socialType;
 
+	@Column(name = "is_profile_completed", nullable = false)
+	@Builder.Default
+	private boolean isProfileCompleted = false;
+
 	@OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<StoredItem> storedItems = new ArrayList<>();
@@ -77,6 +85,18 @@ public class User extends BaseEntity {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<UserDevice> devices = new ArrayList<>();
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<UserInterestCategory> interestCategories = new ArrayList<>();
+
+	public void updateNickname(String nickname) {
+		this.nickname = nickname;
+	}
+
+	public void completeProfile() {
+		this.isProfileCompleted = true;
+	}
 
 	public String getRoleKey() {
 		return this.role.getKey();
