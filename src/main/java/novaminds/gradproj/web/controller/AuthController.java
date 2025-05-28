@@ -84,6 +84,15 @@ public class AuthController {
         response.sendRedirect("/oauth2/authorization/google");
     }
 
+    @GetMapping("/login/naver")
+    @Operation(summary = "네이버 로그인 리다이렉트",
+            description = "네이버 로그인 페이지로 리다이렉트하는 API\n" +
+                    "리다이렉트해야하므로 swagger에서는 테스트 불가!")
+    public void naverLogin(HttpServletResponse response) throws IOException {
+        log.info("🔸 [API 호출] 네이버 로그인 리다이렉트");
+        response.sendRedirect("/oauth2/authorization/naver");
+    }
+
     @PostMapping("/logout")
     public ApiResponse<String> logout(HttpServletResponse response) {
         log.info("🔸 [API 호출] 로그아웃");

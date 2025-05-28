@@ -228,6 +228,8 @@ public class AuthService {
         switch (socialType) {
             case GOOGLE:
                 return "GOOGLE_" + providerId;
+            case NAVER:
+                return "NAVER_" + providerId;
             case LOCAL:
                 return "LOCAL_" + UUID.randomUUID().toString().substring(0, 8);
             default:
