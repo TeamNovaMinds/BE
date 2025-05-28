@@ -219,9 +219,7 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public AuthResponse.LoginResponse getProfile(String loginId) {
-        User user = userRepository.findByLoginIdWithInterestCategories(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    public AuthResponse.LoginResponse getProfile(User user) {
         return AuthResponse.LoginResponse.from(user);
     }
 

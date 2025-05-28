@@ -4,10 +4,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
-import novaminds.gradproj.security.auth.PrincipalDetails;
+import novaminds.gradproj.domain.user.User;
+import novaminds.gradproj.security.auth.CurrentLoginId;
+import novaminds.gradproj.security.auth.CurrentUser;
 import novaminds.gradproj.service.AuthService;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,10 +22,14 @@ public class HomeRestController {
     private final AuthService authService;
 
     @GetMapping
-    @Transactional(readOnly = true)
-    public ApiResponse<?> home(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+    public ApiResponse<?> home(@CurrentUser User user) {
         return ApiResponse.onSuccess(
-                authService.getProfile(principalDetails.getUsername())
+                authService.getProfile(user)
         );
+    }
+
+    @GetMapping("/test")
+    public ApiResponse<String> getSimpleInfo(@CurrentLoginId String loginId) {
+        return ApiResponse.onSuccess("현재 로그인 사용자: " + loginId);
     }
 }

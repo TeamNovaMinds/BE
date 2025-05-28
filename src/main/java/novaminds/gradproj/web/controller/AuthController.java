@@ -7,12 +7,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
-import novaminds.gradproj.security.auth.PrincipalDetails;
+import novaminds.gradproj.domain.user.User;
+import novaminds.gradproj.security.auth.CurrentLoginId;
+import novaminds.gradproj.security.auth.CurrentUser;
 import novaminds.gradproj.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.service.AuthService;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
 import novaminds.gradproj.web.dto.auth.AuthResponse;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -34,7 +35,8 @@ public class AuthController {
                     "isProfileCompleted가 false이므로 추가 정보 입력 페이지로 이동해야 합니다.")
     public ApiResponse<AuthResponse.SignupResponse> signup(
             @Valid @RequestBody AuthRequest.SignupRequest request,
-            HttpServletResponse response) {
+            HttpServletResponse response
+    ) {
         log.info("🔸 [API 호출] 회원가입 - email: {}", request.getEmail());
         return ApiResponse.onSuccess(authService.signup(request, response));
     }
@@ -44,8 +46,9 @@ public class AuthController {
             description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<?> inputAdditionalInfo(
-            @AuthenticationPrincipal PrincipalDetails principalDetails) {
-        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", principalDetails.getUsername());
+            @CurrentUser User user
+    ) {
+        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", user.getLoginId());
         return ApiResponse.onSuccess(customOAuth2UserService.getAdditionalInfoRequirements());
     }
 
@@ -54,10 +57,10 @@ public class AuthController {
             description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
+            @CurrentLoginId String loginId,
             @Valid @RequestBody AuthRequest.AdditionalInfoRequest request) {
-        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", principalDetails.getUsername());
-        return ApiResponse.onSuccess(authService.completeProfile(principalDetails.getUsername(), request));
+        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", loginId);
+        return ApiResponse.onSuccess(authService.completeProfile(loginId, request));
     }
 
     @PostMapping("/login")
@@ -66,7 +69,8 @@ public class AuthController {
                     "isProfileCompleted가 false면 추가 정보 입력 페이지로 이동해야 합니다.")
     public ApiResponse<AuthResponse.LoginResponse> login(
             @Valid @RequestBody AuthRequest.LoginRequest request,
-            HttpServletResponse response) {
+            HttpServletResponse response
+    ) {
         log.info("🔸 [API 호출] 로그인 - email: {}", request.getEmail());
         return ApiResponse.onSuccess(authService.login(request, response));
     }
@@ -90,7 +94,8 @@ public class AuthController {
     @PostMapping("/refresh")
     public ApiResponse<String> refresh(
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
-            HttpServletResponse response) {
+            HttpServletResponse response
+    ) {
         log.info("🔸 [API 호출] 토큰 재발급");
         if (refreshToken == null) {
             throw new IllegalArgumentException("리프레시 토큰이 없습니다.");
