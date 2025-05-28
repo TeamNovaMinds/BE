@@ -35,7 +35,7 @@ public class Recipe extends BaseEntity {
     private int likes = 0;
 
     @Column(name = "recipe_img_url")
-    private String recipeImgUrl;
+    private String recipeImgUrl; //TODO : 레시피 사진 여러개 받을 수 있게 수정
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

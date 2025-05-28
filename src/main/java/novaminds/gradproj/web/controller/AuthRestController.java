@@ -23,7 +23,7 @@ import java.io.IOException;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "인증", description = "로그인/회원가입 관련 API")
-public class AuthController {
+public class AuthRestController {
 
     private final AuthService authService;
     private final CustomOAuth2UserService customOAuth2UserService;
