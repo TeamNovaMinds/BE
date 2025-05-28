@@ -98,6 +98,12 @@ public class User extends BaseEntity {
 		this.isProfileCompleted = true;
 	}
 
+	public User updateOAuthInfo(String name, String picture) {
+		this.name = name;
+		this.profileImage = picture;
+		return this;
+	}
+
 	public String getRoleKey() {
 		return this.role.getKey();
 	}
