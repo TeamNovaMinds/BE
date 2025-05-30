@@ -109,7 +109,7 @@ public class AuthService {
         // 닉네임 업데이트
         user.updateNickname(request.getNickname());
 
-        if (profileImage != null && profileImage.isEmpty()) {
+        if (profileImage != null && !profileImage.isEmpty()) {
             try {
                 if (user.getProfileImage() != null && user.getProfileImage().contains("amazonaws.com")) {
                     s3Service.deleteFile(user.getProfileImage());
