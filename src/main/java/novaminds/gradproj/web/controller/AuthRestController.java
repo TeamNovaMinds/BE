@@ -15,6 +15,7 @@ import novaminds.gradproj.service.AuthService;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
 import novaminds.gradproj.web.dto.auth.AuthResponse;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -58,9 +59,13 @@ public class AuthRestController {
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
             @CurrentLoginId String loginId,
-            @Valid @RequestBody AuthRequest.AdditionalInfoRequest request) {
-        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", loginId);
-        return ApiResponse.onSuccess(authService.completeProfile(loginId, request));
+            @Valid @RequestPart("data") AuthRequest.AdditionalInfoRequest request,
+            @RequestPart(value = "value = profileImg", required = false) MultipartFile profileImg
+    ) {
+
+        log.info("🔸 [API 호출] 추가 정보 입력 (이미지 포함) - loginId: {}, 이미지: {}",
+                loginId, profileImg != null ? profileImg.getOriginalFilename() : "없음");
+        return ApiResponse.onSuccess(authService.completeProfile(loginId, request, profileImg));
     }
 
     @PostMapping("/login")

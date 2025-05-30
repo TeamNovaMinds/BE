@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -33,6 +34,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final S3Service s3Service;
 
     public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
         log.info("🔄 [회원가입] 시작 - 이메일: {}", request.getEmail());
@@ -87,7 +89,11 @@ public class AuthService {
 
     // 추가 정보 입력 (닉네임, 관심 카테고리)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfile(String loginId, AuthRequest.AdditionalInfoRequest request) {
+    public AuthResponse.AdditionalInfoResponse completeProfile(
+            String loginId,
+            AuthRequest.AdditionalInfoRequest request,
+            MultipartFile profileImage
+    ) {
         log.info("🔄 [추가 정보 입력] 시작 - loginId: {}", loginId);
 
         User user = userRepository.findById(loginId)
@@ -103,6 +109,21 @@ public class AuthService {
         // 닉네임 업데이트
         user.updateNickname(request.getNickname());
 
+        if (profileImage != null && profileImage.isEmpty()) {
+            try {
+                if (user.getProfileImage() != null && user.getProfileImage().contains("amazonaws.com")) {
+                    s3Service.deleteFile(user.getProfileImage());
+                }
+
+                String profileImgUrl = s3Service.uploadFile(profileImage, "profile");
+                user.updateProfileImage(profileImgUrl);
+                log.info("✓ [추가 정보 입력] 프로필 이미지 업로드 완료 - URL: {}", profileImgUrl);
+            } catch (Exception e) {
+                log.error("❌ [추가 정보 입력] 프로필 이미지 업로드 실패", e);
+                throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.", e);
+            }
+        }
+
         // 기존 관심 카테고리 삭제
         userInterestCategoryRepository.deleteByUserLoginId(loginId);
 
@@ -116,8 +137,8 @@ public class AuthService {
         // 프로필 완료 상태로 변경
         user.completeProfile();
 
-        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 관심 카테고리 수: {}",
-                loginId, request.getNickname(), categories.size());
+        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 관심 카테고리 수: {}, 프로필 이미지: {}",
+                loginId, request.getNickname(), categories.size(),user.getProfileImage() != null ? "있음" : "없음");
 
         return AuthResponse.AdditionalInfoResponse.from(user);
     }

@@ -72,6 +72,7 @@ public class AuthResponse {
         private String loginId;
         private String nickname;
         private List<RecipeCategory> interestCategories;
+        private String profileImgUrl;
         private boolean isProfileCompleted;
 
         public static AdditionalInfoResponse from(User user) {
@@ -81,6 +82,7 @@ public class AuthResponse {
                     .interestCategories(user.getInterestCategories().stream()
                             .map(UserInterestCategory::getCategory)
                             .toList())
+                    .profileImgUrl(user.getProfileImage())
                     .isProfileCompleted(user.isProfileCompleted())
                     .build();
         }
