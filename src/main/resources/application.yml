@@ -4,3 +4,4 @@ spring:
       - db
       - oauth
       - jwt
+      - s3
