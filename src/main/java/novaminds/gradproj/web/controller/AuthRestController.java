@@ -43,7 +43,7 @@ public class AuthRestController {
 
     @GetMapping("/additional-info")
     @Operation(summary = "추가 정보 입력",
-            description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+            description = "프로필 이미지와 닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<?> inputAdditionalInfo(
             @CurrentUser User user
@@ -54,7 +54,7 @@ public class AuthRestController {
 
     @PostMapping("/additional-info")
     @Operation(summary = "추가 정보 입력",
-            description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+            description = "프로필 이미지와 닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
             @CurrentLoginId String loginId,
