@@ -1,6 +1,9 @@
 package novaminds.gradproj.web.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -14,7 +17,9 @@ import novaminds.gradproj.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.service.AuthService;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
 import novaminds.gradproj.web.dto.auth.AuthResponse;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -43,7 +48,7 @@ public class AuthRestController {
 
     @GetMapping("/additional-info")
     @Operation(summary = "추가 정보 입력",
-            description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+            description = "프로필 이미지와 닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<?> inputAdditionalInfo(
             @CurrentUser User user
@@ -52,15 +57,26 @@ public class AuthRestController {
         return ApiResponse.onSuccess(customOAuth2UserService.getAdditionalInfoRequirements());
     }
 
-    @PostMapping("/additional-info")
+/*    @Operation(
+            summary = "추가 정보 입력",
+            description = "닉네임, 관심 카테고리, 프로필 이미지 업로드",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(implementation = AuthRequest.AdditionalInfoRequest.class))
+            )
+    )*/
+    @PostMapping(value = "/additional-info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "추가 정보 입력",
-            description = "닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+            description = "프로필 이미지와 닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
             @CurrentLoginId String loginId,
-            @Valid @RequestBody AuthRequest.AdditionalInfoRequest request) {
-        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", loginId);
-        return ApiResponse.onSuccess(authService.completeProfile(loginId, request));
+            @Valid @RequestPart("data") AuthRequest.AdditionalInfoRequest request,
+            @RequestPart(value = "profileImg", required = false) MultipartFile profileImg
+    ) {
+        log.info("🔸 [API 호출] 추가 정보 입력 (이미지 포함) - loginId: {}, 이미지: {}",
+                loginId, profileImg != null ? profileImg.getOriginalFilename() : "없음");
+        return ApiResponse.onSuccess(authService.completeProfile(loginId, request, profileImg));
     }
 
     @PostMapping("/login")

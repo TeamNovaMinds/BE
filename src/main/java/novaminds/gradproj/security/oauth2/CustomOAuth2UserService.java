@@ -89,7 +89,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "추가 정보 입력이 필요합니다");
         response.put("requiredFields", Arrays.asList(
-                "nickname", "RecipeCategory"
+                "profileImage", "nickname", "RecipeCategory"
         ));
 
         return response;

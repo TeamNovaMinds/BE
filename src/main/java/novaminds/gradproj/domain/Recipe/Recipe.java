@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
+import novaminds.gradproj.domain.recipeingredient.RecipeOrder;
 import novaminds.gradproj.domain.user.User;
 import novaminds.gradproj.domain.recipeingredient.RecipeIngredient;
 
@@ -32,10 +33,7 @@ public class Recipe extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private int likes = 0;
-
-    @Column(name = "recipe_img_url")
-    private String recipeImgUrl; //TODO : 레시피 사진 여러개 받을 수 있게 수정
+    private Integer likes = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -56,7 +54,12 @@ public class Recipe extends BaseEntity {
     private Integer servings; //몇 인분인지 나타내는 필드
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("ingredientOrder ASC")
+    @OrderBy("imageOrder ASC")
+    @Builder.Default
+    private List<RecipeImage> recipeImages = new ArrayList<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     @Builder.Default
     private List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 
@@ -68,6 +71,11 @@ public class Recipe extends BaseEntity {
     @OrderBy("createdAt DESC")
     @Builder.Default
     private List<RecipeComment> recipeComments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("order ASC")
+    @Builder.Default
+    private List<RecipeOrder> recipeOrders = new ArrayList<>();
 
     private void increaseLikes() {
         this.likes++;
