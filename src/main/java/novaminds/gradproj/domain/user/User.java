@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
+import novaminds.gradproj.domain.ingredient.Ingredient;
+import novaminds.gradproj.domain.ingredient.IngredientCategory;
 import novaminds.gradproj.domain.storeditem.StoredItem;
 import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.Recipe.RecipeLike;
@@ -89,6 +91,15 @@ public class User extends BaseEntity {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<UserInterestCategory> interestCategories = new ArrayList<>();
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<Ingredient> ingredientSuggestion = new ArrayList<>();
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<IngredientCategory> categorySuggestion = new ArrayList<>();
+
 
 	public void updateNickname(String nickname) {
 		this.nickname = nickname;
