@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "stored_items",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "ingredient_id", "expiration_date", "storage_type"})
+                @UniqueConstraint(columnNames = {"refrigerator_id", "ingredient_id", "expiration_date", "storage_type"})
         })
 public class StoredItem extends BaseEntity {
 
