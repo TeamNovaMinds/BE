@@ -26,7 +26,7 @@ public class StoredItem extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "refrigrator_id", nullable = false)
+    @JoinColumn(name = "refrigerator_id", nullable = false)
     private Refrigerator refrigerator;
 
     @ManyToOne(fetch = FetchType.LAZY)
