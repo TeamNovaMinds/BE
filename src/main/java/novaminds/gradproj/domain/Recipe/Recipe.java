@@ -91,11 +91,13 @@ public class Recipe extends BaseEntity {
     public void addRecipeLike(RecipeLike recipeLike) {
         this.recipeLikes.add(recipeLike);
         this.increaseLikes();
+        this.author.increasePointByRecipeLike();
     }
 
     //좋아요 제거 메서드
     public void removeRecipeLike(RecipeLike recipeLike) {
         this.recipeLikes.remove(recipeLike);
         this.decreaseLikes();
+        this.author.decreasePointByRecipeLikeCancel();
     }
 }
