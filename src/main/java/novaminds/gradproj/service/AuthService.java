@@ -4,6 +4,12 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
+import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
+import novaminds.gradproj.domain.refrigerator.Refrigerator;
+import novaminds.gradproj.domain.refrigerator.RefrigeratorRepository;
+import novaminds.gradproj.domain.refrigerator.RefrigeratorSkin;
+import novaminds.gradproj.domain.refrigerator.RefrigeratorSkinRepository;
 import novaminds.gradproj.domain.user.*;
 import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.security.auth.PrincipalDetails;
@@ -35,6 +41,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final S3Service s3Service;
+    private final RefrigeratorRepository refrigeratorRepository;
+    private final RefrigeratorSkinRepository refrigeratorSkinRepository;
+    private final UserRefrigeratorSkinRepository userRefrigeratorSkinRepository;
 
     public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
         log.info("🔄 [회원가입] 시작 - 이메일: {}", request.getEmail());
@@ -66,6 +75,8 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         log.info("✅ [회원가입] 기본 정보 저장 완료 - loginId: {}, email: {}", savedUser.getLoginId(), savedUser.getEmail());
 
+        createRefrigeratorForUser(savedUser);
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 new PrincipalDetails(savedUser), null, new PrincipalDetails(savedUser).getAuthorities()
         );
@@ -85,6 +96,31 @@ public class AuthService {
         log.info("✅ [회원가입] 토큰 발급 완료");
 
         return AuthResponse.SignupResponse.from(savedUser);
+    }
+
+    private void createRefrigeratorForUser(User user) {
+        // 냉장고 생성
+        Refrigerator refrigerator = Refrigerator.builder()
+                .user(user)
+                .build();
+
+        refrigeratorRepository.save(refrigerator);
+        user.setRefrigerator(refrigerator);
+
+        // 기본 스킨 찾기
+        RefrigeratorSkin defaultSkin = refrigeratorSkinRepository.findByIsDefaultTrue()
+                .orElseThrow(() -> new RefrigeratorSkinHandler(ErrorStatus.DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND));
+
+        // 기본 스킨을 유저에게 부여하고 장착
+        UserRefrigeratorSkin userSkin = UserRefrigeratorSkin.builder()
+                .user(user)
+                .skin(defaultSkin)
+                .isEquipped(true)
+                .build();
+
+        userRefrigeratorSkinRepository.save(userSkin);
+
+        log.info("✅ [회원가입] 냉장고 및 기본 스킨 생성 완료 - userId: {}", user.getLoginId());
     }
 
     // 추가 정보 입력 (닉네임, 관심 카테고리)

@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.storeditem;
+package novaminds.gradproj.domain.refrigerator;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
 import novaminds.gradproj.domain.ingredient.Ingredient;
-import novaminds.gradproj.domain.user.User;
 
 import java.time.LocalDate;
 
@@ -18,7 +17,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "stored_items",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "ingredient_id", "expiration_date", "storage_type"})
+                @UniqueConstraint(columnNames = {"refrigerator_id", "ingredient_id", "expiration_date", "storage_type"})
         })
 public class StoredItem extends BaseEntity {
 
@@ -27,8 +26,8 @@ public class StoredItem extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User owner;
+    @JoinColumn(name = "refrigerator_id", nullable = false)
+    private Refrigerator refrigerator;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ingredient_id", nullable = false)

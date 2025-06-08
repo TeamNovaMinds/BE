@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
 import novaminds.gradproj.domain.ingredient.Ingredient;
 import novaminds.gradproj.domain.ingredient.IngredientCategory;
-import novaminds.gradproj.domain.storeditem.StoredItem;
+import novaminds.gradproj.domain.refrigerator.Refrigerator;
 import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.Recipe.RecipeLike;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
@@ -64,9 +64,12 @@ public class User extends BaseEntity {
 	@Builder.Default
 	private boolean isProfileCompleted = false;
 
-	@OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Column(nullable = false)
 	@Builder.Default
-	private List<StoredItem> storedItems = new ArrayList<>();
+	private Integer point = 0;
+
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Refrigerator refrigerator;
 
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
@@ -94,15 +97,51 @@ public class User extends BaseEntity {
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
-	private List<Ingredient> ingredientSuggestion = new ArrayList<>();
+	private List<Ingredient> ingredientRegistration = new ArrayList<>();
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
-	private List<IngredientCategory> categorySuggestion = new ArrayList<>();
+	private List<IngredientCategory> categoryRegistration = new ArrayList<>();
 
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<UserRefrigeratorSkin> purchasedSkins = new ArrayList<>();
+
+	@OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<Follow> followers = new ArrayList<>();
+
+	@OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<Follow> followings = new ArrayList<>();
+
+	public void increasePointByRecipeLike() {
+		this.point += 10; // 좋아요당 10포인트
+	}
+
+	public void decreasePointByRecipeLikeCancel() {
+		if (this.point >= 10) {
+			this.point -= 10;
+		}
+	}
+
+	public void usePoint(int amount) {
+		if (this.point < amount) {
+			throw new IllegalArgumentException("포인트가 부족합니다.");
+		}
+		this.point -= amount;
+	}
+
+	public void addPoint(int amount) {
+		this.point += amount;
+	}
 
 	public void updateNickname(String nickname) {
 		this.nickname = nickname;
+	}
+
+	public void setRefrigerator(Refrigerator refrigerator) {
+		this.refrigerator = refrigerator;
 	}
 
 	public void completeProfile() {

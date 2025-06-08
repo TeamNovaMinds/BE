@@ -2,9 +2,13 @@ package novaminds.gradproj.security.oauth2;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import novaminds.gradproj.domain.user.SocialType;
-import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.domain.user.UserRepository;
+import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
+import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
+import novaminds.gradproj.domain.refrigerator.Refrigerator;
+import novaminds.gradproj.domain.refrigerator.RefrigeratorRepository;
+import novaminds.gradproj.domain.refrigerator.RefrigeratorSkin;
+import novaminds.gradproj.domain.refrigerator.RefrigeratorSkinRepository;
+import novaminds.gradproj.domain.user.*;
 import novaminds.gradproj.security.auth.PrincipalDetails;
 import novaminds.gradproj.security.oauth2.dto.OAuthAttributes;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -23,6 +27,9 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final RefrigeratorRepository refrigeratorRepository;
+    private final RefrigeratorSkinRepository refrigeratorSkinRepository;
+    private final UserRefrigeratorSkinRepository userRefrigeratorSkinRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -52,10 +59,42 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 사용자 조회 또는 생성(업데이트)
         User user = saveOrUpdate(loginId, email, name, picture, providerId, registrationId);
 
+        createRefrigeratorForUser(user);
+
         log.info("✅ [OAuth2 로그인] 성공 - loginId: {}, email: {}, 프로필 완료: {}",
                 user.getLoginId(), user.getEmail(), user.isProfileCompleted());
 
         return new PrincipalDetails(user, attributes);
+    }
+
+    private void createRefrigeratorForUser(User user) {
+        if (refrigeratorRepository.existsByUser(user)) {
+            log.info("ℹ️ 기존 사용자 {}의 냉장고가 이미 존재하므로 생성을 건너뜁니다.", user.getLoginId());
+            return;
+        }
+
+        // 냉장고 생성
+        Refrigerator refrigerator = Refrigerator.builder()
+                .user(user)
+                .build();
+
+        refrigeratorRepository.save(refrigerator);
+        user.setRefrigerator(refrigerator);
+
+        // 기본 스킨 찾기
+        RefrigeratorSkin defaultSkin = refrigeratorSkinRepository.findByIsDefaultTrue()
+                .orElseThrow(() -> new RefrigeratorSkinHandler(ErrorStatus.DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND));
+
+        // 기본 스킨을 유저에게 부여하고 장착
+        UserRefrigeratorSkin userSkin = UserRefrigeratorSkin.builder()
+                .user(user)
+                .skin(defaultSkin)
+                .isEquipped(true)
+                .build();
+
+        userRefrigeratorSkinRepository.save(userSkin);
+
+        log.info("✅ [회원가입] 냉장고 및 기본 스킨 생성 완료 - userId: {}", user.getLoginId());
     }
 
     private User saveOrUpdate(String loginId, String email, String name, String picture,

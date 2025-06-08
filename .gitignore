@@ -40,3 +40,4 @@ out/
 .DS_Store
 .gradle/
 .env
+/src/main/generated/

@@ -6,9 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
-import novaminds.gradproj.domain.recipeingredient.RecipeOrder;
 import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.domain.recipeingredient.RecipeIngredient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,11 +89,13 @@ public class Recipe extends BaseEntity {
     public void addRecipeLike(RecipeLike recipeLike) {
         this.recipeLikes.add(recipeLike);
         this.increaseLikes();
+        this.author.increasePointByRecipeLike();
     }
 
     //좋아요 제거 메서드
     public void removeRecipeLike(RecipeLike recipeLike) {
         this.recipeLikes.remove(recipeLike);
         this.decreaseLikes();
+        this.author.decreasePointByRecipeLikeCancel();
     }
 }

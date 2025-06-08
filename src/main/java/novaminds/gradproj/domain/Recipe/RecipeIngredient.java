@@ -1,14 +1,11 @@
-package novaminds.gradproj.domain.recipeingredient;
+package novaminds.gradproj.domain.Recipe;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.ingredient.Ingredient;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor

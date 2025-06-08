@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.storeditem;
+package novaminds.gradproj.domain.refrigerator;
 
 public enum StorageType {
     ROOM_TEMPERATURE,

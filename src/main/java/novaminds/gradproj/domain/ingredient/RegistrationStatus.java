@@ -5,11 +5,11 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum SuggestionStatus {
+public enum RegistrationStatus {
 
-	Pending("신청 대기"),
-	Approved("승인"),
-	Rejected("거절");
+	PENDING("신청 대기"),
+	APPROVED("승인"),
+	REJECTED("거절");
 
 	private final String description;
 }
