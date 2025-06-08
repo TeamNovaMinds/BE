@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum SuggestionStatus {
 
-	Pending("신청 대기"),
-	Approved("승인"),
-	Rejected("거절");
+	PENDING("신청 대기"),
+	APPROVED("승인"),
+	REJECTED("거절");
 
 	private final String description;
 }
