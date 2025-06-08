@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
 import novaminds.gradproj.domain.ingredient.Ingredient;
 import novaminds.gradproj.domain.ingredient.IngredientCategory;
-import novaminds.gradproj.domain.storeditem.StoredItem;
+import novaminds.gradproj.domain.refrigerator.Refrigerator;
 import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.Recipe.RecipeLike;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
@@ -64,9 +64,8 @@ public class User extends BaseEntity {
 	@Builder.Default
 	private boolean isProfileCompleted = false;
 
-	@OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private List<StoredItem> storedItems = new ArrayList<>();
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Refrigerator refrigerator;
 
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
