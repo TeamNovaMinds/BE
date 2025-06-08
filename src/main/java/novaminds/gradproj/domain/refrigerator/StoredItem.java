@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
 import novaminds.gradproj.domain.ingredient.Ingredient;
-import novaminds.gradproj.domain.user.User;
 
 import java.time.LocalDate;
 
@@ -27,8 +26,8 @@ public class StoredItem extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User owner;
+    @JoinColumn(name = "refrigrator_id", nullable = false)
+    private Refrigerator refrigerator;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ingredient_id", nullable = false)
