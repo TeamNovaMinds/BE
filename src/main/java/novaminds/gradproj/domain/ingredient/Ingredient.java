@@ -38,9 +38,9 @@ public class Ingredient extends BaseEntity {
     private ShelfLife shelfLife;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
+    @Column(nullable = false, length = 20)
     @ColumnDefault("'APPROVED'")
-    private SuggestionStatus status;
+    private RegistrationStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ingredientCategory_id", nullable = false)

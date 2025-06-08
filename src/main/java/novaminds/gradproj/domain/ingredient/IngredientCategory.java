@@ -40,9 +40,9 @@ public class IngredientCategory {
 	private String ingredientCategoryName;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 30)
+	@Column(nullable = false, length = 20)
 	@ColumnDefault("'Approved'")
-	private SuggestionStatus status;
+	private RegistrationStatus status;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id")
