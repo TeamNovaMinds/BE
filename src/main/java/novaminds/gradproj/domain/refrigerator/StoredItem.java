@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.storeditem;
+package novaminds.gradproj.domain.refrigerator;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

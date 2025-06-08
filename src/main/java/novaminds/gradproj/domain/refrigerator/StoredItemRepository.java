@@ -1,4 +1,4 @@
-package novaminds.gradproj.domain.storeditem;
+package novaminds.gradproj.domain.refrigerator;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
