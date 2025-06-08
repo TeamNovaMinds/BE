@@ -6,9 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
-import novaminds.gradproj.domain.recipeingredient.RecipeOrder;
 import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.domain.recipeingredient.RecipeIngredient;
 
 import java.util.ArrayList;
 import java.util.List;

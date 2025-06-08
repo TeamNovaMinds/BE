@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
 import novaminds.gradproj.domain.refrigerator.StoredItem;
-import novaminds.gradproj.domain.recipeingredient.RecipeIngredient;
+import novaminds.gradproj.domain.Recipe.RecipeIngredient;
 import novaminds.gradproj.domain.user.User;
 
 import java.util.ArrayList;
