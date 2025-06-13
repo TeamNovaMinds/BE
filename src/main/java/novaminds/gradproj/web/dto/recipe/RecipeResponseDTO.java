@@ -167,4 +167,14 @@ public class RecipeResponseDTO {
 		private LocalDateTime createdAt;
 
 	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class LikeDTO {
+		private Long recipeId;
+		private boolean isLiked; // 현재 나의 좋아요 상태
+		private int likeCount;   // 변경 후 총 좋아요 개수
+	}
 }

@@ -79,4 +79,15 @@ public class RecipeController {
 		Page<RecipeResponseDTO.ListByCategoryDTO> result = recipeService.getRecipeByCategory(category, pageable);
 		return ApiResponse.onSuccess(result);
 	}
+
+	//좋아요 추가 및 취소.
+	@PostMapping("/{recipeId}/like")
+	@Operation(summary = "레시피 좋아요 토글", description = "특정 레시피에 대한 좋아요를 추가하거나 취소합니다. (토글 방식)")
+	public ApiResponse<RecipeResponseDTO.LikeDTO> toggleLike(
+		@PathVariable("recipeId") Long recipeId,
+		@CurrentUser User user
+	) {
+		RecipeResponseDTO.LikeDTO result = recipeService.RecipeLike(recipeId, user);
+		return ApiResponse.onSuccess(result);
+	}
 }
