@@ -54,7 +54,10 @@ public enum ErrorStatus implements BaseErrorCode {
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON5001", "이미지 업로드에 실패했습니다. 다시 시도해주세요."),
 
     //재료 관련 에러
-    INGREDIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "INGREDIENT4001", "재료를 찾을 수 없습니다.");
+    INGREDIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "INGREDIENT4001", "재료를 찾을 수 없습니다."),
+
+    //레시피 관련 에러
+    RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE4001", "해당 레시피를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.Recipe.Recipe;
+import novaminds.gradproj.domain.Recipe.RecipeComment;
+import novaminds.gradproj.domain.Recipe.RecipeCommentRepository;
 import novaminds.gradproj.domain.Recipe.RecipeImage;
 import novaminds.gradproj.domain.Recipe.RecipeIngredient;
 import novaminds.gradproj.domain.Recipe.RecipeOrder;
@@ -32,6 +36,7 @@ public class RecipeService {
 	private final UserRepository userRepository;
 	private final S3Service s3Service;
 	private final IngredientRepository ingredientRepository;
+	private final RecipeCommentRepository recipeCommentRepository;
 
 	@Transactional
 	public RecipeResponseDTO.CreateRecipeResultDTO createRecipe(
@@ -119,5 +124,59 @@ public class RecipeService {
 			.recipeId(savedRecipe.getId())
 			.build();
 
+	}
+
+
+	//레시피 상세
+	@Transactional(readOnly = true)
+	public RecipeResponseDTO.RecipeDetailDTO getRecipeDetail(Long recipeId){
+
+		//레시피 아이디로 가져오기
+		Recipe recipe = recipeRepository.findById(recipeId)
+			.orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+		//미리보기 댓글 가져오기
+		List<RecipeComment> previewComments = recipeCommentRepository
+			.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtDesc(recipeId);
+
+		return RecipeResponseDTO.RecipeDetailDTO.builder()
+			.recipeId(recipe.getId())
+			.title(recipe.getTitle())
+			.description(recipe.getDescription())
+			.recipeCategory(recipe.getRecipeCategory())
+			.cookingTimeMinutes(recipe.getCookingTimeMinutes())
+			.difficulty(recipe.getDifficulty())
+			.servings(recipe.getServings())
+			.createdAt(recipe.getCreatedAt())
+			.likeCount(recipe.getRecipeLikes().size())
+			.commentPreview(
+				RecipeResponseDTO.CommentPreviewDTO.builder()
+					.totalCount(recipe.getRecipeComments().size())
+					.previewComments(previewComments.stream()
+						.map(RecipeResponseDTO.CommentDTO::from)
+						.collect(Collectors.toList()))
+					.build()
+			)
+			.author(RecipeResponseDTO.AuthorDTO.from(recipe.getAuthor()))
+			.recipeImages(recipe.getRecipeImages().stream()
+				.map(RecipeResponseDTO.ImageDTO::from)
+				.collect(Collectors.toList()))
+			.ingredients(recipe.getRecipeIngredients().stream()
+				.map(RecipeResponseDTO.IngredientDTO::from)
+				.collect((Collectors.toList())))
+			.orders(recipe.getRecipeOrders().stream()
+				.map(RecipeResponseDTO.OrderDTO::from)
+				.collect(Collectors.toList()))
+			.build();
+	}
+
+	//댓글 더보기 기능
+	@Transactional(readOnly = true)
+	public Page<RecipeResponseDTO.CommentDTO> getComments(Long recipeId, Pageable pageable) {
+		if (!recipeRepository.existsById(recipeId)) {
+			throw new GeneralException(ErrorStatus.USER_NOT_FOUND); // TODO: ErrorStatus에 RECIPE_NOT_FOUND 추가 후 변경
+		}
+		Page<RecipeComment> comments = recipeCommentRepository.findByRecipeIdAndParentCommentIsNull(recipeId, pageable);
+		return comments.map(RecipeResponseDTO.CommentDTO::from);
 	}
 }
