@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
+import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
 import novaminds.gradproj.domain.refrigerator.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.RefrigeratorRepository;
@@ -123,17 +124,13 @@ public class AuthService {
         log.info("✅ [회원가입] 냉장고 및 기본 스킨 생성 완료 - userId: {}", user.getLoginId());
     }
 
-    // 추가 정보 입력 (닉네임, 관심 카테고리)
+    // 추가 정보 입력 (닉네임, 프로필 이미지)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfile(
-            String loginId,
-            AuthRequest.AdditionalInfoRequest request,
+    public AuthResponse.AdditionalInfoResponse completeProfilePart1(
+            User user,
+            AuthRequest.AdditionalInfoNicknameRequest request,
             MultipartFile profileImage
     ) {
-        log.info("🔄 [추가 정보 입력] 시작 - loginId: {}", loginId);
-
-        User user = userRepository.findById(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         // 닉네임 중복 확인 (현재 사용자의 닉네임과 다른 경우에만)
         if (!user.getNickname().equals(request.getNickname()) &&
@@ -160,8 +157,20 @@ public class AuthService {
             }
         }
 
+        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 프로필 이미지: {}",
+                user.getLoginId(), request.getNickname(), user.getProfileImage() != null ? "있음" : "없음");
+
+        return AuthResponse.AdditionalInfoResponse.from(user);
+    }
+
+    // 추가 정보 입력 (닉네임, 프로필 이미지)
+    @Transactional
+    public AuthResponse.AdditionalInfoResponse completeProfilePart2(
+            User user,
+            AuthRequest.AdditionalInfoInterestRequest request
+    ) {
         // 기존 관심 카테고리 삭제
-        userInterestCategoryRepository.deleteByUserLoginId(loginId);
+        userInterestCategoryRepository.deleteByUserLoginId(user.getLoginId());
 
         // 새로운 관심 카테고리 저장
         List<RecipeCategory> categories = request.getInterestCategories();
@@ -173,8 +182,8 @@ public class AuthService {
         // 프로필 완료 상태로 변경
         user.completeProfile();
 
-        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 관심 카테고리 수: {}, 프로필 이미지: {}",
-                loginId, request.getNickname(), categories.size(),user.getProfileImage() != null ? "있음" : "없음");
+        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 관심 카테고리 수: {}",
+                user.getLoginId(), categories.size());
 
         return AuthResponse.AdditionalInfoResponse.from(user);
     }
@@ -235,6 +244,19 @@ public class AuthService {
         response.addCookie(refreshTokenCookie);
 
         log.info("✅ [로그아웃] 완료 - 쿠키 삭제됨");
+    }
+
+    public String checkEmailDuplication(String email) {
+        log.info("🔄 [이메일 중복확인] 시작 - 이메일: {}", email);
+
+        // 이메일 중복 확인
+        if (userRepository.findByEmail(email).isPresent()) {
+            log.error("❌ [이메일 중복확인] 이메일 중복 - {}", email);
+            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
+        }
+
+        log.info("✅ [이메일 중복확인] 사용 가능한 이메일 - {}", email);
+        return "사용 가능한 이메일입니다.";
     }
 
     // 토큰 재발급
