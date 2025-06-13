@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.ApiResponse;
+import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.user.User;
 import novaminds.gradproj.security.auth.CurrentLoginId;
 import novaminds.gradproj.security.auth.CurrentUser;
@@ -64,6 +66,17 @@ public class RecipeController {
 			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable
 	) {
 		Page<RecipeResponseDTO.CommentDTO> result = recipeService.getComments(recipeId, pageable);
+		return ApiResponse.onSuccess(result);
+	}
+
+	//카테고리 별 레시피.
+	@GetMapping
+	@Operation(summary = "카테고리 별 레시피 목록 조회", description = "카테고리 별로 레시피 목록을 조회")
+	public ApiResponse<Page<RecipeResponseDTO.ListByCategoryDTO>> getRecipesByCategory(
+			@RequestParam("category")RecipeCategory category,
+		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+	){
+		Page<RecipeResponseDTO.ListByCategoryDTO> result = recipeService.getRecipeByCategory(category, pageable);
 		return ApiResponse.onSuccess(result);
 	}
 }
