@@ -3,6 +3,7 @@ package novaminds.gradproj.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -20,6 +21,8 @@ import novaminds.gradproj.domain.Recipe.RecipeComment;
 import novaminds.gradproj.domain.Recipe.RecipeCommentRepository;
 import novaminds.gradproj.domain.Recipe.RecipeImage;
 import novaminds.gradproj.domain.Recipe.RecipeIngredient;
+import novaminds.gradproj.domain.Recipe.RecipeLike;
+import novaminds.gradproj.domain.Recipe.RecipeLikeRepository;
 import novaminds.gradproj.domain.Recipe.RecipeOrder;
 import novaminds.gradproj.domain.Recipe.RecipeRepository;
 import novaminds.gradproj.domain.ingredient.Ingredient;
@@ -38,6 +41,7 @@ public class RecipeService {
 	private final S3Service s3Service;
 	private final IngredientRepository ingredientRepository;
 	private final RecipeCommentRepository recipeCommentRepository;
+	private final RecipeLikeRepository recipeLikeRepository;
 
 	@Transactional
 	public RecipeResponseDTO.CreateRecipeResultDTO createRecipe(
@@ -205,5 +209,40 @@ public class RecipeService {
 				.createdAt(recipe.getCreatedAt())
 				.build();
 		});
+	}
+
+	//좋아요 추가 및 취소.
+	@Transactional
+	public RecipeResponseDTO.LikeDTO RecipeLike(Long recipeId, User user){
+
+		Recipe recipe = recipeRepository.findById(recipeId)
+			.orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+		Optional<RecipeLike> existLike = recipeLikeRepository.findByUserLoginIdAndRecipeId(user.getLoginId(), recipeId);
+
+		//front에서 총 좋아요 개수와 함께 반환해주는 값
+		//지금 응답이 좋아요 추가인지 취소인지 보기 쉽게 판단 도와주려고.
+		boolean isLiked;
+
+		if (existLike.isPresent()){
+			RecipeLike recipeLike = existLike.get();
+			recipe.removeRecipeLike(recipeLike);
+			recipeLikeRepository.delete(recipeLike);
+			isLiked = false;
+		}else {
+			RecipeLike newLike = RecipeLike.builder()
+				.user(user)
+				.recipe(recipe)
+				.build();
+			recipe.addRecipeLike(newLike);
+			recipeLikeRepository.save(newLike);
+			isLiked = true;
+		}
+
+		return RecipeResponseDTO.LikeDTO.builder()
+			.recipeId(recipe.getId())
+			.isLiked(isLiked)
+			.likeCount(recipe.getRecipeLikes().size())
+			.build();
 	}
 }
