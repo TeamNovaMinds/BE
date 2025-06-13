@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.Recipe.Recipe;
+import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
 import novaminds.gradproj.domain.Recipe.RecipeCommentRepository;
 import novaminds.gradproj.domain.Recipe.RecipeImage;
@@ -178,5 +179,31 @@ public class RecipeService {
 		}
 		Page<RecipeComment> comments = recipeCommentRepository.findByRecipeIdAndParentCommentIsNull(recipeId, pageable);
 		return comments.map(RecipeResponseDTO.CommentDTO::from);
+	}
+
+	//category 별 레시피 리스트 조회
+	@Transactional(readOnly = true)
+	public Page<RecipeResponseDTO.ListByCategoryDTO> getRecipeByCategory(RecipeCategory category, Pageable pageable){
+
+		Page<Recipe> recipes = recipeRepository.findByRecipeCategory(category, pageable);
+
+		return recipes.map(recipe ->{
+
+			String mainImageUrl = recipe.getRecipeImages().stream()
+				.filter(RecipeImage::isMain)
+				.map(RecipeImage::getImageUrl)
+				.findFirst()
+				.orElse(recipe.getRecipeImages().isEmpty() ? null : recipe.getRecipeImages().get(0).getImageUrl());
+
+			return  RecipeResponseDTO.ListByCategoryDTO.builder()
+				.recipeId(recipe.getId())
+				.title(recipe.getTitle())
+				.mainImageUrl(mainImageUrl)
+				.authorNickname(recipe.getAuthor().getNickname())
+				.likeCount(recipe.getRecipeLikes().size())
+				.commentCount(recipe.getRecipeComments().size())
+				.createdAt(recipe.getCreatedAt())
+				.build();
+		});
 	}
 }

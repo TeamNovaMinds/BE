@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.Recipe.Difficulty;
+import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
 import novaminds.gradproj.domain.Recipe.RecipeImage;
@@ -26,7 +27,7 @@ public class RecipeResponseDTO {
 		private Long recipeId;
 	}
 
-
+	//레시피 상세보기 dto
 	@Builder
 	@Getter
 	@NoArgsConstructor
@@ -149,5 +150,21 @@ public class RecipeResponseDTO {
 	public static class CommentPreviewDTO{
 		private long totalCount;
 		private List<CommentDTO> previewComments;
+	}
+
+	//category별 레시피 조회
+	@Builder
+	@Getter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ListByCategoryDTO{
+		private Long recipeId;
+		private String title;
+		private String mainImageUrl;
+		private String authorNickname;
+		private Integer likeCount;
+		private Integer commentCount;
+		private LocalDateTime createdAt;
+
 	}
 }
