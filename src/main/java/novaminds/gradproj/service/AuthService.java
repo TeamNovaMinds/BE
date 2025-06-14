@@ -17,6 +17,7 @@ import novaminds.gradproj.security.auth.PrincipalDetails;
 import novaminds.gradproj.security.jwt.JwtTokenProvider;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
 import novaminds.gradproj.web.dto.auth.AuthResponse;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -229,19 +230,26 @@ public class AuthService {
     public void logout(HttpServletResponse response) {
         log.info("🔄 [로그아웃] 시작");
 
-        // Cookie 삭제
-        Cookie accessTokenCookie = new Cookie(JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME, "");
-        accessTokenCookie.setMaxAge(0);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setHttpOnly(true);
+        // ✅ ResponseCookie 사용으로 변경 (modified)
+        ResponseCookie accessTokenCookie = ResponseCookie.from(JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax") // ✅ SameSite 추가 (added)
+                .maxAge(0)
+                .build();
 
-        Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "");
-        refreshTokenCookie.setMaxAge(0);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setHttpOnly(true);
+        ResponseCookie refreshTokenCookie = ResponseCookie.from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax") // ✅ SameSite 추가 (added)
+                .maxAge(0)
+                .build();
 
-        response.addCookie(accessTokenCookie);
-        response.addCookie(refreshTokenCookie);
+        // ✅ addHeader 방식으로 변경 (modified)
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
 
         log.info("✅ [로그아웃] 완료 - 쿠키 삭제됨");
     }
@@ -318,19 +326,22 @@ public class AuthService {
 
     // Cookie 설정 헬퍼 메서드
     private void setCookies(HttpServletResponse response, String accessToken, String refreshToken) {
-        Cookie accessTokenCookie = jwtTokenProvider.createCookie(
+        ResponseCookie accessTokenCookie = jwtTokenProvider.createResponseCookie(
                 JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME,
                 accessToken,
                 60 * 60 * 24 // 1일
         );
 
-        Cookie refreshTokenCookie = jwtTokenProvider.createCookie(
+        ResponseCookie refreshTokenCookie = jwtTokenProvider.createResponseCookie(
                 JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
                 refreshToken,
                 60 * 60 * 24 * 7 // 7일
         );
 
-        response.addCookie(accessTokenCookie);
-        response.addCookie(refreshTokenCookie);
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+
+        log.info("🍪 [쿠키 설정] AccessToken 쿠키: {}", accessTokenCookie.toString());
+        log.info("🍪 [쿠키 설정] RefreshToken 쿠키: {}", refreshTokenCookie.toString());
     }
 }

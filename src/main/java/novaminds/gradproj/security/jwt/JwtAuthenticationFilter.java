@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.security.auth.CustomUserDetailsService;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -206,13 +207,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String newAccessToken = jwtTokenProvider.generateAccessToken(authentication);
             log.info("✓ [JWT 필터] 새 액세스 토큰 생성 성공: 사용자 {}", loginId);
 
-            // 쿠키에 저장
-            Cookie accessCookie = jwtTokenProvider.createCookie(
-                    JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME,
-                    newAccessToken,
-                    (int) (24 * 60 * 60) // 24시간
-            );
-            response.addCookie(accessCookie);
+            // ResponseCookie 사용으로 변경 (modified)
+            ResponseCookie accessCookie = ResponseCookie.from(
+                            JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME,
+                            newAccessToken)
+                    .path("/")
+                    .httpOnly(true)
+                    .secure(false) // 개발환경
+                    .sameSite("Lax") // SameSite 추가 (added)
+                    .maxAge(24 * 60 * 60) // 24시간
+                    .build();
+
+            // addHeader 방식으로 변경 (modified)
+            response.addHeader("Set-Cookie", accessCookie.toString());
             log.info("✓ [JWT 필터] 새 액세스 토큰 쿠키 설정 완료");
 
             // 인증 정보 설정
@@ -260,19 +267,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 쿠키 삭제
     private void deleteCookie(HttpServletResponse response, String cookieName) {
-        Cookie cookie = new Cookie(cookieName, "");
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 개발환경
-        response.addCookie(cookie);
+        // ResponseCookie 사용으로 변경 (modified)
+        ResponseCookie cookie = ResponseCookie.from(cookieName, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // 개발환경
+                .sameSite("Lax") // ✅ SameSite 추가 (added)
+                .maxAge(0)
+                .build();
+
+        // addHeader 방식으로 변경
+        response.addHeader("Set-Cookie", cookie.toString());
         log.info("🍪 [JWT 필터] 쿠키 삭제 완료: {}", cookieName);
     }
 
     // 허용된 URL 확인
     private boolean isPermitAllUrl(String requestURI) {
         boolean isPermit = requestURI.equals("/") ||
-                requestURI.startsWith("/auth/") ||
+                (requestURI.startsWith("/auth/") &&
+                        !requestURI.startsWith("/auth/additional-info")) ||
                 requestURI.startsWith("/oauth2/") ||
                 requestURI.startsWith("/login/oauth2/") ||
                 requestURI.startsWith("/swagger-ui") ||
