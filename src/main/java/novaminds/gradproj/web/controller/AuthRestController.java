@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
+import novaminds.gradproj.domain.user.QUser;
 import novaminds.gradproj.domain.user.User;
 import novaminds.gradproj.security.auth.CurrentLoginId;
 import novaminds.gradproj.security.auth.CurrentUser;
@@ -65,18 +66,29 @@ public class AuthRestController {
                             schema = @Schema(implementation = AuthRequest.AdditionalInfoRequest.class))
             )
     )*/
-    @PostMapping(value = "/additional-info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/additional-info-part1", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "추가 정보 입력",
-            description = "프로필 이미지와 닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
+            description = "프로필 이미지와 닉네임을 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
-            @CurrentLoginId String loginId,
-            @Valid @RequestPart("data") AuthRequest.AdditionalInfoRequest request,
+            @CurrentUser User user,
+            @Valid @RequestPart("data") AuthRequest.AdditionalInfoNicknameRequest request,
             @RequestPart(value = "profileImg", required = false) MultipartFile profileImg
     ) {
         log.info("🔸 [API 호출] 추가 정보 입력 (이미지 포함) - loginId: {}, 이미지: {}",
-                loginId, profileImg != null ? profileImg.getOriginalFilename() : "없음");
-        return ApiResponse.onSuccess(authService.completeProfile(loginId, request, profileImg));
+                user, profileImg != null ? profileImg.getOriginalFilename() : "없음");
+        return ApiResponse.onSuccess(authService.completeProfilePart1(user, request, profileImg));
+    }
+
+    @PostMapping(value = "/additional-info-part2")
+    @Operation(summary = "추가 정보 입력",
+            description = "관심 카테고리(1~3개)를 입력합니다. " +
+                    "JWT 토큰이 필요합니다.")
+    public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
+            @CurrentUser User user,
+            @Valid @RequestBody AuthRequest.AdditionalInfoInterestRequest request
+    ) {
+        return ApiResponse.onSuccess(authService.completeProfilePart2(user, request));
     }
 
     @PostMapping("/login")
@@ -114,6 +126,17 @@ public class AuthRestController {
         log.info("🔸 [API 호출] 로그아웃");
         authService.logout(response);
         return ApiResponse.onSuccess("로그아웃이 완료되었습니다.");
+    }
+
+    @GetMapping("/check-email")
+    @Operation(summary = "이메일 중복확인",
+            description = "회원가입 시 이메일 중복 여부를 확인합니다. " +
+                    "사용 가능한 이메일이면 isSuccess: true를 반환합니다.")
+    public ApiResponse<String> checkEmailDuplication(
+            @RequestParam("email") String email
+    ) {
+        log.info("🔸 [API 호출] 이메일 중복확인 - email: {}", email);
+        return ApiResponse.onSuccess(authService.checkEmailDuplication(email));
     }
 
     @PostMapping("/refresh")

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.security.auth.PrincipalDetails;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -130,5 +131,16 @@ public class JwtTokenProvider {
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
         return cookie;
+    }
+
+    public ResponseCookie createResponseCookie(String name, String value, int maxAge) {
+        return ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(false) // 개발 환경에서는 false
+                .path("/")
+                .maxAge(maxAge)
+                .sameSite("Lax") // CORS를 위한 필수 설정!
+                .domain("localhost")
+                .build();
     }
 }

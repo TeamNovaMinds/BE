@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
+import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
 import novaminds.gradproj.domain.refrigerator.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.RefrigeratorRepository;
@@ -16,6 +17,7 @@ import novaminds.gradproj.security.auth.PrincipalDetails;
 import novaminds.gradproj.security.jwt.JwtTokenProvider;
 import novaminds.gradproj.web.dto.auth.AuthRequest;
 import novaminds.gradproj.web.dto.auth.AuthResponse;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -123,17 +125,13 @@ public class AuthService {
         log.info("✅ [회원가입] 냉장고 및 기본 스킨 생성 완료 - userId: {}", user.getLoginId());
     }
 
-    // 추가 정보 입력 (닉네임, 관심 카테고리)
+    // 추가 정보 입력 (닉네임, 프로필 이미지)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfile(
-            String loginId,
-            AuthRequest.AdditionalInfoRequest request,
+    public AuthResponse.AdditionalInfoResponse completeProfilePart1(
+            User user,
+            AuthRequest.AdditionalInfoNicknameRequest request,
             MultipartFile profileImage
     ) {
-        log.info("🔄 [추가 정보 입력] 시작 - loginId: {}", loginId);
-
-        User user = userRepository.findById(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         // 닉네임 중복 확인 (현재 사용자의 닉네임과 다른 경우에만)
         if (!user.getNickname().equals(request.getNickname()) &&
@@ -160,8 +158,20 @@ public class AuthService {
             }
         }
 
+        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 프로필 이미지: {}",
+                user.getLoginId(), request.getNickname(), user.getProfileImage() != null ? "있음" : "없음");
+
+        return AuthResponse.AdditionalInfoResponse.from(user);
+    }
+
+    // 추가 정보 입력 (닉네임, 프로필 이미지)
+    @Transactional
+    public AuthResponse.AdditionalInfoResponse completeProfilePart2(
+            User user,
+            AuthRequest.AdditionalInfoInterestRequest request
+    ) {
         // 기존 관심 카테고리 삭제
-        userInterestCategoryRepository.deleteByUserLoginId(loginId);
+        userInterestCategoryRepository.deleteByUserLoginId(user.getLoginId());
 
         // 새로운 관심 카테고리 저장
         List<RecipeCategory> categories = request.getInterestCategories();
@@ -173,8 +183,8 @@ public class AuthService {
         // 프로필 완료 상태로 변경
         user.completeProfile();
 
-        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 관심 카테고리 수: {}, 프로필 이미지: {}",
-                loginId, request.getNickname(), categories.size(),user.getProfileImage() != null ? "있음" : "없음");
+        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 관심 카테고리 수: {}",
+                user.getLoginId(), categories.size());
 
         return AuthResponse.AdditionalInfoResponse.from(user);
     }
@@ -220,21 +230,41 @@ public class AuthService {
     public void logout(HttpServletResponse response) {
         log.info("🔄 [로그아웃] 시작");
 
-        // Cookie 삭제
-        Cookie accessTokenCookie = new Cookie(JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME, "");
-        accessTokenCookie.setMaxAge(0);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setHttpOnly(true);
+        // ✅ ResponseCookie 사용으로 변경 (modified)
+        ResponseCookie accessTokenCookie = ResponseCookie.from(JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax") // ✅ SameSite 추가 (added)
+                .maxAge(0)
+                .build();
 
-        Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "");
-        refreshTokenCookie.setMaxAge(0);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setHttpOnly(true);
+        ResponseCookie refreshTokenCookie = ResponseCookie.from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax") // ✅ SameSite 추가 (added)
+                .maxAge(0)
+                .build();
 
-        response.addCookie(accessTokenCookie);
-        response.addCookie(refreshTokenCookie);
+        // ✅ addHeader 방식으로 변경 (modified)
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
 
         log.info("✅ [로그아웃] 완료 - 쿠키 삭제됨");
+    }
+
+    public String checkEmailDuplication(String email) {
+        log.info("🔄 [이메일 중복확인] 시작 - 이메일: {}", email);
+
+        // 이메일 중복 확인
+        if (userRepository.findByEmail(email).isPresent()) {
+            log.error("❌ [이메일 중복확인] 이메일 중복 - {}", email);
+            throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
+        }
+
+        log.info("✅ [이메일 중복확인] 사용 가능한 이메일 - {}", email);
+        return "사용 가능한 이메일입니다.";
     }
 
     // 토큰 재발급
@@ -296,19 +326,22 @@ public class AuthService {
 
     // Cookie 설정 헬퍼 메서드
     private void setCookies(HttpServletResponse response, String accessToken, String refreshToken) {
-        Cookie accessTokenCookie = jwtTokenProvider.createCookie(
+        ResponseCookie accessTokenCookie = jwtTokenProvider.createResponseCookie(
                 JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME,
                 accessToken,
                 60 * 60 * 24 // 1일
         );
 
-        Cookie refreshTokenCookie = jwtTokenProvider.createCookie(
+        ResponseCookie refreshTokenCookie = jwtTokenProvider.createResponseCookie(
                 JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
                 refreshToken,
                 60 * 60 * 24 * 7 // 7일
         );
 
-        response.addCookie(accessTokenCookie);
-        response.addCookie(refreshTokenCookie);
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+
+        log.info("🍪 [쿠키 설정] AccessToken 쿠키: {}", accessTokenCookie.toString());
+        log.info("🍪 [쿠키 설정] RefreshToken 쿠키: {}", refreshTokenCookie.toString());
     }
 }

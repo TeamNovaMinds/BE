@@ -42,10 +42,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .securityContext(securityContext -> securityContext
+                        .requireExplicitSave(false)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/auth/**",
+                                "/auth/signup",          // ✅ 회원가입만 허용 (modified)
+                                "/auth/login",          // ✅ 로그인만 허용 (modified)
+                                "/auth/check-email",    // ✅ 이메일 중복확인만 허용 (modified)
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",
@@ -54,6 +59,8 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/favicon.ico"
                         ).permitAll()
+                        .requestMatchers("/auth/additional-info-part1", "/auth/additional-info-part2")
+                        .authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -77,11 +84,31 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // 프론트엔드 URL
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // ✅ 더 명확한 Origin 설정 (added)
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"
+        ));
+
+        // ✅ 모든 HTTP 메서드 허용 (added)
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
+        ));
+
+        // ✅ 모든 헤더 허용 (added)
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true); // Cookie 허용
-        configuration.setMaxAge(3600L); // preflight 캐시 시간
+
+        // ✅ 인증 정보 허용 (가장 중요!) (added)
+        configuration.setAllowCredentials(true);
+
+        // ✅ preflight 캐시 시간 (added)
+        configuration.setMaxAge(3600L);
+
+        // ✅ 노출할 헤더 추가 (added)
+        configuration.setExposedHeaders(Arrays.asList(
+                "Set-Cookie", "Authorization", "Access-Control-Allow-Origin"
+        ));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

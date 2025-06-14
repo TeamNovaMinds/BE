@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.security.auth.PrincipalDetails;
 import novaminds.gradproj.security.jwt.JwtTokenProvider;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -30,18 +31,20 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String accessToken = jwtTokenProvider.generateAccessToken(authentication);
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
-        // HTTP Only Cookie로 설정
-        response.addCookie(jwtTokenProvider.createCookie(
+        ResponseCookie accessCookie = jwtTokenProvider.createResponseCookie(
                 JwtTokenProvider.ACCESS_TOKEN_COOKIE_NAME,
                 accessToken,
                 60 * 60 * 24 // 1일
-        ));
+        );
 
-        response.addCookie(jwtTokenProvider.createCookie(
+        ResponseCookie refreshCookie = jwtTokenProvider.createResponseCookie(
                 JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
                 refreshToken,
                 60 * 60 * 24 * 7 // 7일
-        ));
+        );
+
+        response.addHeader("Set-Cookie", accessCookie.toString());
+        response.addHeader("Set-Cookie", refreshCookie.toString());
 
         log.info("✅ [OAuth2 로그인 성공] 토큰 발급 완료");
 
