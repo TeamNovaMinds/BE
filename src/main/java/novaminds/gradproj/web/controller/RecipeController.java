@@ -7,7 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,11 +43,36 @@ public class RecipeController {
 	public ApiResponse<RecipeResponseDTO.CreateRecipeResultDTO> createRecipe(
 			@CurrentUser User author,
 			@Valid @RequestPart("data")RecipeRequestDTO.CreateRecipeDTO request,
-			@RequestPart("recipeImages")List<MultipartFile> recipeImages,
-			@RequestPart("stepImages")List<MultipartFile> stepImages
+			@RequestPart(value = "recipeImages", required = false)List<MultipartFile> recipeImages,
+			@RequestPart(value = "stepImages", required = false)List<MultipartFile> stepImages
 	){
 		RecipeResponseDTO.CreateRecipeResultDTO result = recipeService.createRecipe(author, request, recipeImages, stepImages);
 		return ApiResponse.onSuccess(result);
+	}
+
+	//레시피 수정
+	@PatchMapping(value = "/{recipeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Operation(summary = "레시피 수정", description = "해당 레시피를 수정합니다.")
+	public ApiResponse<String> updateRecipe(
+		@PathVariable("recipeId") Long recipeId,
+		@CurrentUser User user,
+		@Valid @RequestPart("data") RecipeRequestDTO.RecipeUpdateDTO request,
+		@RequestPart(value = "recipeImages", required = false) List<MultipartFile> newRecipeImages,
+		@RequestPart(value = "stepImages", required = false) List<MultipartFile> newStepImages
+	){
+		recipeService.updateRecipe(recipeId, user, request, newRecipeImages, newStepImages);
+		return ApiResponse.onSuccess("레시피가 성공적으로 수정되었습니다.");
+	}
+
+	//레시피 삭제
+	@DeleteMapping("/{recipeId}")
+	@Operation(summary = "레시피 삭제", description = "해당 레시피를 삭제합니다.")
+	public ApiResponse<String> deleteRecipe(
+		@PathVariable("recipeId") Long recipeId,
+		@CurrentUser User user
+	){
+		recipeService.deleteRecipe(recipeId, user);
+		return ApiResponse.onSuccess("레시피가 성공적으로 삭제되었습니다.");
 	}
 
 	//레시피 상세 보기

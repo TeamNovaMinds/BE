@@ -87,6 +87,7 @@ public class RecipeResponseDTO {
 	@NoArgsConstructor
 	@AllArgsConstructor
 	public static class IngredientDTO{
+
 		private String name;
 		private String amount;
 		private String description;

@@ -65,4 +65,21 @@ public class RecipeRequestDTO {
 		private String description;
 		private Integer imageIndex;
 	}
+
+	@Builder
+	@Getter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class RecipeUpdateDTO{
+		private String title;
+		private String description;
+		private RecipeCategory recipeCategory;
+		private Integer cookingTimeMinutes;
+		private Difficulty difficulty;
+		private Integer servings;
+
+		private List<RecipeIngredientDTO> ingredients;
+		private List<RecipeOrderDTO> orders;
+		private List<Long> deletedRecipeImages;
+	}
 }
