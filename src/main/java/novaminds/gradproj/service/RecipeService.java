@@ -20,6 +20,7 @@ import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
 import novaminds.gradproj.domain.Recipe.RecipeCommentRepository;
 import novaminds.gradproj.domain.Recipe.RecipeImage;
+import novaminds.gradproj.domain.Recipe.RecipeImageRepository;
 import novaminds.gradproj.domain.Recipe.RecipeIngredient;
 import novaminds.gradproj.domain.Recipe.RecipeLike;
 import novaminds.gradproj.domain.Recipe.RecipeLikeRepository;
@@ -37,12 +38,13 @@ import novaminds.gradproj.web.dto.recipe.RecipeResponseDTO;
 public class RecipeService {
 
 	private final RecipeRepository recipeRepository;
-	private final UserRepository userRepository;
 	private final S3Service s3Service;
 	private final IngredientRepository ingredientRepository;
 	private final RecipeCommentRepository recipeCommentRepository;
 	private final RecipeLikeRepository recipeLikeRepository;
+	private final RecipeImageRepository recipeImageRepository;
 
+	//레시피 등록
 	@Transactional
 	public RecipeResponseDTO.CreateRecipeResultDTO createRecipe(
 				User author,
@@ -129,6 +131,99 @@ public class RecipeService {
 			.recipeId(savedRecipe.getId())
 			.build();
 
+	}
+
+	//레시피 수정
+	@Transactional
+	public void updateRecipe(Long recipeId, User user, RecipeRequestDTO.RecipeUpdateDTO request,
+		List<MultipartFile> newRecipeImages, List<MultipartFile> newStepImages) {
+		Recipe recipe = recipeRepository.findById(recipeId)
+			.orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+		if (!recipe.getAuthor().getLoginId().equals(user.getLoginId())) {
+			throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
+		}
+
+		//기본 정보 업뎃
+		if (request.getTitle() != null)
+			recipe.updateTitle(request.getTitle());
+		if (request.getDescription() != null)
+			recipe.updateDescription(request.getDescription());
+		if (request.getRecipeCategory() != null)
+			recipe.updateRecipeCategory(request.getRecipeCategory());
+		if (request.getCookingTimeMinutes() != null)
+			recipe.updateCookingTimeMinutes(request.getCookingTimeMinutes());
+		if (request.getDifficulty() != null)
+			recipe.updateDifficulty(request.getDifficulty());
+		if (request.getServings() != null)
+			recipe.updateServings(request.getServings());
+
+		//완성 사진 업데이트
+		if (request.getDeletedRecipeImages() != null && !request.getDeletedRecipeImages().isEmpty()) {
+			recipeImageRepository.deleteAllById(request.getDeletedRecipeImages());
+		}
+		if (newRecipeImages != null && !newRecipeImages.isEmpty()) {
+			List<String> recipeImageUrls = newRecipeImages.stream()
+				.map(image -> s3Service.uploadFile(image, "recipe-images"))
+				.collect(Collectors.toList());
+			for (int i = 0; i < recipeImageUrls.size(); i++) {
+				RecipeImage recipeImage = RecipeImage.builder()
+					.recipe(recipe)
+					.imageUrl(recipeImageUrls.get(i))
+					.imageOrder(recipe.getRecipeImages().size() + i) // 기존 이미지 순서 뒤에 붙임
+					.isMain(false) // 메인 이미지 변경 로직은 별도 구현 필요
+					.build();
+				recipe.getRecipeImages().add(recipeImage);
+			}
+		}
+
+		//order 업데이트 (기존 것 모두 삭제 후, 요청받은 것으로 새로 추가)
+		recipe.getRecipeIngredients().clear();
+		recipe.getRecipeOrders().clear();
+
+		List<String> stepImageUrls = (newStepImages != null && !newStepImages.isEmpty())
+			? newStepImages.stream()
+			.map(image -> s3Service.uploadFile(image, "recipe-step-images"))
+			.collect(Collectors.toList())
+			: Collections.emptyList();
+
+		if (request.getIngredients() != null) {
+			List<RecipeIngredient> recipeIngredients = request.getIngredients().stream().map(dto -> {
+				Ingredient ingredient = ingredientRepository.findById(dto.getIngredientId())
+					.orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND)); // TODO: INGREDIENT_NOT_FOUND
+				return RecipeIngredient.builder().recipe(recipe).ingredient(ingredient).amount(dto.getAmount()).build();
+			}).collect(Collectors.toList());
+			recipe.getRecipeIngredients().addAll(recipeIngredients);
+		}
+
+		if (request.getOrders() != null) {
+			List<RecipeOrder> recipeOrders = request.getOrders().stream().map(dto -> {
+				String imageUrl = null;
+				if (dto.getImageIndex() != null && dto.getImageIndex() < stepImageUrls.size()) {
+					imageUrl = stepImageUrls.get(dto.getImageIndex());
+				}
+				return RecipeOrder.builder()
+					.recipe(recipe)
+					.order(dto.getOrder())
+					.description(dto.getDescription())
+					.ImgUrl(imageUrl)
+					.build();
+			}).collect(Collectors.toList());
+			recipe.getRecipeOrders().addAll(recipeOrders);
+		}
+	}
+
+		//레시피 삭제
+	@Transactional
+	public void deleteRecipe(Long recipeId, User user){
+		Recipe recipe = recipeRepository.findById(recipeId)
+			.orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+		if(!recipe.getAuthor().getLoginId().equals(user.getLoginId())){
+			throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
+		}
+
+		recipeRepository.delete(recipe);
 	}
 
 

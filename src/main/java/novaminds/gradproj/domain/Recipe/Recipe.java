@@ -98,4 +98,29 @@ public class Recipe extends BaseEntity {
         this.decreaseLikes();
         this.author.decreasePointByRecipeLikeCancel();
     }
+
+    //레시피 업데이트 관련 메서드들
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    public void updateRecipeCategory(RecipeCategory recipeCategory) {
+        this.recipeCategory = recipeCategory;
+    }
+
+    public void updateCookingTimeMinutes(Integer cookingTimeMinutes) {
+        this.cookingTimeMinutes = cookingTimeMinutes;
+    }
+
+    public void updateDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public void updateServings(Integer servings) {
+        this.servings = servings;
+    }
 }
