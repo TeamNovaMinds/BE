@@ -49,12 +49,4 @@ public class Ingredient extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL)
-    @Builder.Default
-    private List<StoredItem> storedItems = new ArrayList<>();
-
-    @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL)
-    @Builder.Default
-    private List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 }
