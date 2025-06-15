@@ -6,12 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.BaseEntity;
-import novaminds.gradproj.domain.refrigerator.StoredItem;
-import novaminds.gradproj.domain.Recipe.RecipeIngredient;
 import novaminds.gradproj.domain.user.User;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
