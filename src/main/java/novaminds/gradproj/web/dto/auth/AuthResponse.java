@@ -49,7 +49,7 @@ public class AuthResponse {
     public static class SignupResponse {
         private String loginId;
         private String email;
-        private String nickname;
+        private String name;
         private boolean isProfileCompleted;
         private List<RecipeCategory> interestCategories;
 
@@ -57,7 +57,7 @@ public class AuthResponse {
             return SignupResponse.builder()
                     .loginId(user.getLoginId())
                     .email(user.getEmail())
-                    .nickname(user.getNickname())
+                    .name(user.getName())
                     .isProfileCompleted(user.isProfileCompleted())
                     .interestCategories(user.getInterestCategories().stream()
                             .map(UserInterestCategory::getCategory)
@@ -71,6 +71,8 @@ public class AuthResponse {
     @AllArgsConstructor
     @Builder
     public static class AdditionalInfoResponse {
+        private String name;
+        private String email;
         private String loginId;
         private String nickname;
         private List<RecipeCategory> interestCategories;
@@ -79,14 +81,16 @@ public class AuthResponse {
 
         public static AdditionalInfoResponse from(User user) {
             return AdditionalInfoResponse.builder()
-                    .loginId(user.getLoginId())
-                    .nickname(user.getNickname())
-                    .interestCategories(user.getInterestCategories().stream()
-                            .map(UserInterestCategory::getCategory)
-                            .toList())
-                    .profileImgUrl(user.getProfileImage())
-                    .isProfileCompleted(user.isProfileCompleted())
-                    .build();
+                .email(user.getEmail())
+                .name(user.getName())
+                .loginId(user.getLoginId())
+                .nickname(user.getNickname())
+                .interestCategories(user.getInterestCategories().stream()
+                    .map(UserInterestCategory::getCategory)
+                    .toList())
+                .profileImgUrl(user.getProfileImage())
+                .isProfileCompleted(user.isProfileCompleted())
+                .build();
         }
     }
 }
