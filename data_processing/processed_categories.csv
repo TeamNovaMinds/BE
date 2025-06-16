@@ -1,0 +1,26 @@
+﻿id,original_name,korean_name
+1.0,Baby Food,유아식
+2.0,Baked Goods - Bakery,구운 제품 - 빵집
+3.0,Baked Goods - Baking and Cooking,구운 식품 - 베이킹과 요리
+4.0,Baked Goods - Refrigerated Dough,구운 제품 - 냉장 반죽
+5.0,Beverages,음료수
+6.0,"Condiments, Sauces & Canned Goods","조미료, 소스 및 통조림"
+7.0,Dairy Products & Eggs,유제품 및 계란
+8.0,Food Purchased Frozen,냉동 식품
+9.0,"Grains, Beans & Pasta","곡물, 콩 및 파스타"
+10.0,Meat - Fresh,고기 - 신선한
+11.0,Meat - Shelf Stable Foods,고기 - 선반 안정적인 음식
+12.0,Meat - Smoked or Processed,고기 - 훈제 또는 가공
+13.0,Meat - Stuffed or Assembled,고기 - 박제 또는 조립
+14.0,Poultry - Cooked or Processed,가금류 - 요리 또는 가공
+15.0,Poultry - Fresh,가금류 - 신선한
+16.0,Poultry - Shelf Stable Foods,가금류 - 선반 안정적인 음식
+17.0,Poultry - Stuffed or Assembled,가금류 - 박제 또는 조립
+18.0,Produce - Fresh Fruits,생산 - 신선한 과일
+19.0,Produce - Fresh Vegetables,생산 - 신선한 야채
+20.0,Seafood - Fresh,해산물 - 신선한
+21.0,Seafood - Shellfish,해산물 - 조개
+22.0,Seafood - Smoked,해산물 - 훈제
+23.0,Shelf Stable Foods,선반 안정적인 음식
+24.0,Vegetarian Proteins,채식 단백질
+25.0,Deli & Prepared Foods,델리 & 준비된 음식
