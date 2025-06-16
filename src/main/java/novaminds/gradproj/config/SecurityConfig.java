@@ -48,9 +48,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/auth/signup",          // ✅ 회원가입만 허용 (modified)
-                                "/auth/login",          // ✅ 로그인만 허용 (modified)
-                                "/auth/check-email",    // ✅ 이메일 중복확인만 허용 (modified)
+                                "/auth/signup",
+                                "/auth/login",
+                                "/auth/check-email",
+                                "/auth/login/google",
+                                "auth/login/naver",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",

@@ -41,3 +41,14 @@ out/
 .gradle/
 .env
 /src/main/generated/
+
+# ✅ Python 가상환경 제외 (added)
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ✅ 데이터 처리 결과 파일 제외 (added)
+data_processing/*.csv
+data_processing/*.sql
+data_processing/FMA-Data.json
