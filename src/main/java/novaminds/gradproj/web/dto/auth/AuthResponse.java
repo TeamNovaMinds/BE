@@ -21,6 +21,7 @@ public class AuthResponse {
         private String email;
         private String nickname;
         private String name;
+        private String profileImg;
         private String role;
         private boolean isProfileCompleted;
         private List<RecipeCategory> interestCategories;
@@ -31,6 +32,7 @@ public class AuthResponse {
                     .email(user.getEmail())
                     .nickname(user.getNickname())
                     .name(user.getName())
+                    .profileImg(user.getProfileImage())
                     .role(user.getRole().name())
                     .isProfileCompleted(user.isProfileCompleted())
                     .interestCategories(user.getInterestCategories().stream()
