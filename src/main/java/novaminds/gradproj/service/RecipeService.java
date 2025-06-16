@@ -29,7 +29,6 @@ import novaminds.gradproj.domain.Recipe.RecipeRepository;
 import novaminds.gradproj.domain.ingredient.Ingredient;
 import novaminds.gradproj.domain.ingredient.IngredientRepository;
 import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.domain.user.UserRepository;
 import novaminds.gradproj.web.dto.recipe.RecipeRequestDTO;
 import novaminds.gradproj.web.dto.recipe.RecipeResponseDTO;
 
@@ -46,13 +45,12 @@ public class RecipeService {
 
 	//레시피 등록
 	@Transactional
-	public RecipeResponseDTO.CreateRecipeResultDTO createRecipe(
+	public RecipeResponseDTO.RecipeResultDTO createRecipe(
 				User author,
 				RecipeRequestDTO.CreateRecipeDTO request,
 				List<MultipartFile> recipeImages,
 				List<MultipartFile> stepImages
 	){
-
 		//1. 작성자 @CurrentUser
 
 		//2. 새 레시피 엔티티
@@ -127,7 +125,7 @@ public class RecipeService {
 
 		//리턴 값을 일단은 게시글 아이디로 했는데, 나중에 변경해야 될 수도.
 		//바로그냥 게시글 상세보기로 리다이렉트?
-		return RecipeResponseDTO.CreateRecipeResultDTO.builder()
+		return RecipeResponseDTO.RecipeResultDTO.builder()
 			.recipeId(savedRecipe.getId())
 			.build();
 
@@ -135,7 +133,7 @@ public class RecipeService {
 
 	//레시피 수정
 	@Transactional
-	public void updateRecipe(Long recipeId, User user, RecipeRequestDTO.RecipeUpdateDTO request,
+	public RecipeResponseDTO.RecipeResultDTO updateRecipe(Long recipeId, User user, RecipeRequestDTO.RecipeUpdateDTO request,
 		List<MultipartFile> newRecipeImages, List<MultipartFile> newStepImages) {
 		Recipe recipe = recipeRepository.findById(recipeId)
 			.orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
@@ -211,6 +209,10 @@ public class RecipeService {
 			}).collect(Collectors.toList());
 			recipe.getRecipeOrders().addAll(recipeOrders);
 		}
+
+		return RecipeResponseDTO.RecipeResultDTO.builder()
+				.recipeId(recipeId)
+				.build();
 	}
 
 		//레시피 삭제

@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.security.auth.CurrentLoginId;
 import novaminds.gradproj.security.auth.CurrentUser;
 import novaminds.gradproj.web.dto.recipe.RecipeRequestDTO;
 import novaminds.gradproj.web.dto.recipe.RecipeResponseDTO;
@@ -40,28 +39,28 @@ public class RecipeController {
 	//레시피 등록
 	@PostMapping(value = "/create",
 				 consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-	public ApiResponse<RecipeResponseDTO.CreateRecipeResultDTO> createRecipe(
+	public ApiResponse<RecipeResponseDTO.RecipeResultDTO> createRecipe(
 			@CurrentUser User author,
 			@Valid @RequestPart("data")RecipeRequestDTO.CreateRecipeDTO request,
 			@RequestPart(value = "recipeImages", required = false)List<MultipartFile> recipeImages,
 			@RequestPart(value = "stepImages", required = false)List<MultipartFile> stepImages
 	){
-		RecipeResponseDTO.CreateRecipeResultDTO result = recipeService.createRecipe(author, request, recipeImages, stepImages);
+		RecipeResponseDTO.RecipeResultDTO result = recipeService.createRecipe(author, request, recipeImages, stepImages);
 		return ApiResponse.onSuccess(result);
 	}
 
 	//레시피 수정
 	@PatchMapping(value = "/{recipeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(summary = "레시피 수정", description = "해당 레시피를 수정합니다.")
-	public ApiResponse<String> updateRecipe(
+	public ApiResponse<RecipeResponseDTO.RecipeResultDTO> updateRecipe(
 		@PathVariable("recipeId") Long recipeId,
 		@CurrentUser User user,
 		@Valid @RequestPart("data") RecipeRequestDTO.RecipeUpdateDTO request,
 		@RequestPart(value = "recipeImages", required = false) List<MultipartFile> newRecipeImages,
 		@RequestPart(value = "stepImages", required = false) List<MultipartFile> newStepImages
 	){
-		recipeService.updateRecipe(recipeId, user, request, newRecipeImages, newStepImages);
-		return ApiResponse.onSuccess("레시피가 성공적으로 수정되었습니다.");
+		RecipeResponseDTO.RecipeResultDTO result = recipeService.updateRecipe(recipeId, user, request, newRecipeImages, newStepImages);
+		return ApiResponse.onSuccess(result);
 	}
 
 	//레시피 삭제

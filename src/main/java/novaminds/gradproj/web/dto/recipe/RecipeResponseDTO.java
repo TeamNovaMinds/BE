@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.Recipe.Difficulty;
-import novaminds.gradproj.domain.Recipe.Recipe;
 import novaminds.gradproj.domain.Recipe.RecipeCategory;
 import novaminds.gradproj.domain.Recipe.RecipeComment;
 import novaminds.gradproj.domain.Recipe.RecipeImage;
@@ -23,7 +22,7 @@ public class RecipeResponseDTO {
 	@Getter
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class CreateRecipeResultDTO{
+	public static class RecipeResultDTO {
 		private Long recipeId;
 	}
 
