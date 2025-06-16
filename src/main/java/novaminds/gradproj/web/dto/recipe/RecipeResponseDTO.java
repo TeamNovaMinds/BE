@@ -162,6 +162,9 @@ public class RecipeResponseDTO {
 		private String title;
 		private String mainImageUrl;
 		private String authorNickname;
+		private Integer cookingTimeMinutes;
+		private Difficulty difficulty;
+		private Integer servings;
 		private Integer likeCount;
 		private Integer commentCount;
 		private LocalDateTime createdAt;

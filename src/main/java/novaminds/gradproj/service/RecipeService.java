@@ -296,15 +296,18 @@ public class RecipeService {
 				.findFirst()
 				.orElse(recipe.getRecipeImages().isEmpty() ? null : recipe.getRecipeImages().get(0).getImageUrl());
 
-			return  RecipeResponseDTO.ListByCategoryDTO.builder()
-				.recipeId(recipe.getId())
-				.title(recipe.getTitle())
-				.mainImageUrl(mainImageUrl)
-				.authorNickname(recipe.getAuthor().getNickname())
-				.likeCount(recipe.getRecipeLikes().size())
-				.commentCount(recipe.getRecipeComments().size())
-				.createdAt(recipe.getCreatedAt())
-				.build();
+			return RecipeResponseDTO.ListByCategoryDTO.builder()
+					.recipeId(recipe.getId())
+					.title(recipe.getTitle())
+					.mainImageUrl(mainImageUrl)
+					.authorNickname(recipe.getAuthor().getNickname())
+					.cookingTimeMinutes(recipe.getCookingTimeMinutes())
+					.difficulty(recipe.getDifficulty())
+					.servings(recipe.getServings())
+					.likeCount(recipe.getRecipeLikes().size())
+					.commentCount(recipe.getRecipeComments().size())
+					.createdAt(recipe.getCreatedAt())
+					.build();
 		});
 	}
 
