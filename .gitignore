@@ -49,6 +49,3 @@ __pycache__/
 *.pyo
 
 # ✅ 데이터 처리 결과 파일 제외 (added)
-data_processing/*.csv
-data_processing/*.sql
-data_processing/FMA-Data.json
