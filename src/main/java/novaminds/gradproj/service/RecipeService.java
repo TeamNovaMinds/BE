@@ -294,18 +294,22 @@ public class RecipeService {
 				.filter(RecipeImage::isMain)
 				.map(RecipeImage::getImageUrl)
 				.findFirst()
-				.orElse(recipe.getRecipeImages().isEmpty() ? null : recipe.getRecipeImages().get(0).getImageUrl());
+				.orElse(recipe.getRecipeImages().isEmpty() ? null : recipe.getRecipeImages().getFirst().getImageUrl());
+
+			long likeCount = recipeLikeRepository.countByRecipeId(recipe.getId());
+			long commentCount = recipeCommentRepository.countByRecipeId(recipe.getId());
 
 			return RecipeResponseDTO.ListByCategoryDTO.builder()
 					.recipeId(recipe.getId())
 					.title(recipe.getTitle())
 					.mainImageUrl(mainImageUrl)
 					.authorNickname(recipe.getAuthor().getNickname())
+					.authorProfileImg(recipe.getAuthor().getProfileImage())
 					.cookingTimeMinutes(recipe.getCookingTimeMinutes())
 					.difficulty(recipe.getDifficulty())
 					.servings(recipe.getServings())
-					.likeCount(recipe.getRecipeLikes().size())
-					.commentCount(recipe.getRecipeComments().size())
+					.likeCount(likeCount)
+					.commentCount(commentCount)
 					.createdAt(recipe.getCreatedAt())
 					.build();
 		});

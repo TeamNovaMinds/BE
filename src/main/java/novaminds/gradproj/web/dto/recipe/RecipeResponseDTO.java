@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -162,11 +164,12 @@ public class RecipeResponseDTO {
 		private String title;
 		private String mainImageUrl;
 		private String authorNickname;
+		private String authorProfileImg;
 		private Integer cookingTimeMinutes;
 		private Difficulty difficulty;
 		private Integer servings;
-		private Integer likeCount;
-		private Integer commentCount;
+		private Long likeCount;
+		private Long commentCount;
 		private LocalDateTime createdAt;
 
 	}
