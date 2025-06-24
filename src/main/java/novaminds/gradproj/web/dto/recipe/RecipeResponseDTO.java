@@ -162,6 +162,7 @@ public class RecipeResponseDTO {
 	public static class ListByCategoryDTO{
 		private Long recipeId;
 		private String title;
+		private RecipeCategory recipeCategory;
 		private String mainImageUrl;
 		private String authorNickname;
 		private String authorProfileImg;
