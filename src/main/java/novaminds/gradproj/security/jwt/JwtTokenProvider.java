@@ -40,7 +40,6 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
-                .claim("email", principalDetails.getUser().getEmail())
                 .claim("role", principalDetails.getUser().getRole())
                 .claim("category", "access")
                 .issuedAt(now)
@@ -57,7 +56,6 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
-                .claim("email", principalDetails.getUser().getEmail())
                 .claim("category", "refresh")
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -69,12 +67,6 @@ public class JwtTokenProvider {
     public String getLoginIdFromToken(String token) {
         Claims claims = getClaims(token);
         return claims.getSubject();
-    }
-
-    // 토큰에서 email 추출
-    public String getEmailFromToken(String token) {
-        Claims claims = getClaims(token);
-        return claims.get("email", String.class);
     }
 
     // 토큰 카테고리 추출
