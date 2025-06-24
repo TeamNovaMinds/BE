@@ -1,16 +1,12 @@
-spring:
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
-        auto: false
-      credentials:
-        accessKey: ${AWS_ACCESS_KEY_ID}
-        secretKey: ${AWS_SECRET_ACCESS_KEY}
-      stack:
-        auto: false
-
 cloud:
   aws:
+    region:
+      name: ap-northeast-2
+      auto: false
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY_ID}
+      secretKey: ${AWS_SECRET_ACCESS_KEY}
+    stack:
+      auto: false
     s3:
       bucket: grad-recipe
