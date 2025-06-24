@@ -7,8 +7,8 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import novaminds.gradproj.config.properties.JwtProperties;
 import novaminds.gradproj.security.auth.PrincipalDetails;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -25,25 +25,18 @@ public class JwtTokenProvider {
     public static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
     public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${jwt.expiration}")
-    private Long jwtExpiration;
-
-    @Value("${jwt.refresh-expiration}")
-    private Long refreshExpiration;
+    private final JwtProperties jwtProperties;
 
     // SecretKey 생성
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     // Access Token 생성
     public String generateAccessToken(Authentication authentication) {
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());
 
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
@@ -60,7 +53,7 @@ public class JwtTokenProvider {
     public String generateRefreshToken(Authentication authentication) {
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + refreshExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getRefreshExpiration());
 
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
