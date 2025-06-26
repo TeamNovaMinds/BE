@@ -5,8 +5,8 @@ services:
     image: 'mysql:8.0'
     container_name: mysql-novaminds
     environment:
-      - 'MYSQL_DATABASE=novamindsDB'
-      - 'MYSQL_ROOT_PASSWORD=novaminds1234'
+      MYSQL_DATABASE: novamindsDB
+      MYSQL_ROOT_PASSWORD: novaminds1234
     ports:
       - "3307:3306"
     volumes:
@@ -22,18 +22,18 @@ services:
     depends_on:
       - mysql
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,oauth,jwt,s3,email
-      - JWT_SECRET=${JWT_SECRET}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
-      - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID}
-      - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET}
-      - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN}
-      - MAIL_USERNAME=${MAIL_USERNAME}
+      SPRING_PROFILES_ACTIVE: docker,oauth,jwt,s3,email
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+      GMAIL_REFRESH_TOKEN: ${GMAIL_REFRESH_TOKEN}
+      MAIL_USERNAME: ${MAIL_USERNAME}
     networks:
       - novaminds-network
 

@@ -5,8 +5,8 @@ services:
     image: 'mysql:8.0'
     container_name: mysql-novaminds
     environment:
-      - 'MYSQL_DATABASE=novamindsDB'
-      - 'MYSQL_ROOT_PASSWORD=novaminds1234'
+      MYSQL_DATABASE: novamindsDB
+      MYSQL_ROOT_PASSWORD: novaminds1234
     ports:
       - "3307:3306"
     volumes:
