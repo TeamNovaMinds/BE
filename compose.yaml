@@ -11,6 +11,8 @@ services:
       - "3307:3306"
     volumes:
       - novaminds-mysql-data:/var/lib/mysql
+    networks:
+      - novaminds-network
 
   app:
     build: .
@@ -20,7 +22,7 @@ services:
     depends_on:
       - mysql
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,oauth,jwt,s3,email
       - JWT_SECRET=${JWT_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
