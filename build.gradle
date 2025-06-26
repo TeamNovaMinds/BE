@@ -24,37 +24,55 @@ repositories {
 }
 
 dependencies {
+	// ============= Spring Boot 스타터 =============
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	// ============= 개발 도구 =============
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.mysql:mysql-connector-j'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// ============= 데이터베이스 =============
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// ============= 테스트 =============
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// API 문서화
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+	// ============= 환경 변수 관리 =============
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
-	// QueryDSL 메인 모듈들 (최신 5.1.0 버전)
-	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-	implementation 'com.querydsl:querydsl-core'
-	annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
-	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
-	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
-
-	// JWT
+	// ============= JWT 인증 =============
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-	//.env로 환경 변수 관리
-	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+	// ============= API 문서화 =============
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
+	// ============= QueryDSL =============
+	implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+	implementation 'com.querydsl:querydsl-core:5.1.0'
+	annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+	// ============= AWS 클라우드 서비스 =============
 	implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.1.0')
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+
+	// ============= Google 클라우드 서비스 =============
+	implementation platform('com.google.cloud:libraries-bom:26.40.0')
+	implementation 'com.google.api-client:google-api-client'
+	implementation 'com.google.oauth-client:google-oauth-client'
+	implementation 'com.google.http-client:google-http-client-gson'
 }
 
 tasks.named('test') {
