@@ -145,7 +145,6 @@ public class AuthRestController {
     public ApiResponse<String> sendResetPasswordToken (
             @RequestParam("email") String email
     ) {
-        //테스트용
         log.info("🔸 [API 호출] 비밀번호 재설정 이메일 전송 - email: {}", email);
         return ApiResponse.onSuccess(authService.sendPasswordResetEmail(email));
     }
