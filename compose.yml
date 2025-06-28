@@ -6,11 +6,15 @@ services:
       MYSQL_DATABASE: novamindsDB
       MYSQL_ROOT_PASSWORD: novaminds1234
     ports:
-      - 3307:3306
+      - 3306:3306
     volumes:
       - novaminds-mysql-data:/var/lib/mysql
     networks:
       - novaminds-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
+      interval: 5s
+      retries: 10
 
   app:
     build: .
@@ -18,7 +22,8 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: docker,oauth,jwt,s3,email
       JWT_SECRET: ${JWT_SECRET}
