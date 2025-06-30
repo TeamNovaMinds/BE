@@ -17,26 +17,32 @@ services:
       retries: 10
 
   app:
-    build: .
+    image: 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com/just-fridge-server:latest
     container_name: novaminds-app
-    ports:
-      - 8080:8080
+    expose:
+      - "8080"
     depends_on:
       mysql:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: docker,oauth,jwt,s3,email
-      JWT_SECRET: ${JWT_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
-      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
-      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
-      GMAIL_REFRESH_TOKEN: ${GMAIL_REFRESH_TOKEN}
-      MAIL_USERNAME: ${MAIL_USERNAME}
+    networks:
+      - novaminds-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: novaminds-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - app
     networks:
       - novaminds-network
 
