@@ -22,10 +22,8 @@ public class HomeRestController {
     private final AuthService authService;
 
     @GetMapping
-    public ApiResponse<?> home(@CurrentUser User user) {
-        return ApiResponse.onSuccess(
-                authService.getProfile(user)
-        );
+    public String home() {
+        return "성공";
     }
 
     @GetMapping("/test")
