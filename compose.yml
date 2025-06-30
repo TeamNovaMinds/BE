@@ -1,29 +1,9 @@
 services:
-  mysql:
-    image: 'mysql:8.0'
-    container_name: mysql-novaminds
-    environment:
-      MYSQL_DATABASE: novamindsDB
-      MYSQL_ROOT_PASSWORD: novaminds1234
-    ports:
-      - 3306:3306
-    volumes:
-      - novaminds-mysql-data:/var/lib/mysql
-    networks:
-      - novaminds-network
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping" ]
-      interval: 5s
-      retries: 10
-
   app:
     image: 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com/just-fridge-server:latest
     container_name: novaminds-app
     expose:
       - "8080"
-    depends_on:
-      mysql:
-        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -49,6 +29,3 @@ services:
 networks:
   novaminds-network:
     driver: bridge
-
-volumes:
-  novaminds-mysql-data:
