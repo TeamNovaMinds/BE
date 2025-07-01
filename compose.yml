@@ -2,30 +2,10 @@ services:
   app:
     image: 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com/just-fridge-server:latest
     container_name: novaminds-app
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod,oauth,jwt,s3,email
-    networks:
-      - novaminds-network
-
-  nginx:
-    image: nginx:alpine
-    container_name: novaminds-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
-    depends_on:
-      - app
-    networks:
-      - novaminds-network
-
-networks:
-  novaminds-network:
-    driver: bridge
+    restart: unless-stopped
