@@ -20,10 +20,10 @@ cp nginx/conf.d/websites/justfridge.p-e.kr.conf nginx/conf.d/websites/justfridge
 # 💡 수정된 부분: SSL 인증서 발급을 위해 초기 HTTP 설정을 복사합니다.
 cp nginx/conf.d/websites-init/justfridge.p-e.kr-initial.conf nginx/conf.d/websites/justfridge.p-e.kr.conf
 
-# Nginx를 초기 설정으로 재시작합니다.
-echo "🔄 Nginx를 HTTP 모드로 재시작합니다..."
-docker compose restart nginx
-sleep 10 # Nginx가 완전히 시작될 때까지 잠시 대기
+# Nginx와 Certbot을 초기 설정으로 실행합니다.
+echo "🔄 인증서 발급을 위해 Nginx와 Certbot 컨테이너를 실행합니다..."
+docker compose up -d nginx certbot
+sleep 15 # 컨테이너가 완전히 시작될 때까지 충분히 대기합니다.
 
 # Certbot으로 인증서 발급
 echo "📝 도메인 $DOMAIN에 대한 SSL 인증서 발급을 시도합니다..."
