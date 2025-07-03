@@ -47,6 +47,17 @@ jobs:
       - name: ECR에 Docker 이미지 푸시
         run: docker push ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
 
+      - name: EC2에 배포 파일들 전송
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: "compose.yml,nginx/,scripts/,.env"
+          target: "~/deployment/"
+          strip_components: 0
+          rm: true
+
       - name: EC2에 배포 및 SSL 설정
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -55,57 +66,16 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script_stop: true
           script: |
-            # 0. 배포 디렉토리 생성 (없을 경우)
-            mkdir -p ~/deployment
             cd ~/deployment
-            
-            # 1. GitHub Actions에서 전송된 파일들을 EC2 서버의 임시 위치로 옮기기
-            # 'scp-action' 대신, ssh를 통해 직접 파일을 받아 압축을 해제합니다.
-            echo "🚚 GitHub에서 EC2로 배포 파일들을 안전하게 전송합니다..."
-            cat <<'EOF' > docker-compose.yml
-            ${{ env.COMPOSE_FILE }}
-            EOF
-            
-            cat <<'EOF' > .env
-            ${{ secrets.ENV_FILE }}
-            EOF
 
-            mkdir -p nginx/conf.d/websites nginx/conf.d/websites-init
-            
-            cat <<'EOF' > nginx/nginx.conf
-            ${{ env.NGINX_CONF }}
-            EOF
+            echo "🚀 Just Fridge 배포 및 SSL 설정 시작..."
 
-            cat <<'EOF' > nginx/conf.d/default.conf
-            ${{ env.NGINX_DEFAULT_CONF }}
-            EOF
-
-            cat <<'EOF' > nginx/conf.d/upstream.conf
-            ${{ env.NGINX_UPSTREAM_CONF }}
-            EOF
-            
-            cat <<'EOF' > nginx/conf.d/websites/justfridge.p-e.kr.conf
-            ${{ env.NGINX_SITE_CONF }}
-            EOF
-            
-            cat <<'EOF' > nginx/conf.d/websites-init/justfridge.p-e.kr-initial.conf
-            ${{ env.NGINX_SITE_INIT_CONF }}
-            EOF
-            
-            mkdir -p scripts
-            cat <<'EOF' > scripts/init-ssl.sh
-            ${{ env.SSL_SCRIPT }}
-            EOF
-            chmod +x scripts/init-ssl.sh
-
-            echo "✅ 파일 전송 완료."
-
-            # 2. 기존 컨테이너 정리 및 이미지 정리
+            # 1. 기존 컨테이너 정리 및 이미지 정리
             echo "📦 기존 컨테이너 및 불필요한 이미지 정리 중..."
             docker compose down --remove-orphans || true
             docker image prune -f || true
 
-            # 3. 최신 이미지 Pull
+            # 2. 최신 이미지 Pull
             echo "🔄 최신 이미지 다운로드 중..."
             docker compose pull app || {
               echo "❌ 이미지 pull 실패, ECR 로그인 재시도..."
@@ -113,27 +83,29 @@ jobs:
               docker compose pull app
             }
             
-            # 4. SSL 인증서 발급/갱신 (가장 먼저 실행!)
+            # 3. SSL 인증서 발급/갱신 (가장 먼저 실행!)
+            # 이 스크립트가 내부적으로 Nginx를 임시 HTTP 모드로 실행하고 인증서를 받아옵니다.
             echo "🔐 SSL 인증서 확인 및 발급/갱신을 시작합니다..."
+            chmod +x scripts/init-ssl.sh
             ./scripts/init-ssl.sh
 
-            # 5. 모든 서비스 최종 시작
+            # 4. 모든 서비스 최종 시작
+            # init-ssl.sh가 Nginx를 최종 HTTPS 설정으로 재시작했으므로,
+            # 모든 서비스를 최신 상태로 다시 한번 올립니다.
             echo "🏗️ 모든 서비스를 최종적으로 시작/재시작합니다..."
             docker compose up -d --remove-orphans
 
-            # 6. 서비스 안정화 대기 및 상태 확인
+            # 5. 서비스 안정화 대기 및 상태 확인
             echo "⏳ 서비스 안정화 대기 (20초)..."
             sleep 20
+
             echo "🔍 최종 서비스 상태를 확인합니다..."
             docker compose ps
-            
+
+            # 6. Nginx 설정 및 로그 최종 확인
+            echo "🧪 Nginx 설정 파일의 유효성을 최종 검증합니다..."
+            docker compose exec nginx nginx -t
+            echo "🔍 Nginx의 최근 로그 50줄을 확인합니다..."
+            docker compose logs --tail=50 nginx
+
             echo "✅ 배포 및 SSL 설정이 성공적으로 완료되었습니다!"
-        env:
-          COMPOSE_FILE: ${{ toJSON(file('compose.yml')) }}
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-          NGINX_CONF: ${{ toJSON(file('nginx/nginx.conf')) }}
-          NGINX_DEFAULT_CONF: ${{ toJSON(file('nginx/conf.d/default.conf')) }}
-          NGINX_UPSTREAM_CONF: ${{ toJSON(file('nginx/conf.d/upstream.conf')) }}
-          NGINX_SITE_CONF: ${{ toJSON(file('nginx/conf.d/websites/justfridge.p-e.kr.conf')) }}
-          NGINX_SITE_INIT_CONF: ${{ toJSON(file('nginx/conf.d/websites-init/justfridge.p-e.kr-initial.conf')) }}
-          SSL_SCRIPT: ${{ toJSON(file('scripts/init-ssl.sh')) }}
