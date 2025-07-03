@@ -121,53 +121,19 @@ jobs:
 
             echo "✅ 배포 완료!"
 
-      - name: SSL 인증서 초기 설정  # ✅ 첫 배포 시에만 실행
+      - name: SSL 인증서 초기 설정
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script_stop: false  # ✅ SSL 실패해도 배포는 성공으로 처리
+          script_stop: false
           script: |
             cd ~/deployment
             
-            # ✅ SSL 인증서가 이미 있는지 확인
-            if docker-compose exec -T nginx test -f /etc/letsencrypt/live/justfridge.p-e.kr/fullchain.pem; then
-              echo "🔐 SSL 인증서가 이미 존재합니다. 갱신 체크만 수행..."
-              docker-compose exec -T certbot certbot renew --dry-run || echo "⚠️ SSL 갱신 체크 실패 (정상적일 수 있음)"
-            else
-              echo "🔐 SSL 인증서 초기 발급 시작..."
+            chmod +x scripts/init-ssl.sh
             
-              # ✅ 인증서 발급 (실제 이메일 주소로 변경 필요)
-              docker-compose exec -T certbot certbot certonly \
-                --webroot \
-                --webroot-path=/var/www/certbot \
-                --email kiroro0814@naver.com \
-                --agree-tos \
-                --no-eff-email \
-                --non-interactive \
-                -d justfridge.p-e.kr || {
-                echo "❌ SSL 인증서 발급 실패"
-                echo "🔍 certbot 로그 확인:"
-                docker-compose logs certbot
-                exit 0  # ✅ SSL 실패해도 배포는 성공으로 처리
-              }
-            
-              if [ $? -eq 0 ]; then
-                echo "✅ SSL 인증서 발급 성공!"
-            
-                # ✅ nginx 재시작 (HTTPS 활성화)
-                docker-compose restart nginx
-            
-                # ✅ HTTPS 테스트
-                sleep 10
-                if curl -f https://justfridge.p-e.kr/; then
-                  echo "🎉 HTTPS 설정 완료 및 정상 동작 확인!"
-                else
-                  echo "⚠️ HTTPS 설정 완료했지만 응답 확인 실패 (DNS 전파 대기 중일 수 있음)"
-                fi
-              fi
-            fi
+            ./scripts/init-ssl.sh || echo "⚠️ SSL 설정 실패 (수동으로 진행 필요)"
             
             echo ""
             echo "🎯 배포 완료! 서비스 URL:"
