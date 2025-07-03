@@ -5,7 +5,7 @@ spring:
       max-request-size: 50MB
   profiles:
     include:
-      - db
+      - prod
       - oauth
       - jwt
       - s3
