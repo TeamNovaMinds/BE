@@ -88,7 +88,7 @@ jobs:
             # ✅ 기존 컨테이너 정리
             echo "📦 기존 컨테이너 정리 중..."
             docker compose down || true
-            docker system prune -f || true
+            docker image prune -f || true
 
             # ✅ 최신 이미지 Pull
             echo "🔄 최신 이미지 다운로드 중..."
