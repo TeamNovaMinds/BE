@@ -47,6 +47,18 @@ jobs:
       - name: ECR에 Docker 이미지 푸시
         run: docker push ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
 
+      - name: EC2 배포 디렉토리 정리
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            echo "🧹 이전 배포 디렉토리를 sudo를 사용하여 강제로 삭제합니다..."
+            sudo rm -rf ~/deployment
+            echo "✅ 이전 디렉토리 정리 완료. 새 디렉토리를 생성합니다..."
+            mkdir ~/deployment
+
       - name: EC2에 배포 파일들 전송
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -56,7 +68,6 @@ jobs:
           source: "compose.yml,nginx/,scripts/,.env"
           target: "~/deployment/"
           strip_components: 0
-          rm: true
 
       - name: EC2에 배포 및 SSL 설정
         uses: appleboy/ssh-action@v1.0.3
