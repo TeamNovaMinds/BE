@@ -47,6 +47,17 @@ jobs:
       - name: ECR에 Docker 이미지 푸시
         run: docker push ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
 
+      - name: EC2에서 이전 Nginx 설정 정리
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            echo "🧹 이전 Nginx 설정 폴더를 삭제합니다..."
+            rm -rf ~/deployment/nginx
+            echo "✅ 이전 설정 정리 완료!"
+
       - name: EC2에 배포 파일들 전송
         uses: appleboy/scp-action@v0.1.7
         with:
