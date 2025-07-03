@@ -3,30 +3,30 @@
 echo "🔐 SSL 인증서 초기 설정 시작..."
 
 DOMAIN="justfridge.p-e.kr"
-EMAIL="kiroro0814@naver.com"  # ✅ 실제 이메일로 변경됨
+EMAIL="kiroro0814@naver.com"
 
-# ✅ 인증서가 이미 있는지 확인
+# 인증서가 이미 있는지 확인
 if docker compose exec -T nginx test -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem 2>/dev/null; then
     echo "✅ SSL 인증서가 이미 존재합니다."
     echo "🎉 HTTPS 설정 완료!"
     exit 0
 fi
 
-# ✅ 초기 HTTP 전용 설정으로 시작
 cd /home/ubuntu/deployment
 
-# 기존 설정 백업
+# 기존 HTTPS 설정을 백업합니다.
 cp nginx/conf.d/websites/justfridge.p-e.kr.conf nginx/conf.d/websites/justfridge.p-e.kr.conf.backup
 
-# 초기 설정 적용
+# 💡 수정된 부분: SSL 인증서 발급을 위해 초기 HTTP 설정을 복사합니다.
 cp nginx/conf.d/websites-init/justfridge.p-e.kr-initial.conf nginx/conf.d/websites/justfridge.p-e.kr.conf
 
-# ✅ Nginx 재시작 (HTTP 전용 모드)
+# Nginx를 초기 설정으로 재시작합니다.
+echo "🔄 Nginx를 HTTP 모드로 재시작합니다..."
 docker compose restart nginx
-sleep 10
+sleep 10 # Nginx가 완전히 시작될 때까지 잠시 대기
 
-# ✅ Certbot으로 인증서 발급
-echo "📝 도메인 $DOMAIN에 대한 SSL 인증서 발급 중..."
+# Certbot으로 인증서 발급
+echo "📝 도메인 $DOMAIN에 대한 SSL 인증서 발급을 시도합니다..."
 docker compose exec -T certbot certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
@@ -36,23 +36,19 @@ docker compose exec -T certbot certbot certonly \
     --non-interactive \
     -d $DOMAIN
 
+# 인증서 발급 성공/실패에 따라 처리
 if [ $? -eq 0 ]; then
     echo "✅ SSL 인증서 발급 성공!"
-
-    # ✅ HTTPS 포함 설정으로 전환
+    # 백업해둔 최종 HTTPS 설정으로 복원합니다.
     cp nginx/conf.d/websites/justfridge.p-e.kr.conf.backup nginx/conf.d/websites/justfridge.p-e.kr.conf
-
-    # ✅ Nginx 재시작 (HTTPS 모드)
+    echo "🔄 Nginx를 HTTPS 모드로 재시작합니다..."
     docker compose restart nginx
     sleep 10
-
-    echo "🎉 HTTPS 설정 완료!"
+    echo "🎉 HTTPS 설정이 성공적으로 완료되었습니다!"
 else
-    echo "❌ SSL 인증서 발급 실패"
-
-    # ✅ 원래 설정으로 복구
+    echo "❌ SSL 인증서 발급에 실패했습니다."
+    # 원래 설정으로 복구합니다.
     cp nginx/conf.d/websites/justfridge.p-e.kr.conf.backup nginx/conf.d/websites/justfridge.p-e.kr.conf
     docker compose restart nginx
-
     exit 1
 fi
