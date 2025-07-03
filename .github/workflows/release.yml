@@ -47,16 +47,21 @@ jobs:
       - name: ECR에 Docker 이미지 푸시
         run: docker push ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
 
-      - name: EC2에서 이전 Nginx 설정 정리
+      - name: EC2 배포 디렉토리 정리 및 권한 설정
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            echo "🧹 이전 Nginx 설정 폴더를 삭제합니다..."
-            rm -rf ~/deployment/nginx
-            echo "✅ 이전 설정 정리 완료!"
+            echo "🧹 배포 디렉토리 전체를 정리하고 권한을 설정합니다..."
+            # 1. sudo를 사용해 이전 폴더를 확실히 삭제합니다.
+            sudo rm -rf ~/deployment
+            # 2. 배포 폴더를 새로 만듭니다.
+            mkdir -p ~/deployment
+            # 3. 새로 만든 폴더의 소유자를 ubuntu 유저로 변경합니다.
+            sudo chown -R ${{ secrets.EC2_USERNAME }}:${{ secrets.EC2_USERNAME }} ~/deployment
+            echo "✅ 정리 및 권한 설정 완료!"
 
       - name: EC2에 배포 파일들 전송
         uses: appleboy/scp-action@v0.1.7
