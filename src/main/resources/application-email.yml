@@ -4,8 +4,8 @@ gmail:
     port: 587                                    # 2. 어떤 포트를 사용할 것인가? -> TLS 암호화 통신 포트
     username: ${MAIL_USERNAME}                   # 3. 어떤 계정 이름으로 보낼 것인가? (예: myapp@gmail.com)
   client:
-    id: ${GMAIL_CLIENT_ID}           # 1. 구글에 등록된 내 애플리케이션의 ID
-    secret: ${GMAIL_CLIENT_SECRET}   # 2. 구글에 등록된 내 애플리케이션의 비밀번호
+    id: ${GOOGLE_CLIENT_ID}           # 1. 구글에 등록된 내 애플리케이션의 ID
+    secret: ${GOOGLE_CLIENT_SECRET}   # 2. 구글에 등록된 내 애플리케이션의 비밀번호
   refresh:
     token: ${GMAIL_REFRESH_TOKEN}    # 3. ★★★ Access Token을 새로 발급받기 위한 Refresh Token
 
