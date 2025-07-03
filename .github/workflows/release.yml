@@ -73,7 +73,7 @@ jobs:
           target: "~/deployment/"
           strip_components: 0
 
-      - name: EC2에서 Docker Compose로 배포
+      - name: EC2에 배포 및 SSL 설정
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -83,75 +83,44 @@ jobs:
           script: |
             cd ~/deployment
 
-            echo "🚀 Just Fridge 배포 시작..."
+            echo "🚀 Just Fridge 배포 및 SSL 설정 시작..."
 
-            # ✅ 기존 컨테이너 정리
-            echo "📦 기존 컨테이너 정리 중..."
-            docker compose down || true
+            # 1. 기존 컨테이너 정리 및 이미지 정리
+            echo "📦 기존 컨테이너 및 불필요한 이미지 정리 중..."
+            docker compose down --remove-orphans || true
             docker image prune -f || true
 
-            # ✅ 최신 이미지 Pull
+            # 2. 최신 이미지 Pull
             echo "🔄 최신 이미지 다운로드 중..."
             docker compose pull app || {
               echo "❌ 이미지 pull 실패, ECR 로그인 재시도..."
               aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com
               docker compose pull app
             }
+            
+            # 3. SSL 인증서 발급/갱신 (가장 먼저 실행!)
+            # 이 스크립트가 내부적으로 Nginx를 임시 HTTP 모드로 실행하고 인증서를 받아옵니다.
+            echo "🔐 SSL 인증서 확인 및 발급/갱신을 시작합니다..."
+            chmod +x scripts/init-ssl.sh
+            ./scripts/init-ssl.sh
 
-            # ✅ 모든 서비스 시작
-            echo "🏗️ 서비스 시작 중..."
-            docker compose up -d
+            # 4. 모든 서비스 최종 시작
+            # init-ssl.sh가 Nginx를 최종 HTTPS 설정으로 재시작했으므로,
+            # 모든 서비스를 최신 상태로 다시 한번 올립니다.
+            echo "🏗️ 모든 서비스를 최종적으로 시작/재시작합니다..."
+            docker compose up -d --remove-orphans
 
-            # ✅ 서비스 안정화 대기
-            echo "⏳ 서비스 안정화 대기 (30초)..."
-            sleep 30
+            # 5. 서비스 안정화 대기 및 상태 확인
+            echo "⏳ 서비스 안정화 대기 (20초)..."
+            sleep 20
 
-            # ✅ 서비스 상태 확인
-            echo "🔍 서비스 상태 확인..."
+            echo "🔍 최종 서비스 상태를 확인합니다..."
             docker compose ps
 
-            # ✅ nginx 로그 확인 (문제 진단용) - 추가!
-            echo "🔍 nginx 로그 확인..."
-            docker compose logs nginx
+            # 6. Nginx 설정 및 로그 최종 확인
+            echo "🧪 Nginx 설정 파일의 유효성을 최종 검증합니다..."
+            docker compose exec nginx nginx -t
+            echo "🔍 Nginx의 최근 로그 50줄을 확인합니다..."
+            docker compose logs --tail=50 nginx
 
-            # ✅ nginx 설정 파일 검증 (문제 진단용) - 추가!
-            echo "🧪 nginx 설정 파일 검증..."
-            docker compose exec nginx nginx -t || {
-              echo "❌ nginx 설정 파일 오류 발견!"
-              echo "📋 nginx 오류 로그:"
-              docker compose logs nginx
-              exit 1
-            }
-
-            # ✅ 애플리케이션 헬스 체크
-            echo "🏥 애플리케이션 헬스 체크..."
-            for i in {1..10}; do
-              if curl -f http://localhost/; then
-                echo "✅ 애플리케이션 정상 동작 확인!"
-                break
-              else
-                echo "⏳ 애플리케이션 시작 대기 중... ($i/10)"
-                sleep 10
-              fi
-            done
-
-            echo "✅ 배포 완료!"
-
-      - name: SSL 인증서 초기 설정
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script_stop: false
-          script: |
-            cd ~/deployment
-            
-            chmod +x scripts/init-ssl.sh
-            
-            ./scripts/init-ssl.sh || echo "⚠️ SSL 설정 실패 (수동으로 진행 필요)"
-            
-            echo ""
-            echo "🎯 배포 완료! 서비스 URL:"
-            echo "  - HTTP: http://justfridge.p-e.kr"
-            echo "  - HTTPS: https://justfridge.p-e.kr (SSL 설정 후)"
+            echo "✅ 배포 및 SSL 설정이 성공적으로 완료되었습니다!"
