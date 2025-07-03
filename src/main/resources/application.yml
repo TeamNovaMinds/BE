@@ -9,3 +9,4 @@ spring:
       - oauth
       - jwt
       - s3
+      - email

@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: 'mysql:8.0'
+    container_name: mysql-novaminds
+    environment:
+      MYSQL_DATABASE: novamindsDB
+      MYSQL_ROOT_PASSWORD: novaminds1234
+    ports:
+      - 3306:3306
+    volumes:
+      - novaminds-mysql-data:/var/lib/mysql
+    networks:
+      - novaminds-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
+      interval: 5s
+      retries: 10
+
+networks:
+  novaminds-network:
+    driver: bridge
+
+volumes:
+  novaminds-mysql-data:

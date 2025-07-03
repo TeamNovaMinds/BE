@@ -28,5 +28,6 @@ public class Refrigerator extends BaseEntity {
     private User user;
 
     @OneToMany(mappedBy = "refrigerator", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<StoredItem> storedItems = new ArrayList<>();
 }

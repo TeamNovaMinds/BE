@@ -302,6 +302,7 @@ public class RecipeService {
 			return RecipeResponseDTO.ListByCategoryDTO.builder()
 					.recipeId(recipe.getId())
 					.title(recipe.getTitle())
+					.recipeCategory(recipe.getRecipeCategory())
 					.mainImageUrl(mainImageUrl)
 					.authorNickname(recipe.getAuthor().getNickname())
 					.authorProfileImg(recipe.getAuthor().getProfileImage())

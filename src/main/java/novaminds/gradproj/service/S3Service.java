@@ -2,7 +2,7 @@ package novaminds.gradproj.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import novaminds.gradproj.config.properties.S3Properties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -20,12 +20,7 @@ import java.util.UUID;
 public class S3Service {
 
     private final S3Client s3Client;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucketName;
-
-    @Value("${spring.cloud.aws.region.static}")
-    private String region;
+    private final S3Properties s3Properties;
 
     /**
      * S3에 파일 업로드
@@ -47,7 +42,7 @@ public class S3Service {
         try {
             // S3에 파일 업로드
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(s3Properties.getS3().getBucket())
                     .key(fileName)
                     .contentType(multipartFile.getContentType())
                     .build();
@@ -57,7 +52,7 @@ public class S3Service {
 
             // 업로드된 파일의 URL 반환
             String fileUrl = String.format("https://%s.s3.%s.amazonaws.com/%s",
-                    bucketName, region, fileName);
+                    s3Properties.getS3().getBucket(), s3Properties.getRegion().getName(), fileName);
 
             log.info("✅ [S3 업로드] 완료 - URL: {}", fileUrl);
             return fileUrl;
@@ -80,7 +75,7 @@ public class S3Service {
             log.info("🔄 [S3 삭제] 시작 - 파일명: {}", fileName);
 
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(s3Properties.getS3().getBucket())
                     .key(fileName)
                     .build();
 

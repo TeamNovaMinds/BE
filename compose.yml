@@ -1,0 +1,11 @@
+services:
+  app:
+    image: 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com/just-fridge-server:latest
+    container_name: novaminds-app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,oauth,jwt,s3,email
+    restart: unless-stopped

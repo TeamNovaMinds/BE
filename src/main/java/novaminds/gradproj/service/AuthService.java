@@ -1,11 +1,9 @@
 package novaminds.gradproj.service;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
-import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
 import novaminds.gradproj.domain.refrigerator.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.RefrigeratorRepository;
@@ -29,24 +27,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class AuthService {
+
+    private final EmailService emailService;
+    private final S3Service s3Service;
 
     private final UserRepository userRepository;
     private final UserInterestCategoryRepository userInterestCategoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final S3Service s3Service;
     private final RefrigeratorRepository refrigeratorRepository;
     private final RefrigeratorSkinRepository refrigeratorSkinRepository;
     private final UserRefrigeratorSkinRepository userRefrigeratorSkinRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
+    @Transactional
     public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
         log.info("🔄 [회원가입] 시작 - 이메일: {}", request.getEmail());
 
@@ -190,6 +194,7 @@ public class AuthService {
     }
 
     // 로그인
+    @Transactional
     public AuthResponse.LoginResponse login(AuthRequest.LoginRequest request, HttpServletResponse response) {
         log.info("🔄 [로그인] 시작 - 이메일: {}", request.getEmail());
 
@@ -227,6 +232,7 @@ public class AuthService {
     }
 
     // 로그아웃
+    @Transactional
     public void logout(HttpServletResponse response) {
         log.info("🔄 [로그아웃] 시작");
 
@@ -268,6 +274,7 @@ public class AuthService {
     }
 
     // 토큰 재발급
+    @Transactional
     public void refreshToken(String refreshToken, HttpServletResponse response) {
         log.info("🔄 [토큰 재발급] 시작");
 
@@ -305,7 +312,6 @@ public class AuthService {
         log.info("✅ [토큰 재발급] 완료 - loginId: {}", loginId);
     }
 
-    @Transactional(readOnly = true)
     public AuthResponse.LoginResponse getProfile(User user) {
         return AuthResponse.LoginResponse.from(user);
     }
@@ -322,6 +328,47 @@ public class AuthService {
             default:
                 throw new IllegalArgumentException("지원하지 않는 소셜 타입입니다.");
         }
+    }
+
+    @Transactional
+    public String sendPasswordResetEmail(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일 입니다."));
+
+        Optional<PasswordResetToken> existToken = passwordResetTokenRepository.findByUser(user);
+        if (existToken.isPresent()) {
+            PasswordResetToken passwordResetToken = existToken.get();
+            passwordResetTokenRepository.delete(passwordResetToken);
+            passwordResetTokenRepository.flush();
+        }
+
+        String token = generateSecureUniqueNumericCode();
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(24))
+                .build();
+
+        passwordResetTokenRepository.save(resetToken);
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
+
+        return "비밀번호 재설정 인증을 위한 6자리 숫자코드가 이메일로 발송되었습니다.";
+    }
+
+    private String generateSecureUniqueNumericCode() {
+        SecureRandom random = new SecureRandom();
+        String token;
+
+        do {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 6; i++) {
+                sb.append(random.nextInt(10)); // 0-9만 사용
+            }
+            token = sb.toString();
+        } while (passwordResetTokenRepository.existsByToken(token));
+
+        return token;
     }
 
     // Cookie 설정 헬퍼 메서드

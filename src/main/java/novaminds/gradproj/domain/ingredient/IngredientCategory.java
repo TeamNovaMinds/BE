@@ -49,5 +49,6 @@ public class IngredientCategory {
 	private User user;
 
 	@OneToMany(mappedBy = "ingredientCategory", cascade = CascadeType.ALL)
+	@Builder.Default
 	private List<Ingredient> ingredients = new ArrayList<>();
 }

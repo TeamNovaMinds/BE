@@ -139,6 +139,16 @@ public class AuthRestController {
         return ApiResponse.onSuccess(authService.checkEmailDuplication(email));
     }
 
+    @GetMapping("reset-password")
+    @Operation(summary = "이메일로 비밀번호 재설정",
+            description = "비밀번호를 잊어버렸을 경우, 이메일을 통해 인증 코드 6자리를 전송하는 api 입니다.")
+    public ApiResponse<String> sendResetPasswordToken (
+            @RequestParam("email") String email
+    ) {
+        log.info("🔸 [API 호출] 비밀번호 재설정 이메일 전송 - email: {}", email);
+        return ApiResponse.onSuccess(authService.sendPasswordResetEmail(email));
+    }
+
     @PostMapping("/refresh")
     public ApiResponse<String> refresh(
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
