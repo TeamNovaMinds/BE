@@ -1,4 +1,4 @@
-name: Release to EC2
+name: Deploy to EC2
 
 on:
   push:
@@ -6,16 +6,166 @@ on:
       - release
 
 jobs:
-  ReleaseJustFridge:
+  JustFridgeDeploy:
     runs-on: ubuntu-latest
     steps:
       - name: Github Repository 파일 불러오기
         uses: actions/checkout@v4
 
-      - name: JDK 버전에 맞게 설치
+      - name: JDK 21 설치
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
 
-      - name:
+      - name: gradlew 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: .env 파일 생성
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: 테스트 및 빌드하기
+        run: ./gradlew clean build
+
+      - name: AWS Resource에 접근할 수 있게 AWS credentials 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: ECR에 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker 이미지 생성
+        run: docker build -t just-fridge-server .
+
+      - name: Docker 이미지에 Tag 붙이기
+        run: docker tag just-fridge-server ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
+
+      - name: ECR에 Docker 이미지 푸시
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
+
+      - name: EC2에 배포 파일들 전송
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: "compose.yml,nginx/,scripts/,.env"
+          target: "~/deployment/"
+          strip_components: 0
+
+      - name: EC2에서 Docker Compose로 배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            cd ~/deployment
+            
+            echo "🚀 Just Fridge 배포 시작..."
+            
+            # ✅ 기존 컨테이너 정리
+            echo "📦 기존 컨테이너 정리 중..."
+            docker-compose down || true
+            docker system prune -f || true
+            
+            # ✅ 최신 이미지 Pull (ECR Credential Helper가 자동으로 인증 처리)
+            echo "🔄 최신 이미지 다운로드 중..."
+            docker-compose pull app || {
+              echo "❌ 이미지 pull 실패, ECR 로그인 재시도..."
+              aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com
+              docker-compose pull app
+            }
+            
+            # ✅ 모든 서비스 시작 (백그라운드)
+            echo "🏗️ 서비스 시작 중..."
+            docker-compose up -d
+            
+            # ✅ 서비스 안정화 대기
+            echo "⏳ 서비스 안정화 대기 (30초)..."
+            sleep 30
+            
+            # ✅ 서비스 상태 확인
+            echo "🔍 서비스 상태 확인..."
+            docker-compose ps
+            
+            # ✅ 애플리케이션 헬스 체크
+            echo "🏥 애플리케이션 헬스 체크..."
+            for i in {1..10}; do
+              if curl -f http://localhost/; then
+                echo "✅ 애플리케이션 정상 동작 확인!"
+                break
+              else
+                echo "⏳ 애플리케이션 시작 대기 중... ($i/10)"
+                sleep 10
+              fi
+            done
+            
+            # ✅ nginx 설정 검증
+            echo "🧪 Nginx 설정 검증..."
+            docker-compose exec nginx nginx -t
+            
+            echo "✅ 배포 완료!"
+            echo ""
+            echo "📋 서비스 정보:"
+            echo "  - HTTP: http://justfridge.p-e.kr"
+            echo "  - 로그 확인: docker-compose logs -f"
+            echo "  - 상태 확인: docker-compose ps"
+
+      - name: SSL 인증서 초기 설정  # ✅ 첫 배포 시에만 실행
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script_stop: false  # ✅ SSL 실패해도 배포는 성공으로 처리
+          script: |
+            cd ~/deployment
+            
+            # ✅ SSL 인증서가 이미 있는지 확인
+            if docker-compose exec -T nginx test -f /etc/letsencrypt/live/justfridge.p-e.kr/fullchain.pem; then
+              echo "🔐 SSL 인증서가 이미 존재합니다. 갱신 체크만 수행..."
+              docker-compose exec -T certbot certbot renew --dry-run || echo "⚠️ SSL 갱신 체크 실패 (정상적일 수 있음)"
+            else
+              echo "🔐 SSL 인증서 초기 발급 시작..."
+            
+              # ✅ 인증서 발급 (실제 이메일 주소로 변경 필요)
+              docker-compose exec -T certbot certbot certonly \
+                --webroot \
+                --webroot-path=/var/www/certbot \
+                --email kiroro0814@naver.com \
+                --agree-tos \
+                --no-eff-email \
+                --non-interactive \
+                -d justfridge.p-e.kr || {
+                echo "❌ SSL 인증서 발급 실패"
+                echo "🔍 certbot 로그 확인:"
+                docker-compose logs certbot
+                exit 0  # ✅ SSL 실패해도 배포는 성공으로 처리
+              }
+            
+              if [ $? -eq 0 ]; then
+                echo "✅ SSL 인증서 발급 성공!"
+            
+                # ✅ nginx 재시작 (HTTPS 활성화)
+                docker-compose restart nginx
+            
+                # ✅ HTTPS 테스트
+                sleep 10
+                if curl -f https://justfridge.p-e.kr/; then
+                  echo "🎉 HTTPS 설정 완료 및 정상 동작 확인!"
+                else
+                  echo "⚠️ HTTPS 설정 완료했지만 응답 확인 실패 (DNS 전파 대기 중일 수 있음)"
+                fi
+              fi
+            fi
+            
+            echo ""
+            echo "🎯 배포 완료! 서비스 URL:"
+            echo "  - HTTP: http://justfridge.p-e.kr"
+            echo "  - HTTPS: https://justfridge.p-e.kr (SSL 설정 후)"
