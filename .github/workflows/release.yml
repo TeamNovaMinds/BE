@@ -66,34 +66,47 @@ jobs:
           script_stop: true
           script: |
             cd ~/deployment
-            
+
             echo "🚀 Just Fridge 배포 시작..."
-            
+
             # ✅ 기존 컨테이너 정리
             echo "📦 기존 컨테이너 정리 중..."
             docker compose down || true
             docker system prune -f || true
-            
-            # ✅ 최신 이미지 Pull (ECR Credential Helper가 자동으로 인증 처리)
+
+            # ✅ 최신 이미지 Pull
             echo "🔄 최신 이미지 다운로드 중..."
             docker compose pull app || {
               echo "❌ 이미지 pull 실패, ECR 로그인 재시도..."
               aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com
               docker compose pull app
             }
-            
-            # ✅ 모든 서비스 시작 (백그라운드)
+
+            # ✅ 모든 서비스 시작
             echo "🏗️ 서비스 시작 중..."
             docker compose up -d
-            
+
             # ✅ 서비스 안정화 대기
             echo "⏳ 서비스 안정화 대기 (30초)..."
             sleep 30
-            
+
             # ✅ 서비스 상태 확인
             echo "🔍 서비스 상태 확인..."
             docker compose ps
-            
+
+            # ✅ nginx 로그 확인 (문제 진단용) - 추가!
+            echo "🔍 nginx 로그 확인..."
+            docker compose logs nginx
+
+            # ✅ nginx 설정 파일 검증 (문제 진단용) - 추가!
+            echo "🧪 nginx 설정 파일 검증..."
+            docker compose exec nginx nginx -t || {
+              echo "❌ nginx 설정 파일 오류 발견!"
+              echo "📋 nginx 오류 로그:"
+              docker compose logs nginx
+              exit 1
+            }
+
             # ✅ 애플리케이션 헬스 체크
             echo "🏥 애플리케이션 헬스 체크..."
             for i in {1..10}; do
@@ -105,17 +118,8 @@ jobs:
                 sleep 10
               fi
             done
-            
-            # ✅ nginx 설정 검증
-            echo "🧪 Nginx 설정 검증..."
-            docker compose exec nginx nginx -t
-            
+
             echo "✅ 배포 완료!"
-            echo ""
-            echo "📋 서비스 정보:"
-            echo "  - HTTP: http://justfridge.p-e.kr"
-            echo "  - 로그 확인: docker compose logs -f"
-            echo "  - 상태 확인: docker compose ps"
 
       - name: SSL 인증서 초기 설정  # ✅ 첫 배포 시에만 실행
         uses: appleboy/ssh-action@v1.0.3
