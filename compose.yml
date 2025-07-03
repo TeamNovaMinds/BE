@@ -1,11 +1,56 @@
 services:
+  # Spring Boot 애플리케이션
   app:
     image: 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com/just-fridge-server:latest
     container_name: novaminds-app
-    ports:
-      - "8080:8080"
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod,oauth,jwt,s3,email
     restart: unless-stopped
+    networks:
+      - app-network
+
+  # Nginx 리버스 프록시
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # GitHub Actions에서 전송할 nginx 설정 파일들
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # certbot과 SSL 인증서 공유
+      - certbot-certs:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - app
+
+  # Certbot (SSL 인증서 자동 발급 및 갱신)
+  certbot:
+    image: certbot/certbot
+    container_name: certbot-ssl
+    volumes:
+      - certbot-certs:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    # 처음에는 인증서 발급, 이후에는 12시간마다 갱신 체크
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+# Docker 네트워크
+networks:
+  app-network:
+    driver: bridge
+
+# 영구 볼륨 (SSL 인증서 데이터 보존)
+volumes:
+  certbot-certs:
+    driver: local
+  certbot-www:
+    driver: local

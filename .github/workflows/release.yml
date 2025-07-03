@@ -1,1 +1,21 @@
-name: release.yml
+name: Release to EC2
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  ReleaseJustFridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github Repository 파일 불러오기
+        uses: actions/checkout@v4
+
+      - name: JDK 버전에 맞게 설치
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name:
