@@ -2,11 +2,8 @@ cloud:
   aws:
     region:
       name: ap-northeast-2
-      auto: false
     credentials:
-      accessKey: ${AWS_ACCESS_KEY_ID}
-      secretKey: ${AWS_SECRET_ACCESS_KEY}
-    stack:
-      auto: false
+      accessKey: ${AWS_S3_ACCESS_KEY_ID}
+      secretKey: ${AWS_S3_SECRET_ACCESS_KEY}
     s3:
       bucket: grad-recipe
