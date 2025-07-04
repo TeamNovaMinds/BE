@@ -18,7 +18,7 @@ public class HomeRestController {
 
     @GetMapping
     public String home() {
-        return "진짜 제발 좀 되라 \n이제는 성공 \n 캐싱까지 잘 되냐? \n 배포 속도도 빠르게?!?";
+        return "김현재 확인용";
     }
 
     @GetMapping("/test")
