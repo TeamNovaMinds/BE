@@ -18,7 +18,7 @@ public class HomeRestController {
 
     @GetMapping
     public String home() {
-        return "김현재 확인용";
+        return "찬우야 해냈다!!!!!!!!!!!!1";
     }
 
     @GetMapping("/test")
