@@ -18,24 +18,14 @@ jobs:
           java-version: 21
           distribution: temurin
 
-      - name: Gradle 캐시 설정
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: gradlew 실행 권한 부여
         run: chmod +x gradlew
 
-      - name: .env 파일 생성
-        run: echo "${{ secrets.ENV_FILE }}" > .env
-
       - name: 테스트 및 빌드하기
         run: ./gradlew clean build
+
+      - name: .env 파일 생성
+        run: echo "${{ secrets.ENV_FILE }}" > .env
 
       - name: AWS Resource에 접근할 수 있게 AWS credentials 설정
         uses: aws-actions/configure-aws-credentials@v4
