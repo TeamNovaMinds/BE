@@ -18,7 +18,7 @@ public class HomeRestController {
 
     @GetMapping
     public String home() {
-        return "찬우야 해냈다!!!!!!!!!!!!1";
+        return "CI/CD에서 Dockerfile을 통해 빌드 간단화";
     }
 
     @GetMapping("/test")
