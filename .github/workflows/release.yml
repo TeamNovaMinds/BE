@@ -94,17 +94,8 @@ jobs:
             echo "🏗️ 모든 서비스를 최종적으로 시작/재시작합니다..."
             docker compose up -d --remove-orphans
 
-            # 5. 서비스 안정화 대기 및 상태 확인
+            # 5. 서비스 안정화 대기
             echo "⏳ 서비스 안정화 대기 (20초)..."
             sleep 20
-
-            echo "🔍 최종 서비스 상태를 확인합니다..."
-            docker compose ps
-
-            # 6. Nginx 설정 및 로그 최종 확인
-            echo "🧪 Nginx 설정 파일의 유효성을 최종 검증합니다..."
-            docker compose exec nginx nginx -t
-            echo "🔍 Nginx의 최근 로그 50줄을 확인합니다..."
-            docker compose logs --tail=50 nginx
 
             echo "✅ 배포 및 SSL 설정이 성공적으로 완료되었습니다!"
