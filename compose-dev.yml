@@ -5,8 +5,6 @@ services:
     environment:
       MYSQL_DATABASE: novamindsDB
       MYSQL_ROOT_PASSWORD: novaminds1234
-      MYSQL_USER: user
-      MYSQL_PASSWORD: pwd1234
     ports:
       - 3306:3306
     volumes:
