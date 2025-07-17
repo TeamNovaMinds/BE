@@ -1,18 +1,13 @@
 package novaminds.gradproj.web.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
-import novaminds.gradproj.domain.user.QUser;
 import novaminds.gradproj.domain.user.User;
-import novaminds.gradproj.security.auth.CurrentLoginId;
 import novaminds.gradproj.security.auth.CurrentUser;
 import novaminds.gradproj.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.service.AuthService;
@@ -30,6 +25,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Tag(name = "인증", description = "로그인/회원가입 관련 API")
 public class AuthRestController {
+
+    //테스트용 주석
 
     private final AuthService authService;
     private final CustomOAuth2UserService customOAuth2UserService;
