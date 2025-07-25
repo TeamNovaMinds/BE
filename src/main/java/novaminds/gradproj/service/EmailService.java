@@ -4,7 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import novaminds.gradproj.config.properties.GmailProperties;
+import novaminds.gradproj.config.properties.GmailProperties; // ✅ 다시 import
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
     private final JavaMailSender emailSender;
-    private final GmailProperties gmailProperties;
+    private final GmailProperties gmailProperties; // ✅ GmailProperties를 다시 주입받습니다.
 
     public void sendPasswordResetEmail(String email, String token) {
         try {
@@ -22,7 +22,8 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             // 이메일 기본 정보 설정
-            helper.setFrom(gmailProperties.getMail().getUsername(), "Just Fridge");
+            // ✅ gmailProperties에서 사용자 이름을 가져옵니다.
+            helper.setFrom(gmailProperties.getUsername(), "Just Fridge");
             helper.setTo(email);
             helper.setSubject("[Just Fridge] 비밀번호 재설정 인증 코드");
 
@@ -56,13 +57,11 @@ public class EmailService {
             <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f8f9fa;">
                 <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
-                    <!-- 헤더 -->
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
                         <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 300;">JustFridge</h1>
                         <p style="color: #e8eaff; margin: 10px 0 0 0; font-size: 16px;">비밀번호 재설정</p>
                     </div>
                     
-                    <!-- 메인 콘텐츠 -->
                     <div style="padding: 40px 30px;">
                         <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px; font-weight: 400;">안녕하세요!</h2>
                         
@@ -71,7 +70,6 @@ public class EmailService {
                             아래 6자리 코드를 입력해주세요.
                         </p>
                         
-                        <!-- 인증 코드 -->
                         <div style="text-align: center; margin: 30px 0;">
                             <div style="display: inline-block; background-color: #f8f9fa; border: 2px dashed #667eea; border-radius: 8px; padding: 20px 30px;">
                                 <div style="font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 4px; font-family: 'Courier New', monospace;">
@@ -90,7 +88,6 @@ public class EmailService {
                         </div>
                     </div>
                     
-                    <!-- 푸터 -->
                     <div style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e9ecef;">
                         <p style="color: #999999; margin: 0; font-size: 12px;">
                             © 2025 Just Fridge. All rights reserved.
