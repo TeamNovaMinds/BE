@@ -22,14 +22,14 @@ hooks:
       timeout: 60
       runas: ubuntu
 
-#  # 2. 필요한 파일 권한을 설정하고 Docker 이미지를 미리 받아옵니다.
-#  AfterInstall:
-#    - location: scripts/codedeploy/after_install.sh
-#      timeout: 300
-#      runas: ubuntu
-#
-#  # 3. 새 버전의 애플리케이션을 실행합니다.
-#  ApplicationStart:
-#    - location: scripts/codedeploy/start.sh
-#      timeout: 300
-#      runas: ubuntu
+  # 2. 필요한 파일 권한을 설정하고 Docker 이미지를 미리 받아옵니다.
+  AfterInstall:
+    - location: scripts/codedeploy/after_install.sh
+      timeout: 300
+      runas: ubuntu
+
+  # 3. 새 버전의 애플리케이션을 실행합니다.
+  ApplicationStart:
+    - location: scripts/codedeploy/start.sh
+      timeout: 300
+      runas: ubuntu
