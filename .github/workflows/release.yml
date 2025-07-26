@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to EC2 with CodeDeploy
 
 on:
   push:
@@ -9,93 +9,51 @@ jobs:
   JustFridgeDeploy:
     runs-on: ubuntu-latest
     steps:
+      # 1. 소스 코드 체크아웃
       - name: Github Repository 파일 불러오기
         uses: actions/checkout@v4
 
+      # 2. .env 파일 생성
       - name: .env 파일 생성
         run: echo "${{ secrets.ENV_FILE }}" > .env
 
-      - name: AWS Resource에 접근할 수 있게 AWS credentials 설정
+      # 3. AWS 자격 증명 설정
+      - name: AWS credentials 설정
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
+      # 4. ECR 로그인
       - name: ECR에 로그인
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Docker 이미지 생성
-        run: docker build -t just-fridge-server .
+      # 5. Docker 이미지 빌드 및 ECR에 푸시
+      - name: Docker 이미지 생성 및 ECR에 푸시
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: just-fridge-server
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Docker 이미지에 Tag 붙이기
-        run: docker tag just-fridge-server ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
+      # 6. 배포할 파일들을 압축
+      - name: 배포 파일 압축
+        run: |
+          zip -r deployment.zip . -x ".git/*" ".github/*" ".gitignore"
 
-      - name: ECR에 Docker 이미지 푸시
-        run: docker push ${{ steps.login-ecr.outputs.registry }}/just-fridge-server:latest
+      # 7. S3에 배포 파일 업로드
+      - name: S3에 배포 파일 업로드
+        run: |
+          aws s3 cp deployment.zip s3://${{ secrets.S3_BUCKET_NAME }}/codedeploy/justfridge-server/${{ github.sha }}.zip
 
-      - name: EC2 배포 디렉토리 정리
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
-            echo "🧹 이전 배포 디렉토리를 sudo를 사용하여 강제로 삭제합니다..."
-            sudo rm -rf ~/deployment
-            echo "✅ 이전 디렉토리 정리 완료. 새 디렉토리를 생성합니다..."
-            mkdir ~/deployment
-
-      - name: EC2에 배포 파일들 전송
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "compose.yml,nginx/,scripts/,.env"
-          target: "~/deployment/"
-          strip_components: 0
-
-      - name: EC2에 배포 및 SSL 설정
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            cd ~/deployment
-
-            echo "🚀 Just Fridge 배포 및 SSL 설정 시작..."
-
-            # 1. 기존 컨테이너 정리 및 이미지 정리
-            echo "📦 기존 컨테이너 및 불필요한 이미지 정리 중..."
-            docker compose down --remove-orphans || true
-            docker image prune -f || true
-
-            # 2. 최신 이미지 Pull
-            echo "🔄 최신 이미지 다운로드 중..."
-            docker compose pull app || {
-              echo "❌ 이미지 pull 실패, ECR 로그인 재시도..."
-              aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627338836.dkr.ecr.ap-northeast-2.amazonaws.com
-              docker compose pull app
-            }
-            
-            # 3. SSL 인증서 발급/갱신 (가장 먼저 실행!)
-            # 이 스크립트가 내부적으로 Nginx를 임시 HTTP 모드로 실행하고 인증서를 받아옵니다.
-            echo "🔐 SSL 인증서 확인 및 발급/갱신을 시작합니다..."
-            chmod +x scripts/init-ssl.sh
-            ./scripts/init-ssl.sh
-
-            # 4. 모든 서비스 최종 시작
-            # init-ssl.sh가 Nginx를 최종 HTTPS 설정으로 재시작했으므로,
-            # 모든 서비스를 최신 상태로 다시 한번 올립니다.
-            echo "🏗️ 모든 서비스를 최종적으로 시작/재시작합니다..."
-            docker compose up -d --remove-orphans
-
-            # 5. 서비스 안정화 대기
-            echo "⏳ 서비스 안정화 대기 (20초)..."
-            sleep 20
-
-            echo "✅ 배포 및 SSL 설정이 성공적으로 완료되었습니다!"
+      # 8. CodeDeploy 배포 생성
+      - name: CodeDeploy 배포 생성
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ secrets.CODEDEPLOY_APPLICATION_NAME }} \
+            --deployment-group-name ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }} \
+            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},bundleType=zip,key=codedeploy/justfridge-server/${{ github.sha }}.zip
