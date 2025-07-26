@@ -18,7 +18,7 @@ public class HomeRestController {
 
     @GetMapping
     public String home() {
-        return "로드밸런서 사용";
+        return "로드밸런서 사용 중인 홈 화면입니다. 현재 로그인 정보 유지 잘 되나 테스트용!!";
     }
 
     @GetMapping("/test")
