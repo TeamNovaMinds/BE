@@ -18,7 +18,7 @@ public class HomeRestController {
 
     @GetMapping
     public String home() {
-        return "CI/CD에서 Dockerfile을 통해 빌드 간단화";
+        return "로드밸런서 사용";
     }
 
     @GetMapping("/test")
