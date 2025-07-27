@@ -33,3 +33,14 @@ hooks:
     - location: scripts/codedeploy/start.sh
       timeout: 300
       runas: ubuntu
+
+  # Blue/Green 배포 전용 훅 추가
+  BeforeAllowTraffic:
+    - location: scripts/codedeploy/before_allow_traffic.sh
+      timeout: 60
+      runas: ubuntu
+
+  AfterAllowTraffic:
+    - location: scripts/codedeploy/after_allow_traffic.sh
+      timeout: 60
+      runas: ubuntu
