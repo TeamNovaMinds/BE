@@ -7,6 +7,6 @@ cd /home/ubuntu/deployment
 
 # 애플리케이션 로그 확인
 echo "📋 최근 애플리케이션 로그:"
-docker-compose logs --tail=10
+docker compose logs --tail=10
 
 echo "✅ Blue/Green 배포가 성공적으로 완료되었습니다!"
