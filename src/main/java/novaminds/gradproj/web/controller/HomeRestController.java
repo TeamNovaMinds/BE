@@ -18,7 +18,7 @@ public class HomeRestController {
 
     @GetMapping
     public String home() {
-        return "로드밸런서 사용 중인 홈 화면입니다. 새로운 auto scaling 그룹에 배포된 서버입니다.";
+        return "로드밸런서 사용 중인 홈 화면입니다. auto scaling 제대로 삭제되고 잘 되나 확인용.";
     }
 
     @GetMapping("/test")
