@@ -4,7 +4,7 @@ cd /home/ubuntu/deployment
 
 # 1. Docker Compose로 모든 서비스 시작
 echo "🐳 Docker Compose로 모든 서비스를 시작합니다..."
-docker-compose up -d --remove-orphans
+docker compose up -d --remove-orphans
 
 # 2. 불필요한 Docker 이미지 정리
 echo "🧹 불필요한 Docker 이미지를 정리합니다..."

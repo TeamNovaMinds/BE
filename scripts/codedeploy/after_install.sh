@@ -12,6 +12,6 @@ aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS
 
 # 3. 최신 Docker 이미지 다운로드 (pull)
 echo "📦 최신 Docker 이미지를 다운로드합니다..."
-docker-compose pull app
+docker compose pull app
 
 echo "✅ AfterInstall 단계가 완료되었습니다."
