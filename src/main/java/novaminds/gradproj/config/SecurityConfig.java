@@ -1,9 +1,9 @@
 package novaminds.gradproj.config;
 
 import lombok.RequiredArgsConstructor;
-import novaminds.gradproj.security.jwt.JwtAuthenticationFilter;
-import novaminds.gradproj.security.oauth2.CustomOAuth2UserService;
-import novaminds.gradproj.security.oauth2.OAuth2SuccessHandler;
+import novaminds.gradproj.domain.member.service.security.jwt.JwtAuthenticationFilter;
+import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
+import novaminds.gradproj.domain.member.service.security.oauth2.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
