@@ -28,7 +28,7 @@ public enum ErrorStatus implements BaseErrorCode {
     EMAIL_CODE_INVALID(HttpStatus.BAD_REQUEST, "EMAIL4006", "유효하지 않은 이메일 인증 코드입니다."),
     EMAIL_CODE_EXPIRED(HttpStatus.BAD_REQUEST,"EMAIL4007","만료된 이메일 인증 코드입니다. 이메일 인증을 다시 요청해주세요."),
 
-    USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER4001", "사용자를 찾을 수 없습니다."),
+    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER4001", "사용자를 찾을 수 없습니다."),
     NICKNAME_NOT_EXIST(HttpStatus.BAD_REQUEST, "USER4000", "닉네임은 필수 입니다."),
     WITHDRAWAL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "USER5001", "계정 탈퇴 처리 중 오류가 발생했습니다."),
     ALREADY_LOGGED_OUT(HttpStatus.BAD_REQUEST, "USER4000", "이미 로그아웃된 사용자입니다."),
