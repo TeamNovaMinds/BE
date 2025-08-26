@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
 import novaminds.gradproj.domain.member.entity.Member;
-import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorRepository;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinRepository;
@@ -15,6 +14,7 @@ import novaminds.gradproj.domain.member.repository.MemberRefrigeratorSkinReposit
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.oauth2.dto.OAuthAttributes;
+import novaminds.gradproj.domain.refrigerator.service.command.RefrigeratorCommandService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -34,6 +34,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final RefrigeratorRepository refrigeratorRepository;
     private final RefrigeratorSkinRepository refrigeratorSkinRepository;
     private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
+    private final RefrigeratorCommandService refrigeratorCommandService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -78,12 +79,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 냉장고 생성
-        Refrigerator refrigerator = Refrigerator.builder()
-                .member(member)
-                .build();
-
-        refrigeratorRepository.save(refrigerator);
-        member.setRefrigerator(refrigerator);
+        refrigeratorCommandService.createRefrigerator(member);
 
         // 기본 스킨 찾기
         RefrigeratorSkin defaultSkin = refrigeratorSkinRepository.findByIsDefaultTrue()

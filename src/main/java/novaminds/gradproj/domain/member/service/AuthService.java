@@ -22,6 +22,7 @@ import novaminds.gradproj.domain.member.repository.MemberRefrigeratorSkinReposit
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtTokenProvider;
+import novaminds.gradproj.domain.refrigerator.service.command.RefrigeratorCommandService;
 import novaminds.gradproj.global.service.S3Service;
 import novaminds.gradproj.domain.member.web.dto.AuthRequest;
 import novaminds.gradproj.domain.member.web.dto.AuthResponse;
@@ -59,6 +60,7 @@ public class AuthService {
     private final RefrigeratorSkinRepository refrigeratorSkinRepository;
     private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final RefrigeratorCommandService refrigeratorCommandService;
 
     @Transactional
     public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
@@ -116,12 +118,7 @@ public class AuthService {
 
     private void createRefrigeratorForUser(Member member) {
         // 냉장고 생성
-        Refrigerator refrigerator = Refrigerator.builder()
-                .member(member)
-                .build();
-
-        refrigeratorRepository.save(refrigerator);
-        member.setRefrigerator(refrigerator);
+        refrigeratorCommandService.createRefrigerator(member);
 
         // 기본 스킨 찾기
         RefrigeratorSkin defaultSkin = refrigeratorSkinRepository.findByIsDefaultTrue()
