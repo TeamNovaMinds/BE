@@ -140,7 +140,7 @@ public class RecipeService {
 			.orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
 
 		if (!recipe.getAuthor().getLoginId().equals(member.getLoginId())) {
-			throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
+			throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND);
 		}
 
 		//기본 정보 업뎃
@@ -189,7 +189,7 @@ public class RecipeService {
 		if (request.getIngredients() != null) {
 			List<RecipeIngredient> recipeIngredients = request.getIngredients().stream().map(dto -> {
 				Ingredient ingredient = ingredientRepository.findById(dto.getIngredientId())
-					.orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND)); // TODO: INGREDIENT_NOT_FOUND
+					.orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND)); // TODO: INGREDIENT_NOT_FOUND
 				return RecipeIngredient.builder().recipe(recipe).ingredient(ingredient).amount(dto.getAmount()).build();
 			}).collect(Collectors.toList());
 			recipe.getRecipeIngredients().addAll(recipeIngredients);
@@ -223,7 +223,7 @@ public class RecipeService {
 			.orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
 
 		if(!recipe.getAuthor().getLoginId().equals(member.getLoginId())){
-			throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
+			throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND);
 		}
 
 		recipeRepository.delete(recipe);
@@ -277,7 +277,7 @@ public class RecipeService {
 	@Transactional(readOnly = true)
 	public Page<RecipeResponseDTO.CommentDTO> getComments(Long recipeId, Pageable pageable) {
 		if (!recipeRepository.existsById(recipeId)) {
-			throw new GeneralException(ErrorStatus.USER_NOT_FOUND); // TODO: ErrorStatus에 RECIPE_NOT_FOUND 추가 후 변경
+			throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND); // TODO: ErrorStatus에 RECIPE_NOT_FOUND 추가 후 변경
 		}
 		Page<RecipeComment> comments = recipeCommentRepository.findByRecipeIdAndParentCommentIsNull(recipeId, pageable);
 		return comments.map(RecipeResponseDTO.CommentDTO::from);
