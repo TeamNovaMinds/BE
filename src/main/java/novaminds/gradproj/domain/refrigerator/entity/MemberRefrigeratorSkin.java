@@ -1,12 +1,12 @@
-package novaminds.gradproj.domain.member.entity;
+package novaminds.gradproj.domain.refrigerator.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.global.BaseEntity;
-import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 
 @Getter
 @NoArgsConstructor
