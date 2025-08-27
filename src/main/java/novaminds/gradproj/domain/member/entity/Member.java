@@ -1,10 +1,8 @@
 package novaminds.gradproj.domain.member.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 import novaminds.gradproj.domain.ingredient.entity.IngredientCategory;
@@ -68,7 +66,8 @@ public class Member extends BaseEntity {
 	@Builder.Default
 	private Integer point = 0;
 
-	@OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Setter
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Refrigerator refrigerator;
 
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -140,11 +139,7 @@ public class Member extends BaseEntity {
 		this.nickname = nickname;
 	}
 
-	public void setRefrigerator(Refrigerator refrigerator) {
-		this.refrigerator = refrigerator;
-	}
-
-	public void completeProfile() {
+    public void completeProfile() {
 		this.isProfileCompleted = true;
 	}
 
