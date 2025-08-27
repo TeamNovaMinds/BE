@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import novaminds.gradproj.domain.member.entity.MemberRefrigeratorSkin;
 
 public interface MemberRefrigeratorSkinRepository extends JpaRepository<MemberRefrigeratorSkin, Long> {
+    boolean existsByMemberLoginIdAndSkinId(String loginId, Long skinId);
 }
