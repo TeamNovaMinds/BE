@@ -2,6 +2,7 @@ package novaminds.gradproj.domain.refrigerator.service.query;
 
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
+import novaminds.gradproj.domain.member.repository.MemberRefrigeratorSkinRepository;
 import novaminds.gradproj.domain.refrigerator.converter.RefrigeratorConverter;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinRepository;
@@ -21,18 +22,22 @@ public class RefrigeratorQueryService {
     private static final int DEFAULT_PAGE_SIZE = 10;
     
     private final RefrigeratorSkinRepository refrigeratorSkinRepository;
+    private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
 
-    public RefrigeratorResponseDTO.RefrigeratorSkinResponse getRefrigeratorSkin(Long skinId) {
+    public RefrigeratorResponseDTO.RefrigeratorSkinResponse getRefrigeratorSkin(Long skinId, String memberId) {
 
         // 냉장고 스킨 조회
         RefrigeratorSkin refrigeratorSkin = refrigeratorSkinRepository.findById(skinId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.REFRIGERATOR_SKIN_NOT_FOUND));
 
+        // 해당 냉장고 스킨의 구매 여부 확인
+        boolean owned = memberRefrigeratorSkinRepository.existsByMemberLoginIdAndSkinId(memberId, skinId);
+
         // DTO 변환
-        return RefrigeratorConverter.toRefrigeratorSkinResponse(refrigeratorSkin);
+        return RefrigeratorConverter.toRefrigeratorSkinResponse(refrigeratorSkin, owned);
     }
 
-    public RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse getRefrigeratorSkins(Long cursorId) {
+    public RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse getRefrigeratorSkins(Long cursorId, String memberId) {
 
         // 페이지 크기 + 1로 조회하여 다음 페이지 존재 여부 확인
         List<RefrigeratorSkin> skins = refrigeratorSkinRepository.findSkinsWithCursor(cursorId, DEFAULT_PAGE_SIZE + 1);
@@ -45,12 +50,18 @@ public class RefrigeratorQueryService {
             nextCursor = skins.getLast().getId(); // 다음 커서 값 설정
         }
         
-        // 엔티티를 DTO로 변환
+        // DTO List 변환
         var skinResponses = skins.stream()
-                .map(RefrigeratorConverter::toRefrigeratorSkinListResponse)
+                .map(skin -> {
+
+                    // 해당 냉장고 스킨의 구매 여부 확인
+                    boolean owned = memberRefrigeratorSkinRepository.existsByMemberLoginIdAndSkinId(memberId, skin.getId());
+                    // DTO 변환
+                    return RefrigeratorConverter.toRefrigeratorSkinListResponse(skin, owned);
+                })
                 .toList();
         
-        // 페이징 응답 객체 생성
+        // 무한 스크롤용 반환 DTO 생성
         return RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse.builder()
                 .skins(skinResponses)
                 .nextCursor(nextCursor)
