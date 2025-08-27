@@ -3,22 +3,14 @@ package novaminds.gradproj.domain.member.service;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
-import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
-import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
-import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorRepository;
-import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
-import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinRepository;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.entity.PasswordResetToken;
 import novaminds.gradproj.domain.member.entity.Role;
 import novaminds.gradproj.domain.member.entity.SocialType;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.entity.MemberInterestCategory;
-import novaminds.gradproj.domain.member.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.domain.member.repository.PasswordResetTokenRepository;
 import novaminds.gradproj.domain.member.repository.MemberInterestCategoryRepository;
-import novaminds.gradproj.domain.member.repository.MemberRefrigeratorSkinRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtTokenProvider;
@@ -56,11 +48,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RefrigeratorRepository refrigeratorRepository;
-    private final RefrigeratorSkinRepository refrigeratorSkinRepository;
-    private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final RefrigeratorCommandService refrigeratorCommandService;
+    private final MemberOnboardingService memberOnboardingService;
 
     @Transactional
     public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
@@ -93,7 +82,7 @@ public class AuthService {
         Member savedMember = memberRepository.save(member);
         log.info("✅ [회원가입] 기본 정보 저장 완료 - loginId: {}, email: {}", savedMember.getLoginId(), savedMember.getEmail());
 
-        createRefrigeratorForUser(savedMember);
+        memberOnboardingService.setupDefaultResources(savedMember);
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 new PrincipalDetails(savedMember), null, new PrincipalDetails(savedMember).getAuthorities()
@@ -116,25 +105,6 @@ public class AuthService {
         return AuthResponse.SignupResponse.from(savedMember);
     }
 
-    private void createRefrigeratorForUser(Member member) {
-        // 냉장고 생성
-        refrigeratorCommandService.createRefrigerator(member);
-
-        // 기본 스킨 찾기
-        RefrigeratorSkin defaultSkin = refrigeratorSkinRepository.findByIsDefaultTrue()
-                .orElseThrow(() -> new RefrigeratorSkinHandler(ErrorStatus.DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND));
-
-        // 기본 스킨을 유저에게 부여하고 장착
-        MemberRefrigeratorSkin userSkin = MemberRefrigeratorSkin.builder()
-                .member(member)
-                .skin(defaultSkin)
-                .isEquipped(true)
-                .build();
-
-        memberRefrigeratorSkinRepository.save(userSkin);
-
-        log.info("✅ [회원가입] 냉장고 및 기본 스킨 생성 완료 - userId: {}", member.getLoginId());
-    }
 
     // 추가 정보 입력 (닉네임, 프로필 이미지)
     @Transactional
