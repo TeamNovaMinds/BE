@@ -21,4 +21,7 @@ public interface MemberRepository extends JpaRepository<Member, String> {
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    @Query("SELECT CASE WHEN m.role = 'ADMIN' THEN true ELSE false END FROM Member m WHERE m.loginId = :loginId")
+    boolean isAdminByLoginId(@Param("loginId") String loginId);
 }
