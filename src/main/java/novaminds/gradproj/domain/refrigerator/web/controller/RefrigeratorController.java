@@ -39,9 +39,10 @@ public class RefrigeratorController {
     })
     @GetMapping("/skins")
     public ApiResponse<RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse> getRefrigeratorSkins(
-            @RequestParam(required = false) Long cursor
+            @CurrentLoginId String memberId,
+            @RequestParam(required = false) Long cursorId
     ) {
-        return ApiResponse.onSuccess(refrigeratorQueryService.getRefrigeratorSkins(cursor));
+        return ApiResponse.onSuccess(refrigeratorQueryService.getRefrigeratorSkins(cursorId, memberId));
     }
 
     @Operation(summary = "냉장고 스킨 상세 조회", description = "특정 냉장고 스킨을 상세조회합니다.")
@@ -49,9 +50,10 @@ public class RefrigeratorController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
     })
     @GetMapping("/skins/{skinId}")
-    public ApiResponse<RefrigeratorResponseDTO.RefrigeratorSkinResponse> registerRefrigeratorSkin(
+    public ApiResponse<RefrigeratorResponseDTO.RefrigeratorSkinResponse> getRefrigeratorSkin(
+            @CurrentLoginId String memberId,
             @PathVariable Long skinId
     ) {
-        return ApiResponse.onSuccess(refrigeratorQueryService.getRefrigeratorSkin(skinId));
+        return ApiResponse.onSuccess(refrigeratorQueryService.getRefrigeratorSkin(skinId, memberId));
     }
 }
