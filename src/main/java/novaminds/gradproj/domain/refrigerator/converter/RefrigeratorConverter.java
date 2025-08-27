@@ -2,6 +2,8 @@ package novaminds.gradproj.domain.refrigerator.converter;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.member.entity.Member;
+import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkinImage;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
@@ -45,6 +47,13 @@ public class RefrigeratorConverter {
         return RefrigeratorResponseDTO.RefrigeratorSkinImageUrlResponse.builder()
                 .imageOrder(skinImage.getImageOrder())
                 .ImageUrl(skinImage.getImageUrl())
+                .build();
+    }
+
+    public static MemberRefrigeratorSkin toMemberRefrigeratorSkin(Member member, RefrigeratorSkin skin) {
+        return MemberRefrigeratorSkin.builder()
+                .member(member)
+                .skin(skin)
                 .build();
     }
 }
