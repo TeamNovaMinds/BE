@@ -29,6 +29,7 @@ public enum ErrorStatus implements BaseErrorCode {
     EMAIL_CODE_EXPIRED(HttpStatus.BAD_REQUEST,"EMAIL4007","만료된 이메일 인증 코드입니다. 이메일 인증을 다시 요청해주세요."),
 
     MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER4001", "사용자를 찾을 수 없습니다."),
+    MEMBER_NOT_ADMIN(HttpStatus.FORBIDDEN, "USER4002", "관리자 권한이 필요합니다."),
     NICKNAME_NOT_EXIST(HttpStatus.BAD_REQUEST, "USER4000", "닉네임은 필수 입니다."),
     WITHDRAWAL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "USER5001", "계정 탈퇴 처리 중 오류가 발생했습니다."),
     ALREADY_LOGGED_OUT(HttpStatus.BAD_REQUEST, "USER4000", "이미 로그아웃된 사용자입니다."),
@@ -42,6 +43,7 @@ public enum ErrorStatus implements BaseErrorCode {
 
     // 냉장고 스킨 관련 에러
     DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND(HttpStatus.NOT_FOUND, "SKIN4001","기본 냉장고 스킨을 찾을 수 없습니다."),
+    REFRIGERATOR_SKIN_NOT_FOUND(HttpStatus.NOT_FOUND, "SKIN4002","냉장고 스킨을 찾을 수 없습니다."),
 
     //페이징 시 페이지 범위를 벗어났을 때
     PAGE_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "PAGE4001","페이지 범위에 맞지 않는 페이지 값 입니다."),
