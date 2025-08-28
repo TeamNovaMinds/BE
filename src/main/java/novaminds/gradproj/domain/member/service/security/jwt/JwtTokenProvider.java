@@ -35,7 +35,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
-                .claim("role", principalDetails.getMember().getRole())
+                .claim("role", principalDetails.getMember().getRole().name())
                 .claim("profileCompleted", principalDetails.getMember().isProfileCompleted())
                 .claim("category", "access")
                 .issuedAt(now)
@@ -77,20 +77,29 @@ public class JwtTokenProvider {
         return claims.get("role", String.class);
     }
 
-    // JWT 액세스 토큰으로부터 PrincipalDetails 생성
-    public PrincipalDetails createPrincipalFromAccessToken(String accessToken) {
-        String loginId = getLoginIdFromToken(accessToken);
-        String role = getRoleFromToken(accessToken);
-        boolean profileCompleted = getClaims(accessToken).get("profileCompleted", Boolean.class);
-        return PrincipalDetails.fromJwtClaims(loginId, role, profileCompleted);
-    }
+    public PrincipalDetails createPrincipalFromToken(String token) {
+        // 토큰 파싱 및 검증을 딱 한 번만 수행
+        Claims claims = getClaims(token);
 
-    // JWT 리프레시 토큰으로부터 PrincipalDetails 생성 (DB 조회 없이)
-    public PrincipalDetails createPrincipalFromRefreshToken(String refreshToken) {
-        String loginId = getLoginIdFromToken(refreshToken);
+        // claims에서 필요한 모든 정보를 직접 가져오기
+        String loginId = claims.getSubject();
+        String category = claims.get("category", String.class);
 
-        // 리프레시 토큰에는 role과 profileCompleted 정보가 없으므로 기본값 사용
-        return PrincipalDetails.fromJwtClaims(loginId, "ROLE_USER", false);
+        // Access Token의 경우, 모든 정보를 사용
+        if ("access".equals(category)) {
+            String role = claims.get("role", String.class);
+            boolean profileCompleted = claims.get("profileCompleted", Boolean.class);
+            return PrincipalDetails.fromJwtClaims(loginId, role, profileCompleted);
+        }
+
+        // Refresh Token의 경우, 최소한의 정보만 사용
+        if ("refresh".equals(category)) {
+            // 리프레시 토큰에는 role과 프로필 정보가 없으므로 기본값을 사용
+            return PrincipalDetails.fromJwtClaims(loginId, "USER", false);
+        }
+
+        // 지원하지 않는 토큰 타입인 경우 예외를 발생
+        throw new IllegalArgumentException("지원하지 않는 토큰 카테고리입니다: " + category);
     }
 
     // 토큰 만료 확인
