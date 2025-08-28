@@ -130,7 +130,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             setAuthentication(refreshToken);
                             
                             // 새로운 액세스 토큰 생성을 위한 Authentication 객체 생성
-                            PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromRefreshToken(refreshToken);
+                            PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromToken(refreshToken);
                             Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
 
                             String newAccessToken = jwtTokenProvider.generateAccessToken(authentication);
@@ -148,17 +148,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 인증 정보 설정 (JWT Claims로부터 직접 생성)
      */
     private void setAuthentication(String token) {
-        // JWT 토큰의 카테고리 확인 각 카테고리에 맞는 메소드 호출
-        String category = jwtTokenProvider.getCategory(token);
-
-        if ("access".equals(category)) {
-            PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromAccessToken(token);
-            authenticationHelper.setAuthentication(principalDetails);
-        } else if ("refresh".equals(category)) {
-            PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromRefreshToken(token);
-            authenticationHelper.setAuthentication(principalDetails);
-        }
-
+        PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromToken(token);
+        authenticationHelper.setAuthentication(principalDetails);
     }
 
     /**
