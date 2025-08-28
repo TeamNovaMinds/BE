@@ -16,7 +16,8 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "refrigerators")
+@Table(name = "refrigerators",
+        uniqueConstraints = @UniqueConstraint(columnNames = "member_id"))
 public class Refrigerator extends BaseEntity {
 
     @Id
