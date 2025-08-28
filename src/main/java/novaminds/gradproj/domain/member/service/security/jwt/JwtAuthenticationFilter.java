@@ -135,7 +135,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                             String newAccessToken = jwtTokenProvider.generateAccessToken(authentication);
 
-                            jwtCookieUtil.addTokenToCookie(response, "accessToken", newAccessToken, (int) (jwtProperties.getExpiration() / 1000L));
+                            jwtCookieUtil.addTokenToCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration().intValue());
                         }
                     } catch (Exception e) {
                         log.error("❌ [JWT 필터] 토큰 재발급 실패: {}", e.getMessage());
