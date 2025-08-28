@@ -1,8 +1,6 @@
 package novaminds.gradproj.domain.member.service.security.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -120,9 +118,12 @@ public class JwtTokenProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (Exception ex) {
-            log.error("JWT 토큰 검증 실패: {}", ex.getMessage());
-            return false;
+        } catch (ExpiredJwtException e) {
+            log.warn("❌ [JWT 검증] 만료된 토큰입니다: {}", e.getMessage());
+            throw e;
+        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("❌ [JWT 검증] 유효하지 않은 토큰입니다: {}", e.getMessage());
+            throw new JwtException("유효하지 않은 토큰입니다.", e);
         }
     }
 
