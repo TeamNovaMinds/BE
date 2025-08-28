@@ -12,7 +12,7 @@ import static novaminds.gradproj.domain.refrigerator.entity.QMemberRefrigeratorS
 
 @Repository
 @RequiredArgsConstructor
-public class MemberRefrigeratorSkinRepositoryImpl implements MemberRefrigeratorSkinRepositoryCustom {
+public class MemberRefrigeratorSkinRepositoryCustomImpl implements MemberRefrigeratorSkinRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
