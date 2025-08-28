@@ -1,7 +1,6 @@
 package novaminds.gradproj.config;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.domain.member.service.security.auth.ProfileCompletionFilter;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtAuthenticationFilter;
 import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
