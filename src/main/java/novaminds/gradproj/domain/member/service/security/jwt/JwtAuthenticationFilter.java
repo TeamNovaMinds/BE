@@ -39,7 +39,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtProperties jwtProperties;
+    private final JwtLoginProcessor jwtLoginProcessor;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
@@ -142,9 +142,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromToken(refreshToken);
                             Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
 
-                            String newAccessToken = jwtTokenProvider.generateAccessToken(authentication);
-
-                            jwtCookieUtil.addTokenToCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration().intValue());
+                            // 액세스 토큰과 리프레쉬 토큰 재발급
+                            jwtLoginProcessor.issueAndSetTokens(response, authentication);
                         }
                     } catch (Exception e) {
                         log.error("❌ [JWT 필터] 토큰 재발급 실패: {}", e.getMessage());
