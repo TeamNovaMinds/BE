@@ -21,7 +21,7 @@ import java.io.IOException;
 
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "인증", description = "로그인/회원가입 관련 API")
 public class AuthRestController {
