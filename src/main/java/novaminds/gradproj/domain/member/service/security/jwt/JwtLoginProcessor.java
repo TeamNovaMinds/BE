@@ -22,9 +22,10 @@ public class JwtLoginProcessor {
     private final AuthRedisService authRedisService;
 
     /**
-     * 로그인 처리: JWT 토큰 생성, 쿠키 설정, Redis 저장
+     * 인증(Authentication) 객체를 기반으로 Access/Refresh 토큰을 생성하고,
+     * 이를 쿠키와 Redis에 저장하는 통합 메소드.
      */
-    public void processLogin(HttpServletResponse response, Authentication authentication) {
+    public void issueAndSetTokens(HttpServletResponse response, Authentication authentication) {
         // JWT 토큰 생성
         String accessToken = jwtTokenProvider.generateAccessToken(authentication);
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);

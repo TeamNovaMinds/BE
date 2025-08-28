@@ -90,7 +90,7 @@ public class AuthService {
         
         Authentication authentication = authenticationHelper.createAuthentication(savedMember);
 
-        jwtLoginProcessor.processLogin(response, authentication);
+        jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
         return AuthResponse.SignupResponse.from(savedMember);
     }
@@ -168,7 +168,7 @@ public class AuthService {
 
         authenticationHelper.setAuthentication((PrincipalDetails) authentication.getPrincipal());
 
-        jwtLoginProcessor.processLogin(response, authentication);
+        jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
         return AuthResponse.LoginResponse.from(member);
     }
@@ -218,7 +218,7 @@ public class AuthService {
         
         Authentication authentication = authenticationHelper.createAuthentication(member);
 
-        jwtLoginProcessor.processLogin(response, authentication);
+        jwtLoginProcessor.issueAndSetTokens(response, authentication);
     }
 
     /**
