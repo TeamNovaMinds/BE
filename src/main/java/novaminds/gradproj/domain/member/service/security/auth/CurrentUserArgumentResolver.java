@@ -58,18 +58,14 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 
         // @CurrentLoginId인 경우 loginId 반환
         if (parameter.getParameterAnnotation(CurrentLoginId.class) != null) {
-            log.info("✅ [ArgumentResolver] loginId 주입: {}", loginId);
             return loginId;
         }
 
         // @CurrentUser인 경우 User 객체 반환
         if (parameter.getParameterAnnotation(CurrentUser.class) != null) {
-            Member member = memberRepository.findById(loginId)
-                    .orElse(null);
-
-            if (member != null) {
-                log.info("✅ [ArgumentResolver] User 객체 주입: {}", member.getLoginId());
-            } else {
+            Member member = memberRepository.findById(loginId).orElse(null);
+            
+            if (member == null) {
                 log.warn("⚠️ [ArgumentResolver] 사용자를 찾을 수 없음: {}", loginId);
             }
 
