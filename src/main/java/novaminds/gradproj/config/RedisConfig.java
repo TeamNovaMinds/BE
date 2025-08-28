@@ -80,7 +80,8 @@ public class RedisConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
                 "refreshToken", defaultConfig.entryTtl(Duration.ofDays(14)),
-                "blacklist", defaultConfig.entryTtl(Duration.ofHours(2))
+                "blacklist", defaultConfig.entryTtl(Duration.ofHours(2)),
+                "passwordReset", defaultConfig.entryTtl(Duration.ofMinutes(30))
         );
 
         return RedisCacheManager.builder(connectionFactory)
