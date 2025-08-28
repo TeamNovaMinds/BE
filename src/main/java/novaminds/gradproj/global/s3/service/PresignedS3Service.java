@@ -150,7 +150,7 @@ public class PresignedS3Service {
     private String getFileExtension(String fileName) {
         // 파일의 확장자가 제대로 명시되지 않은 경우
         if (fileName == null || !fileName.contains(".")) {
-            return "";
+            throw new GeneralException(ErrorStatus.INVALID_FILE_TYPE);
         }
 
         // 파일 확장자 추출
