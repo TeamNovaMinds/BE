@@ -28,10 +28,10 @@ public class AuthRedisService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    // Redis 키 접두사 상수 정의
-    private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
-    private static final String BLACKLIST_PREFIX = "blacklist:token:";
-    private static final String PASSWORD_RESET_PREFIX = "password_reset:";
+    // Redis 키 접두사 상수 정의 (RedisConfig와 일치)
+    private static final String REFRESH_TOKEN_PREFIX = "refreshToken:";
+    private static final String BLACKLIST_PREFIX = "blacklist:";
+    private static final String PASSWORD_RESET_PREFIX = "passwordReset:";
 
     /**
      * Refresh Token을 Redis에 저장
@@ -40,15 +40,13 @@ public class AuthRedisService {
      * @param refreshToken 저장할 리프레시 토큰
      * @param expiration   토큰의 만료 시간
      */
-    @CacheEvict(value = "refreshTokens", key = "#loginId")
+    @CacheEvict(value = "refreshToken", key = "#loginId")
     public void saveRefreshToken(String loginId, String refreshToken, Duration expiration) {
         // Redis 키 생성
         String key = REFRESH_TOKEN_PREFIX + loginId;
         
         // 토큰을 만료 시간과 함께 Redis에 저장
         redisTemplate.opsForValue().set(key, refreshToken, expiration);
-        
-        log.info("✅ [Redis] Refresh Token 저장 완료 - loginId: {}", loginId);
     }
 
     /**
@@ -57,21 +55,13 @@ public class AuthRedisService {
      * @param loginId 사용자의 로그인 ID
      * @return        저장된 리프레시 토큰, 없으면 null
      */
-    @Cacheable(value = "refreshTokens", key = "#loginId")
+    @Cacheable(value = "refreshToken", key = "#loginId")
     public String getRefreshToken(String loginId) {
         // Redis 키 생성
         String key = REFRESH_TOKEN_PREFIX + loginId;
         
         // Redis에서 토큰 조회
-        String token = redisTemplate.opsForValue().get(key);
-        
-        if (token != null) {
-            log.debug("🔍 [Redis] Refresh Token 조회 성공 - loginId: {}", loginId);
-        } else {
-            log.debug("🔍 [Redis] Refresh Token 없음 - loginId: {}", loginId);
-        }
-        
-        return token;
+        return redisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -79,19 +69,13 @@ public class AuthRedisService {
      *
      * @param loginId 사용자의 로그인 ID
      */
-    @CacheEvict(value = "refreshTokens", key = "#loginId")
+    @CacheEvict(value = "refreshToken", key = "#loginId")
     public void deleteRefreshToken(String loginId) {
         // Redis 키 생성
         String key = REFRESH_TOKEN_PREFIX + loginId;
         
         // Redis에서 토큰 삭제
-        Boolean deleted = redisTemplate.delete(key);
-        
-        if (Boolean.TRUE.equals(deleted)) {
-            log.info("✅ [Redis] Refresh Token 삭제 완료 - loginId: {}", loginId);
-        } else {
-            log.warn("⚠️ [Redis] Refresh Token 삭제 실패 또는 존재하지 않음 - loginId: {}", loginId);
-        }
+        redisTemplate.delete(key);
     }
 
     /**
@@ -106,8 +90,6 @@ public class AuthRedisService {
         
         // 토큰을 블랙리스트에 TTL과 함께 저장
         redisTemplate.opsForValue().set(key, "blacklisted", ttl);
-        
-        log.info("✅ [Redis] 토큰 블랙리스트 추가 완료 - TTL: {}초", ttl.getSeconds());
     }
 
     /**
@@ -116,7 +98,7 @@ public class AuthRedisService {
      * @param token 확인할 토큰
      * @return      블랙리스트에 등록되어 있으면 true, 그렇지 않으면 false
      */
-    @Cacheable(value = "tokenBlacklist", key = "#token")
+    @Cacheable(value = "blacklist", key = "#token")
     public boolean isBlacklisted(String token) {
         // Redis 키 생성
         String key = BLACKLIST_PREFIX + token;
@@ -124,13 +106,7 @@ public class AuthRedisService {
         // Redis에서 키 존재 여부 확인
         Boolean exists = redisTemplate.hasKey(key);
         
-        boolean isBlacklisted = Boolean.TRUE.equals(exists);
-        
-        if (isBlacklisted) {
-            log.debug("🚫 [Redis] 블랙리스트에 등록된 토큰 확인됨");
-        }
-        
-        return isBlacklisted;
+        return Boolean.TRUE.equals(exists);
     }
 
     /**
@@ -146,8 +122,6 @@ public class AuthRedisService {
         
         // 토큰을 만료 시간과 함께 Redis에 저장
         redisTemplate.opsForValue().set(key, token, expiration);
-        
-        log.info("✅ [Redis] 비밀번호 재설정 토큰 저장 완료 - email: {}", email);
     }
 
     /**
@@ -161,15 +135,7 @@ public class AuthRedisService {
         String key = PASSWORD_RESET_PREFIX + email;
         
         // Redis에서 토큰 조회
-        String token = redisTemplate.opsForValue().get(key);
-        
-        if (token != null) {
-            log.debug("🔍 [Redis] 비밀번호 재설정 토큰 조회 성공 - email: {}", email);
-        } else {
-            log.debug("🔍 [Redis] 비밀번호 재설정 토큰 없음 - email: {}", email);
-        }
-        
-        return token;
+        return redisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -182,12 +148,6 @@ public class AuthRedisService {
         String key = PASSWORD_RESET_PREFIX + email;
         
         // Redis에서 토큰 삭제
-        Boolean deleted = redisTemplate.delete(key);
-        
-        if (Boolean.TRUE.equals(deleted)) {
-            log.info("✅ [Redis] 비밀번호 재설정 토큰 삭제 완료 - email: {}", email);
-        } else {
-            log.warn("⚠️ [Redis] 비밀번호 재설정 토큰 삭제 실패 또는 존재하지 않음 - email: {}", email);
-        }
+        redisTemplate.delete(key);
     }
 }
