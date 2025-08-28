@@ -1,6 +1,7 @@
 package novaminds.gradproj.config;
 
 import lombok.RequiredArgsConstructor;
+import novaminds.gradproj.domain.member.service.security.auth.ProfileCompletionFilter;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtAuthenticationFilter;
 import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.domain.member.service.security.oauth2.OAuth2SuccessHandler;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ProfileCompletionFilter profileCompletionFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
@@ -73,7 +75,8 @@ public class SecurityConfig {
                         )
                         .successHandler(oAuth2SuccessHandler)
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(profileCompletionFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -88,27 +91,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ 더 명확한 Origin 설정 (added)
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000"
         ));
 
-        // ✅ 모든 HTTP 메서드 허용 (added)
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
         ));
 
-        // ✅ 모든 헤더 허용 (added)
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // ✅ 인증 정보 허용 (가장 중요!) (added)
         configuration.setAllowCredentials(true);
 
-        // ✅ preflight 캐시 시간 (added)
         configuration.setMaxAge(3600L);
 
-        // ✅ 노출할 헤더 추가 (added)
         configuration.setExposedHeaders(Arrays.asList(
                 "Set-Cookie", "Authorization", "Access-Control-Allow-Origin"
         ));
