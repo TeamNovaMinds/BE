@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,13 +67,14 @@ public class RefrigeratorSkinQueryService {
             nextCursor = skins.getLast().getId(); // 다음 커서 값 설정
         }
 
+        // 배치로 소유 상태 조회
+        List<Long> skinIds = skins.stream().map(RefrigeratorSkin::getId).toList();
+        Map<Long, SkinOwnershipStatus> skinOwnershipMap = getBatchSkinOwnershipStatus(memberId, skinIds);
+
         // DTO List 변환
         var skinResponses = skins.stream()
                 .map(skin -> {
-                    // 소유 여부 및 장착 상태 확인
-                    SkinOwnershipStatus status = getSkinOwnershipStatus(memberId, skin.getId());
-                    
-                    // DTO 변환
+                    SkinOwnershipStatus status = skinOwnershipMap.get(skin.getId());
                     return RefrigeratorConverter.toRefrigeratorSkinListResponse(skin, status.owned(), status.equipped());
                 })
                 .toList();
@@ -145,6 +148,33 @@ public class RefrigeratorSkinQueryService {
         }
         
         return new SkinOwnershipStatus(owned, equipped);
+    }
+
+    /**
+     * 특정 회원의 여러 냉장고 스킨에 대한 소유 및 장착 상태를 배치로 조회하여 Map으로 반환
+     *
+     * @param memberId 스킨을 조회하는 회원의 ID
+     * @param skinIds  조회할 냉장고 스킨의 ID 목록
+     * @return         {@code skinId}를 키로, {@code SkinOwnershipStatus}를 값으로 하는 Map
+     */
+    private Map<Long, SkinOwnershipStatus> getBatchSkinOwnershipStatus(String memberId, List<Long> skinIds) {
+        // 배치로 멤버의 스킨 소유 정보 조회
+        Map<Long, MemberRefrigeratorSkin> memberSkinMap = 
+                memberRefrigeratorSkinRepository.findByMemberLoginIdAndSkinIds(memberId, skinIds);
+
+        // 각 스킨에 대한 소유 및 장착 상태를 Map으로 변환
+        return skinIds.stream()
+                .collect(Collectors.toMap(
+                        skinId -> skinId,
+                        skinId -> {
+                            MemberRefrigeratorSkin memberSkin = memberSkinMap.get(skinId);
+                            if (memberSkin != null) {
+                                return new SkinOwnershipStatus(true, memberSkin.isEquipped());
+                            } else {
+                                return new SkinOwnershipStatus(false, false);
+                            }
+                        }
+                ));
     }
 
     /**
