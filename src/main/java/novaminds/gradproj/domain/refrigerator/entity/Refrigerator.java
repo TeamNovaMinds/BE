@@ -30,4 +30,8 @@ public class Refrigerator extends BaseEntity {
     @OneToMany(mappedBy = "refrigerator", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<StoredItem> storedItems = new ArrayList<>();
+
+    public void setMember(Member member) {
+        this.member = member;
+    }
 }
