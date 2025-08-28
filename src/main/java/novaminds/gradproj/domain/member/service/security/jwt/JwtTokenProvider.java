@@ -4,12 +4,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.config.properties.JwtProperties;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +19,6 @@ import java.util.Date;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
-
-    public static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
-    public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
     private final JwtProperties jwtProperties;
 
@@ -99,6 +94,12 @@ public class JwtTokenProvider {
         }
     }
 
+    // 토큰에서 만료 시간 추출
+    public Date getExpirationFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.getExpiration();
+    }
+
     // Claims 추출
     private Claims getClaims(String token) {
         return Jwts.parser()
@@ -108,24 +109,4 @@ public class JwtTokenProvider {
                 .getPayload();
     }
 
-    // Cookie 생성 헬퍼 메서드
-    public Cookie createCookie(String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 개발 환경에서는 false, 나중에 https 적용하고나서는 true
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        return cookie;
-    }
-
-    public ResponseCookie createResponseCookie(String name, String value, int maxAge) {
-        return ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(false) // 개발 환경에서는 false
-                .path("/")
-                .maxAge(maxAge)
-                .sameSite("Lax") // CORS를 위한 필수 설정!
-                .domain("localhost")
-                .build();
-    }
 }

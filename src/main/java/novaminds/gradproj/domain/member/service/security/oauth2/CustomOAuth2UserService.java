@@ -28,19 +28,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
 
+        OAuth2User oAuth2User = super.loadUser(userRequest);
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String userNameAttributeName = userRequest.getClientRegistration()
-                .getProviderDetails()
-                .getUserInfoEndpoint()
-                .getUserNameAttributeName();
-
-        log.info("🔄 [OAuth2 로그인] {} 로그인 시도", registrationId);
-
-        OAuthAttributes oAuthAttributes = OAuthAttributes.of(registrationId, userNameAttributeName, attributes);
+        OAuthAttributes oAuthAttributes = OAuthAttributes.of(registrationId, attributes);
 
         // 사용자 정보 추출
         String email = oAuthAttributes.getEmail();
@@ -54,10 +48,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 사용자 조회 또는 생성(업데이트)
         Member member = saveOrUpdate(loginId, email, name, picture, providerId, registrationId);
 
+        // 기본 냉장고 할당
         memberOnboardingService.setupDefaultResources(member);
-
-        log.info("✅ [OAuth2 로그인] 성공 - loginId: {}, email: {}, 프로필 완료: {}",
-                member.getLoginId(), member.getEmail(), member.isProfileCompleted());
 
         return new PrincipalDetails(member, attributes);
     }
@@ -65,21 +57,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private Member saveOrUpdate(String loginId, String email, String name, String picture,
                               String providerId, String registrationId) {
-
         // 기존 사용자 조회
         Member member = memberRepository.findById(loginId)
                 .map(entity -> entity.updateOAuthInfo(name, picture)) // 기존 사용자 정보 업데이트
                 .orElseGet(() -> {
                     // 새 사용자 생성
-                    log.info("🆕 [OAuth2 회원가입] 새 사용자 생성 - loginId: {}", loginId);
-
                     OAuthAttributes oAuthAttributes = OAuthAttributes.builder()
                             .name(name)
                             .email(email)
                             .picture(picture)
                             .providerId(providerId)
                             .build();
-
                     return oAuthAttributes.toEntity(loginId, SocialType.valueOf(registrationId.toUpperCase()));
                 });
 
@@ -88,15 +76,5 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private String generateLoginId(String provider, String providerId) {
         return provider + "_" + providerId;
-    }
-
-    public Map<String, Object> getAdditionalInfoRequirements() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "추가 정보 입력이 필요합니다");
-        response.put("requiredFields", Arrays.asList(
-                "profileImage", "nickname", "RecipeCategory"
-        ));
-
-        return response;
     }
 }
