@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.member.entity.Member;
+import novaminds.gradproj.domain.member.entity.Role;
 import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.repository.MemberRefrigeratorSkinRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
@@ -41,7 +42,7 @@ public class RefrigeratorSkinCommandService {
     public Long registerRefrigeratorSkin(String memberId, RefrigeratorRequestDTO.RefrigeratorSkinCreateRequest request) {
 
         // 관리자인지 권한 확인
-        if (!memberRepository.isAdminByLoginId(memberId)) {
+        if (!memberRepository.existsByLoginIdAndRole(memberId, Role.ADMIN)) {
             throw new GeneralException(ErrorStatus.MEMBER_NOT_ADMIN);
         }
 
