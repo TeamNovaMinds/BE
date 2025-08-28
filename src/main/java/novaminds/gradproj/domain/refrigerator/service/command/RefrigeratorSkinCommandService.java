@@ -29,6 +29,15 @@ public class RefrigeratorSkinCommandService {
     private final RefrigeratorSkinImageRepository refrigeratorSkinImageRepository;
     private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
 
+    /**
+     * 요청값을 통해 새로운 냉장고 스킨을 등록하고 데이터베이스에 저장
+     * <br>회원이 관리자 권한을 가지고 있는지 확인 후 스킨 등록
+     *
+     * @param memberId 스킨 등록하는 회원의 ID
+     * @param request 생성할 냉장고 스킨의 상세 정보. 스킨 이름, 설명, 가격, 이미지 URL
+     * @return 새로 생성된 냉장고 스킨의 ID
+     * @throws GeneralException 회원이 관리자 권한을 가지고 있지 않은 경우 ({@code MEMBER_NOT_ADMIN})
+     */
     public Long registerRefrigeratorSkin(String memberId, RefrigeratorRequestDTO.RefrigeratorSkinCreateRequest request) {
 
         // 관리자인지 권한 확인
@@ -67,6 +76,21 @@ public class RefrigeratorSkinCommandService {
         return savedRefrigeratorSkin.getId();
     }
 
+    /**
+     * 냉장고 스킨 구매
+     * <br>회원이 충분한 포인트를 가지고 있는지, 스킨을 이미 소유하고 있는지 확인
+     * <br>구매할 때는 포인트를 차감하고 스킨을 회원에게 연결한 뒤, 해당 관계를 저장합니다.
+     *
+     * @param memberId 냉장고 스킨을 구매하는 회원의 ID
+     * @param skinId 구매할 냉장고 스킨의 ID
+     * @throws GeneralException
+     * <ul>
+     * <li>회원이 존재하지 않거나({@code MEMBER_NOT_FOUND})</li>
+     * <li>냉장고 스킨이 존재하지 않거나({@code REFRIGERATOR_SKIN_NOT_FOUND})</li>
+     * <li>스킨을 이미 소유하고 있거나({@code REFRIGERATOR_SKIN_ALREADY_OWNED})</li>
+     * <li>회원의 포인트가 부족한 경우({@code INSUFFICIENT_POINTS})</li>
+     * </ul>
+     */
     public void purchaseRefrigeratorSkin(String memberId, Long skinId) {
 
         // 해당 냉장고 스킨의 구매 여부 확인
@@ -99,5 +123,38 @@ public class RefrigeratorSkinCommandService {
 
         // 냉장고 스킨의 가격 만큼 포인트 차감
         member.usePoint(refrigeratorSkin.getPrice());
+    }
+
+    /**
+     * 회원의 냉장고 스킨을 장착
+     * <p>
+     * 현재 장착된 스킨을 해제하고, 새로운 스킨을 장착
+     *
+     * @param memberId 스킨을 장착할 회원의 ID
+     * @param skinId   장착할 새로운 냉장고 스킨의 ID
+     * @throws GeneralException
+     * <ul>
+     * <li>회원이 현재 장착 중인 스킨을 소유하고 있지 않거나({@code EQUIPPED_REFRIGERATOR_SKIN_NOT_OWNED})</li>
+     * <li>새로 장착할 스킨을 이미 장착하고 있는 경우({@code ALREADY_EQUIPPED})</li>>
+     * </ul>
+     */
+    public void equipSkin(String memberId, Long skinId) {
+
+        // 새로 장착할 스킨 먼저 조회
+        MemberRefrigeratorSkin skinToEquip = memberRefrigeratorSkinRepository
+                .findByMemberLoginIdAndSkinId(memberId, skinId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.REFRIGERATOR_SKIN_NOT_OWNED));
+
+        // 이미 장착된 스킨이면 early return
+        if (skinToEquip.isEquipped()) {
+            throw new GeneralException(ErrorStatus.ALREADY_EQUIPPED);
+        }
+
+        // 현재 장착된 스킨 해제
+        memberRefrigeratorSkinRepository.findByMemberLoginIdAndEquippedTrue(memberId)
+                .ifPresent(MemberRefrigeratorSkin::unEquip);
+
+        // 새 스킨 장착
+        skinToEquip.equip();
     }
 }
