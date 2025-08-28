@@ -19,6 +19,7 @@ public class RefrigeratorResponseDTO {
         private String description;
         private List<RefrigeratorSkinImageUrlResponse> skinImageUrls;
         private boolean owned;
+        private boolean equipped;
     }
 
     @Getter
@@ -51,5 +52,6 @@ public class RefrigeratorResponseDTO {
         private Integer price;
         private String thumbnailUrl;
         private boolean owned;
+        private boolean equipped;
     }
 }
