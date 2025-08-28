@@ -43,9 +43,11 @@ public class RefrigeratorSkin extends BaseEntity {
     // 연관관계 편의 메서드
     public void addRefrigeratorSkinImage(RefrigeratorSkinImage image) {
         this.refrigeratorSkinImages.add(image);
+        image.setRefrigeratorSkin(this);
     }
 
     public void removeRefrigeratorSkinImage(RefrigeratorSkinImage image) {
         this.refrigeratorSkinImages.remove(image);
+        image.setRefrigeratorSkin(null);
     }
 }
