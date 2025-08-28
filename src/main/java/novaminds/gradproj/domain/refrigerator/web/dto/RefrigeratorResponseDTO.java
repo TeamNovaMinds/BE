@@ -28,7 +28,7 @@ public class RefrigeratorResponseDTO {
     @Builder
     public static class RefrigeratorSkinImageUrlResponse {
         private int imageOrder;
-        private String ImageUrl;
+        private String imageUrl;
     }
 
     @Getter

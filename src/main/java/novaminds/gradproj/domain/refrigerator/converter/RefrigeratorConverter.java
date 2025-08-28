@@ -56,7 +56,7 @@ public class RefrigeratorConverter {
     private static RefrigeratorResponseDTO.RefrigeratorSkinImageUrlResponse toRefrigeratorSkinImageUrlResponse(RefrigeratorSkinImage skinImage) {
         return RefrigeratorResponseDTO.RefrigeratorSkinImageUrlResponse.builder()
                 .imageOrder(skinImage.getImageOrder())
-                .ImageUrl(skinImage.getImageUrl())
+                .imageUrl(skinImage.getImageUrl())
                 .build();
     }
 
