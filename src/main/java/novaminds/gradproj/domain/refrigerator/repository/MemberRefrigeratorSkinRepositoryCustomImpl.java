@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +34,13 @@ public class MemberRefrigeratorSkinRepositoryCustomImpl implements MemberRefrige
 
     @Override
     public Map<Long, MemberRefrigeratorSkin> findByMemberLoginIdAndSkinIds(String memberId, List<Long> skinIds) {
+
+        // 스킨 목록이 없으면 빈 Map 반환
+        if (skinIds == null || skinIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // 해당하는 스킨 목록 조회
         List<MemberRefrigeratorSkin> memberSkins = queryFactory
                 .selectFrom(memberRefrigeratorSkin)
                 .where(
@@ -41,6 +49,7 @@ public class MemberRefrigeratorSkinRepositoryCustomImpl implements MemberRefrige
                 )
                 .fetch();
 
+        // Map으로 변환 후 반환
         return memberSkins.stream()
                 .collect(Collectors.toMap(
                         memberSkin -> memberSkin.getSkin().getId(),
