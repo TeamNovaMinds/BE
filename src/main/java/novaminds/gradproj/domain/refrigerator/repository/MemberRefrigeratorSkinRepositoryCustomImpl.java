@@ -7,6 +7,8 @@ import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static novaminds.gradproj.domain.refrigerator.entity.QMemberRefrigeratorSkin.memberRefrigeratorSkin;
 
@@ -27,6 +29,23 @@ public class MemberRefrigeratorSkinRepositoryCustomImpl implements MemberRefrige
                 .orderBy(memberRefrigeratorSkin.id.desc())
                 .limit(pageSize)
                 .fetch();
+    }
+
+    @Override
+    public Map<Long, MemberRefrigeratorSkin> findByMemberLoginIdAndSkinIds(String memberId, List<Long> skinIds) {
+        List<MemberRefrigeratorSkin> memberSkins = queryFactory
+                .selectFrom(memberRefrigeratorSkin)
+                .where(
+                        memberRefrigeratorSkin.member.loginId.eq(memberId),
+                        memberRefrigeratorSkin.skin.id.in(skinIds)
+                )
+                .fetch();
+
+        return memberSkins.stream()
+                .collect(Collectors.toMap(
+                        memberSkin -> memberSkin.getSkin().getId(),
+                        memberSkin -> memberSkin
+                ));
     }
 
     private BooleanExpression cursorCondition(Long cursorId) {
