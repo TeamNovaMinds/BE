@@ -61,10 +61,10 @@ public class RefrigeratorSkinController {
     @Operation(summary = "특정 냉장고 스킨 구매", description = "냉장고의 스킨을 구매합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER4001", description = "실패, 회원 존재 X"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "SKIN4002", description = "실패, 스킨 존재 X"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "SKIN4003", description = "실패, 스킨 이미 구매"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "POINT4001", description = "실패, 포인트 부족"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER4001", description = "사용자를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "SKIN4002", description = "냉장고 스킨을 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "SKIN4003", description = "이미 구매한 냉장고 스킨입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "POINT4001", description = "포인트가 부족합니다."),
     })
     @PostMapping("/{skinId}")
     public ApiResponse<Long> purchaseRefrigeratorSkin(
