@@ -45,6 +45,9 @@ public enum ErrorStatus implements BaseErrorCode {
     DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND(HttpStatus.NOT_FOUND, "SKIN4001","기본 냉장고 스킨을 찾을 수 없습니다."),
     REFRIGERATOR_SKIN_NOT_FOUND(HttpStatus.NOT_FOUND, "SKIN4002","냉장고 스킨을 찾을 수 없습니다."),
     REFRIGERATOR_SKIN_ALREADY_OWNED(HttpStatus.BAD_REQUEST, "SKIN4003", "이미 구매한 냉장고 스킨입니다."),
+    REFRIGERATOR_SKIN_NOT_OWNED(HttpStatus.BAD_REQUEST, "SKIN4004", "구매하지 않은 냉장고 스킨입니다."),
+    EQUIPPED_REFRIGERATOR_SKIN_NOT_OWNED(HttpStatus.NOT_FOUND, "SKIN4005", "장착 중인 냉장고 스킨이 없습니다."),
+    ALREADY_EQUIPPED(HttpStatus.BAD_REQUEST, "SKIN4006", "이미 장착중인 스킨입니다."),
     INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "POINT4001", "포인트가 부족합니다."),
 
     //페이징 시 페이지 범위를 벗어났을 때
