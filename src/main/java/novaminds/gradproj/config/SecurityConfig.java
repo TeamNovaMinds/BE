@@ -53,21 +53,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/auth/signup",
-                                "/auth/login",
-                                "/auth/check-email",
-                                "/auth/login/google",
-                                "/auth/login/naver",
-                                "/auth/reset-password",
-                                "/oauth2/**",
+                                "/api/auth/signup",
+                                "/api/auth/login",
+                                "/api/auth/check-email",
+                                "/api/auth/login/google",
+                                "/api/auth/login/naver",
+                                "/api/auth/reset-password",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/webjars/**",
-                                "/favicon.ico"
+                                "/swagger-resources/**"
                         ).permitAll()
-                        .requestMatchers("/auth/additional-info-part1", "/auth/additional-info-part2")
+                        .requestMatchers("/api/auth/additional-info-part1", "/api/auth/additional-info-part2")
                         .authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
