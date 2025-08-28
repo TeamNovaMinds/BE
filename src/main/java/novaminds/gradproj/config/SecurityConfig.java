@@ -55,8 +55,8 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/check-email",
-                                "/api/auth/login/google",
-                                "/api/auth/login/naver",
+                                "/api/auth/login/google", //TODO : 이건 없애고 프론트에서 바로 직접 접근하는게 나은 구조
+                                "/api/auth/login/naver", //TODO : 이건 없애고 프론트에서 바로 직접 접근하는게 나은 구조
                                 "/api/auth/reset-password",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",

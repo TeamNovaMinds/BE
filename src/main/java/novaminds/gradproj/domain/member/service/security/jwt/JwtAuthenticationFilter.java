@@ -16,11 +16,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.util.List;
 
 /**
  * JWT 기반 인증 필터
@@ -43,23 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
     private final AuthenticationHelper authenticationHelper;
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
-
-    // 인증이 필요없는 URL 패턴
-    private static final List<String> PERMIT_ALL_PATTERNS = List.of(
-            "/",
-            "/api/auth/login",
-            "/api/auth/signup",
-            "/api/auth/check-email",
-            "/api/auth/reset-password",
-            "/swagger-ui/**",
-            "/v3/api-docs/**"
-    );
 
     @Override
     protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
-        return PERMIT_ALL_PATTERNS.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, request.getRequestURI()));
+        return !request.getRequestURI().startsWith("/api/");
     }
 
     @Override
