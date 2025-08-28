@@ -36,6 +36,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
                 .claim("role", principalDetails.getMember().getRole())
+                .claim("profileCompleted", principalDetails.getMember().isProfileCompleted())
                 .claim("category", "access")
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -68,6 +69,28 @@ public class JwtTokenProvider {
     public String getCategory(String token) {
         Claims claims = getClaims(token);
         return claims.get("category", String.class);
+    }
+
+    // 토큰에서 role 추출
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("role", String.class);
+    }
+
+    // JWT 액세스 토큰으로부터 PrincipalDetails 생성
+    public PrincipalDetails createPrincipalFromAccessToken(String accessToken) {
+        String loginId = getLoginIdFromToken(accessToken);
+        String role = getRoleFromToken(accessToken);
+        boolean profileCompleted = getClaims(accessToken).get("profileCompleted", Boolean.class);
+        return PrincipalDetails.fromJwtClaims(loginId, role, profileCompleted);
+    }
+
+    // JWT 리프레시 토큰으로부터 PrincipalDetails 생성 (DB 조회 없이)
+    public PrincipalDetails createPrincipalFromRefreshToken(String refreshToken) {
+        String loginId = getLoginIdFromToken(refreshToken);
+
+        // 리프레시 토큰에는 role과 profileCompleted 정보가 없으므로 기본값 사용
+        return PrincipalDetails.fromJwtClaims(loginId, "ROLE_USER", false);
     }
 
     // 토큰 만료 확인
@@ -109,4 +132,19 @@ public class JwtTokenProvider {
                 .getPayload();
     }
 
+    /**
+     * 토큰의 남은 유효 시간을 밀리초로 반환
+     * 
+     * @param token JWT 토큰 (액세스 또는 리프레시)
+     * @return 남은 시간(밀리초), 이미 만료된 경우 음수 반환
+     */
+    public long getRemainingTime(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return claims.getExpiration().getTime() - System.currentTimeMillis();
+        } catch (Exception e) {
+            log.warn("토큰 남은 시간 계산 실패: {}", e.getMessage());
+            return 0; // 오류 시 0 반환 (만료로 간주)
+        }
+    }
 }
