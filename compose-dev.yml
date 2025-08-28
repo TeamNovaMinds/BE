@@ -1,19 +1,34 @@
 services:
-  mysql:
-    image: 'mysql:8.0'
-    container_name: mysql-novaminds
-    environment:
-      MYSQL_DATABASE: novamindsDB
-      MYSQL_ROOT_PASSWORD: novaminds1234
+#  mysql:
+#    image: 'mysql:8.0'
+#    container_name: mysql-novaminds
+#    environment:
+#      MYSQL_DATABASE: novamindsDB
+#      MYSQL_ROOT_PASSWORD: novaminds1234
+#    ports:
+#      - 3306:3306
+#    volumes:
+#      - novaminds-mysql-data:/var/lib/mysql
+#    networks:
+#      - novaminds-network
+#    healthcheck:
+#      test: [ "CMD", "mysqladmin", "ping" ]
+#      interval: 5s
+#      retries: 10
+
+  redis:
+    image: 'redis:7.2-alpine'
     ports:
-      - 3306:3306
+      - 6379:6379
+    command: redis-server --appendonly yes --requirepass justfridge1234
     volumes:
-      - novaminds-mysql-data:/var/lib/mysql
+      - redis_data:/data
     networks:
       - novaminds-network
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping" ]
+      test: ["CMD", "redis-cli", "-a", "justfridge1234", "ping"]
       interval: 5s
+      timeout: 3s
       retries: 10
 
 networks:
@@ -21,4 +36,5 @@ networks:
     driver: bridge
 
 volumes:
-  novaminds-mysql-data:
+  #novaminds-mysql-data:
+  redis_data:
