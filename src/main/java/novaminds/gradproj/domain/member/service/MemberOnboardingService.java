@@ -1,7 +1,6 @@
 package novaminds.gradproj.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
 import novaminds.gradproj.domain.member.entity.Member;
@@ -14,7 +13,6 @@ import novaminds.gradproj.domain.refrigerator.service.command.RefrigeratorComman
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,10 +23,14 @@ public class MemberOnboardingService {
     private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
     private final RefrigeratorCommandService refrigeratorCommandService;
 
+    /**
+     * 전달된 회원에게 새로운 냉장고를 생성하고 기본 스킨 설정
+     *
+     * @param member 현재 로그인 중인 회원
+     */
     @Transactional
     public void setupDefaultResources(Member member) {
         if (refrigeratorRepository.existsByMember(member)) {
-            log.info("ℹ️ 기존 사용자 {}의 냉장고가 이미 존재하므로 생성을 건너뜁니다.", member.getLoginId());
             return;
         }
 
@@ -43,11 +45,9 @@ public class MemberOnboardingService {
         MemberRefrigeratorSkin userSkin = MemberRefrigeratorSkin.builder()
                 .member(member)
                 .skin(defaultSkin)
-                .isEquipped(true)
+                .equipped(true)
                 .build();
 
         memberRefrigeratorSkinRepository.save(userSkin);
-
-        log.info("✅ [회원 온보딩] 냉장고 및 기본 스킨 생성 완료 - userId: {}", member.getLoginId());
     }
 }
