@@ -34,7 +34,7 @@ public class RefrigeratorConverter {
     public static RefrigeratorResponseDTO.RefrigeratorSkinListResponse toRefrigeratorSkinListResponse(
             RefrigeratorSkin refrigeratorSkin,
             boolean owned,
-            Boolean equipped
+            boolean equipped
     ) {
         // 첫 번째 이미지를 썸네일로 사용
         String thumbnailUrl = refrigeratorSkin.getRefrigeratorSkinImages().stream()
