@@ -138,8 +138,9 @@ public class RefrigeratorSkinQueryService {
         // 장착 여부 확인
         boolean equipped = false;
         if (owned) {
-            // owned가 true면 이미 존재하는 것이기 때문에 ifPresent를 수행하지 않고 바로 .get() 사용해도 무방
-            MemberRefrigeratorSkin memberSkin = memberRefrigeratorSkinRepository.findByMemberLoginIdAndSkinId(memberId, skinId).get();
+            // owned가 true면 이미 존재하는 것이기 때문에 ifPresent를 수행하지 않고 바로 .get() 사용해도 무방하지만 안전하고 명시적으로 orElseThrow() 사용
+            MemberRefrigeratorSkin memberSkin = memberRefrigeratorSkinRepository.findByMemberLoginIdAndSkinId(memberId, skinId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.REFRIGERATOR_SKIN_NOT_OWNED));
             equipped = memberSkin.isEquipped();
         }
         
