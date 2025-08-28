@@ -15,6 +15,11 @@ public class RefrigeratorCommandService {
 
     private final RefrigeratorRepository refrigeratorRepository;
 
+    /**
+     * 회원에게 새로운 냉장고를 생성하고 연결하고 저장
+     *
+     * @param member 새로 생성된 냉장고와 연결할 회원 엔티티
+     */
     public void createRefrigerator(Member member) {
 
         // 냉장고 생성
