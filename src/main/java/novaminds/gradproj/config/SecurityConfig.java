@@ -1,6 +1,7 @@
 package novaminds.gradproj.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.domain.member.service.security.auth.ProfileCompletionFilter;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtAuthenticationFilter;
 import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -28,6 +30,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final AuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ProfileCompletionFilter profileCompletionFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
@@ -74,6 +77,9 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(profileCompletionFilter, JwtAuthenticationFilter.class);
