@@ -31,15 +31,15 @@ public class MemberRefrigeratorSkin extends BaseEntity {
     @JoinColumn(name = "skin_id", nullable = false)
     private RefrigeratorSkin skin;
 
-    @Column(name = "is_equipped", nullable = false)
+    @Column(name = "equipped", nullable = false)
     @Builder.Default
-    private boolean isEquipped = false;
+    private boolean equipped = false;
 
     public void equip() {
-        this.isEquipped = true;
+        this.equipped = true;
     }
 
     public void unEquip() {
-        this.isEquipped = false;
+        this.equipped = false;
     }
 }
