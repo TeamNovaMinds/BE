@@ -5,8 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.domain.member.entity.Member;
-import novaminds.gradproj.domain.member.service.security.auth.AuthTokenService;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
+import novaminds.gradproj.domain.member.service.security.jwt.JwtLoginProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -20,7 +20,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final AuthTokenService authTokenService;
+    private final JwtLoginProcessor jwtLoginProcessor;
 
     @Value("${app.oauth2.redirect.base-uri}")
     private String baseUri;
@@ -29,19 +29,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
-        authTokenService.generateAndSetTokens(authentication, response);
+        jwtLoginProcessor.processLogin(response, authentication);
 
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
         Member member = principalDetails.getMember();
 
         String path = member.isProfileCompleted() ? "home" : "profile";
 
-        // 기본 리다이렉트 URI
         String targetUrl = UriComponentsBuilder.fromUriString(baseUri)
                 .pathSegment(path)
                 .build().toUriString();
 
-        // 성공 후 리다이렉트 URL 설정
         clearAuthenticationAttributes(request);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
