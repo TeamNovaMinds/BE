@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -135,18 +136,17 @@ public class RefrigeratorSkinQueryService {
      * 장착 상태({@code equipped})를 담고있는 {@code SkinOwnershipStatus} 객체
      */
     private SkinOwnershipStatus getSkinOwnershipStatus(String memberId, Long skinId) {
+
+        // 멤버의 스킨 리스트에서 조회
+        Optional<MemberRefrigeratorSkin> memberSkinOpt
+                = memberRefrigeratorSkinRepository.findByMemberLoginIdAndSkinId(memberId, skinId);
+
         // 구매 여부 확인
-        boolean owned = memberRefrigeratorSkinRepository.existsByMemberLoginIdAndSkinId(memberId, skinId);
+        boolean owned = memberSkinOpt.isPresent();
 
         // 장착 여부 확인
-        boolean equipped = false;
-        if (owned) {
-            // owned가 true면 이미 존재하는 것이기 때문에 ifPresent를 수행하지 않고 바로 .get() 사용해도 무방하지만 안전하고 명시적으로 orElseThrow() 사용
-            MemberRefrigeratorSkin memberSkin = memberRefrigeratorSkinRepository.findByMemberLoginIdAndSkinId(memberId, skinId)
-                    .orElseThrow(() -> new GeneralException(ErrorStatus.REFRIGERATOR_SKIN_NOT_OWNED));
-            equipped = memberSkin.isEquipped();
-        }
-        
+        boolean equipped = owned && memberSkinOpt.get().isEquipped();
+
         return new SkinOwnershipStatus(owned, equipped);
     }
 
