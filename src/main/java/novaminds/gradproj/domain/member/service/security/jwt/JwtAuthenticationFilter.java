@@ -48,15 +48,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // 인증이 필요없는 URL 패턴
     private static final List<String> PERMIT_ALL_PATTERNS = List.of(
             "/",
-            "/auth/login",
-            "/auth/signup",
-            "/auth/check-email",
-            "/auth/reset-password",
-            "/oauth2/**",
-            "/login/oauth2/**",
+            "/api/auth/login",
+            "/api/auth/signup",
+            "/api/auth/check-email",
+            "/api/auth/reset-password",
             "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/favicon.ico"
+            "/v3/api-docs/**"
     );
 
     @Override
