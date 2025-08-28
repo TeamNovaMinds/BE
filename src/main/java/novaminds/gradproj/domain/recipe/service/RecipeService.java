@@ -222,8 +222,8 @@ public class RecipeService {
 		Recipe recipe = recipeRepository.findById(recipeId)
 			.orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
 
-		if(!recipe.getAuthor().getLoginId().equals(member.getLoginId())){
-			throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND);
+		if(!recipe.getAuthor().equals(member)){
+			throw new GeneralException(ErrorStatus.RECIPE_DELETE_FORBIDDEN);
 		}
 
 		recipeRepository.delete(recipe);
