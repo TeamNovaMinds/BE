@@ -1,10 +1,13 @@
 package novaminds.gradproj.config.properties;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import java.time.Duration;
 
 @Getter
 @Setter
@@ -38,5 +41,8 @@ public class S3Properties {
     public static class S3{
         @NotBlank(message = "S3 Bucket 이름은 필수입니다")
         private String bucket;
+
+        @NotNull(message = "Presigned URL 만료시간은 필수입니다")
+        private Duration presignedUrlExpiration = Duration.ofMinutes(10);
     }
 }

@@ -1,10 +1,8 @@
 package novaminds.gradproj.domain.member.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 import novaminds.gradproj.domain.ingredient.entity.IngredientCategory;
@@ -68,7 +66,7 @@ public class Member extends BaseEntity {
 	@Builder.Default
 	private Integer point = 0;
 
-	@OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Refrigerator refrigerator;
 
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -140,11 +138,7 @@ public class Member extends BaseEntity {
 		this.nickname = nickname;
 	}
 
-	public void setRefrigerator(Refrigerator refrigerator) {
-		this.refrigerator = refrigerator;
-	}
-
-	public void completeProfile() {
+    public void completeProfile() {
 		this.isProfileCompleted = true;
 	}
 
@@ -160,5 +154,20 @@ public class Member extends BaseEntity {
 
 	public String getRoleKey() {
 		return this.role.getKey();
+	}
+
+	public void setRefrigerator(Refrigerator refrigerator) {
+		// 기존 냉장고가 있고 새 냉장고와 다르면 기존 냉장고의 member 참조 해제
+		if (this.refrigerator != null && this.refrigerator != refrigerator) {
+			this.refrigerator.setMember(null);
+		}
+		
+		// 새 냉장고 할당
+		this.refrigerator = refrigerator;
+		
+		// 새 냉장고가 null이 아니면 양방향 연관관계 설정
+		if (refrigerator != null) {
+			refrigerator.setMember(this);
+		}
 	}
 }

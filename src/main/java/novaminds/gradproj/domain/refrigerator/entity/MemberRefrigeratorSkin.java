@@ -1,12 +1,12 @@
-package novaminds.gradproj.domain.member.entity;
+package novaminds.gradproj.domain.refrigerator.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.global.BaseEntity;
-import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 
 @Getter
 @NoArgsConstructor
@@ -31,15 +31,15 @@ public class MemberRefrigeratorSkin extends BaseEntity {
     @JoinColumn(name = "skin_id", nullable = false)
     private RefrigeratorSkin skin;
 
-    @Column(name = "is_equipped", nullable = false)
+    @Column(name = "equipped", nullable = false)
     @Builder.Default
-    private boolean isEquipped = false;
+    private boolean equipped = false;
 
     public void equip() {
-        this.isEquipped = true;
+        this.equipped = true;
     }
 
     public void unEquip() {
-        this.isEquipped = false;
+        this.equipped = false;
     }
 }

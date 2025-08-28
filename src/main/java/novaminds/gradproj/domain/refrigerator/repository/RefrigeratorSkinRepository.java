@@ -6,6 +6,6 @@ import java.util.Optional;
 
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 
-public interface RefrigeratorSkinRepository extends JpaRepository<RefrigeratorSkin, Long> {
+public interface RefrigeratorSkinRepository extends JpaRepository<RefrigeratorSkin, Long>, RefrigeratorSkinRepositoryCustom {
     Optional<RefrigeratorSkin> findByIsDefaultTrue();
 }

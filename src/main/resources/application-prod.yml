@@ -7,14 +7,13 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # ✅ 첫 배포시 update, 안정화 후 validate로 변경
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: false
     show-sql: false
 
-# ✅ 운영 환경 로깅 설정
 logging:
   level:
     org.springframework.security: WARN

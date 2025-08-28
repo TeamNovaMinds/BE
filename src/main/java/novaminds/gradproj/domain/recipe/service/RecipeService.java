@@ -68,7 +68,7 @@ public class RecipeService {
 		//3. 이미지 업로드 및 RecipeImage 엔티티
 		List<String> imageUrls = recipeImages.stream()
 			.map(image -> s3Service.uploadFile(image, "recipe-image"))
-			.collect(Collectors.toList());
+			.toList();
 
 		List<RecipeImage> recipeImageList = new ArrayList<>();
 
@@ -87,7 +87,7 @@ public class RecipeService {
 		List<String> stepImageUrls = (stepImages != null && !stepImages.isEmpty())
 			? stepImages.stream()
 				.map(image->s3Service.uploadFile(image, "recipe-step-images"))
-				.collect(Collectors.toList())
+				.toList()
 			: Collections.emptyList();
 
 		//5. RecipeOrder 엔티티
@@ -104,7 +104,7 @@ public class RecipeService {
 					.ImgUrl(imageUrl)
 					.build();
 			})
-			.collect(Collectors.toList());
+			.toList();
 		newRecipe.getRecipeOrders().addAll(recipeOrders);
 
 		//6. RecipeIngredient 엔티티
@@ -118,7 +118,7 @@ public class RecipeService {
 					.description(dto.getDescription())
 					.amount(dto.getAmount())
 					.build();
-			}).collect(Collectors.toList());
+			}).toList();
 		newRecipe.getRecipeIngredients().addAll(recipeIngredients);
 
 
@@ -140,7 +140,7 @@ public class RecipeService {
 			.orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
 
 		if (!recipe.getAuthor().getLoginId().equals(member.getLoginId())) {
-			throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
+			throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND);
 		}
 
 		//기본 정보 업뎃
@@ -164,7 +164,7 @@ public class RecipeService {
 		if (newRecipeImages != null && !newRecipeImages.isEmpty()) {
 			List<String> recipeImageUrls = newRecipeImages.stream()
 				.map(image -> s3Service.uploadFile(image, "recipe-images"))
-				.collect(Collectors.toList());
+				.toList();
 			for (int i = 0; i < recipeImageUrls.size(); i++) {
 				RecipeImage recipeImage = RecipeImage.builder()
 					.recipe(recipe)
@@ -183,15 +183,15 @@ public class RecipeService {
 		List<String> stepImageUrls = (newStepImages != null && !newStepImages.isEmpty())
 			? newStepImages.stream()
 			.map(image -> s3Service.uploadFile(image, "recipe-step-images"))
-			.collect(Collectors.toList())
+			.toList()
 			: Collections.emptyList();
 
 		if (request.getIngredients() != null) {
 			List<RecipeIngredient> recipeIngredients = request.getIngredients().stream().map(dto -> {
 				Ingredient ingredient = ingredientRepository.findById(dto.getIngredientId())
-					.orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND)); // TODO: INGREDIENT_NOT_FOUND
+					.orElseThrow(() -> new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND));
 				return RecipeIngredient.builder().recipe(recipe).ingredient(ingredient).amount(dto.getAmount()).build();
-			}).collect(Collectors.toList());
+			}).toList();
 			recipe.getRecipeIngredients().addAll(recipeIngredients);
 		}
 
@@ -207,7 +207,7 @@ public class RecipeService {
 					.description(dto.getDescription())
 					.ImgUrl(imageUrl)
 					.build();
-			}).collect(Collectors.toList());
+			}).toList();
 			recipe.getRecipeOrders().addAll(recipeOrders);
 		}
 
@@ -223,7 +223,7 @@ public class RecipeService {
 			.orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
 
 		if(!recipe.getAuthor().getLoginId().equals(member.getLoginId())){
-			throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
+			throw new GeneralException(ErrorStatus.RECIPE_DELETE_FORBIDDEN);
 		}
 
 		recipeRepository.delete(recipe);
@@ -277,7 +277,7 @@ public class RecipeService {
 	@Transactional(readOnly = true)
 	public Page<RecipeResponseDTO.CommentDTO> getComments(Long recipeId, Pageable pageable) {
 		if (!recipeRepository.existsById(recipeId)) {
-			throw new GeneralException(ErrorStatus.USER_NOT_FOUND); // TODO: ErrorStatus에 RECIPE_NOT_FOUND 추가 후 변경
+			throw new GeneralException(ErrorStatus.RECIPE_NOT_FOUND);
 		}
 		Page<RecipeComment> comments = recipeCommentRepository.findByRecipeIdAndParentCommentIsNull(recipeId, pageable);
 		return comments.map(RecipeResponseDTO.CommentDTO::from);

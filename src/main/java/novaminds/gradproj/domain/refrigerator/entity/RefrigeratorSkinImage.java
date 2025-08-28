@@ -27,4 +27,8 @@ public class RefrigeratorSkinImage {
 
     @Column(name = "image_order", nullable = false)
     private int imageOrder;
+
+    public void setRefrigeratorSkin(RefrigeratorSkin refrigeratorSkin) {
+        this.refrigeratorSkin = refrigeratorSkin;
+    }
 }

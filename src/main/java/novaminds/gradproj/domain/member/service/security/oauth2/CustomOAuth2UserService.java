@@ -2,19 +2,12 @@ package novaminds.gradproj.domain.member.service.security.oauth2;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
-import novaminds.gradproj.apiPayload.exception.handler.RefrigeratorSkinHandler;
 import novaminds.gradproj.domain.member.entity.Member;
-import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
-import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorRepository;
-import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
-import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinRepository;
 import novaminds.gradproj.domain.member.entity.SocialType;
-import novaminds.gradproj.domain.member.entity.MemberRefrigeratorSkin;
-import novaminds.gradproj.domain.member.repository.MemberRefrigeratorSkinRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.oauth2.dto.OAuthAttributes;
+import novaminds.gradproj.domain.member.service.MemberOnboardingService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -31,9 +24,7 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final MemberRepository memberRepository;
-    private final RefrigeratorRepository refrigeratorRepository;
-    private final RefrigeratorSkinRepository refrigeratorSkinRepository;
-    private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
+    private final MemberOnboardingService memberOnboardingService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -63,7 +54,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 사용자 조회 또는 생성(업데이트)
         Member member = saveOrUpdate(loginId, email, name, picture, providerId, registrationId);
 
-        createRefrigeratorForUser(member);
+        memberOnboardingService.setupDefaultResources(member);
 
         log.info("✅ [OAuth2 로그인] 성공 - loginId: {}, email: {}, 프로필 완료: {}",
                 member.getLoginId(), member.getEmail(), member.isProfileCompleted());
@@ -71,35 +62,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return new PrincipalDetails(member, attributes);
     }
 
-    private void createRefrigeratorForUser(Member member) {
-        if (refrigeratorRepository.existsByMember(member)) {
-            log.info("ℹ️ 기존 사용자 {}의 냉장고가 이미 존재하므로 생성을 건너뜁니다.", member.getLoginId());
-            return;
-        }
-
-        // 냉장고 생성
-        Refrigerator refrigerator = Refrigerator.builder()
-                .member(member)
-                .build();
-
-        refrigeratorRepository.save(refrigerator);
-        member.setRefrigerator(refrigerator);
-
-        // 기본 스킨 찾기
-        RefrigeratorSkin defaultSkin = refrigeratorSkinRepository.findByIsDefaultTrue()
-                .orElseThrow(() -> new RefrigeratorSkinHandler(ErrorStatus.DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND));
-
-        // 기본 스킨을 유저에게 부여하고 장착
-        MemberRefrigeratorSkin userSkin = MemberRefrigeratorSkin.builder()
-                .member(member)
-                .skin(defaultSkin)
-                .isEquipped(true)
-                .build();
-
-        memberRefrigeratorSkinRepository.save(userSkin);
-
-        log.info("✅ [회원가입] 냉장고 및 기본 스킨 생성 완료 - userId: {}", member.getLoginId());
-    }
 
     private Member saveOrUpdate(String loginId, String email, String name, String picture,
                               String providerId, String registrationId) {
