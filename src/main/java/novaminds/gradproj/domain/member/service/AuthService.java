@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
+import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
+import novaminds.gradproj.domain.member.service.security.jwt.JwtLoginProcessor;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.entity.Role;
 import novaminds.gradproj.domain.member.entity.SocialType;
@@ -14,9 +16,8 @@ import novaminds.gradproj.domain.member.entity.MemberInterestCategory;
 import novaminds.gradproj.domain.member.repository.MemberInterestCategoryRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
-import novaminds.gradproj.domain.member.service.security.auth.AuthTokenService;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
-import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieService;
+import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieUtil;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtTokenProvider;
 import novaminds.gradproj.global.service.S3Service;
 import novaminds.gradproj.domain.member.web.dto.AuthRequest;
@@ -24,7 +25,6 @@ import novaminds.gradproj.domain.member.web.dto.AuthResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
-import java.util.Date;
 
 @Slf4j
 @Service
@@ -49,10 +48,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final JwtCookieService jwtCookieService;
-    private final AuthTokenService authTokenService;
+    private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
     private final MemberOnboardingService memberOnboardingService;
+    private final JwtLoginProcessor jwtLoginProcessor;
+    private final AuthenticationHelper authenticationHelper;
 
     // 랜덤 인증번호 생성용 정적 필드
     private static final SecureRandom secureRandom = new SecureRandom();
@@ -86,13 +86,11 @@ public class AuthService {
 
         memberOnboardingService.setupDefaultResources(savedMember);
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                new PrincipalDetails(savedMember), null, new PrincipalDetails(savedMember).getAuthorities()
-        );
+        authenticationHelper.setAuthentication(savedMember);
+        
+        Authentication authentication = authenticationHelper.createAuthentication(savedMember);
 
-        SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
-
-        authTokenService.generateAndSetTokens(authentication, response);
+        jwtLoginProcessor.processLogin(response, authentication);
 
         return AuthResponse.SignupResponse.from(savedMember);
     }
@@ -124,15 +122,12 @@ public class AuthService {
 
                 String profileImgUrl = s3Service.uploadFile(profileImage, "profile");
                 member.updateProfileImage(profileImgUrl);
-                log.info("✓ [추가 정보 입력] 프로필 이미지 업로드 완료 - URL: {}", profileImgUrl);
             } catch (Exception e) {
                 log.error("❌ [추가 정보 입력] 프로필 이미지 업로드 실패", e);
                 throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.", e);
             }
         }
 
-        log.info("✅ [추가 정보 입력] 완료 - loginId: {}, 닉네임: {}, 프로필 이미지: {}",
-                member.getLoginId(), request.getNickname(), member.getProfileImage() != null ? "있음" : "없음");
 
         return AuthResponse.AdditionalInfoResponse.from(member);
     }
@@ -162,7 +157,6 @@ public class AuthService {
     // 로그인
     @Transactional
     public AuthResponse.LoginResponse login(AuthRequest.LoginRequest request, HttpServletResponse response) {
-
         // 이메일로 사용자 조회
         Member member = memberRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MACTHED));
@@ -172,9 +166,9 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(member.getLoginId(), request.getPassword())
         );
 
-        SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
+        authenticationHelper.setAuthentication((PrincipalDetails) authentication.getPrincipal());
 
-        authTokenService.generateAndSetTokens(authentication, response);
+        jwtLoginProcessor.processLogin(response, authentication);
 
         return AuthResponse.LoginResponse.from(member);
     }
@@ -188,48 +182,11 @@ public class AuthService {
      */
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        
-        // 쿠키에서 액세스 토큰 추출 및 블랙리스트 추가
-        jwtCookieService.getTokenFromCookies(request, JwtCookieService.ACCESS_TOKEN_COOKIE_NAME)
-                .ifPresent(accessToken -> {
-                    try {
-                        // 액세스 토큰의 남은 만료 시간 계산
-                        Date expiration = jwtTokenProvider.getExpirationFromToken(accessToken);
-                        long ttlMillis = expiration.getTime() - System.currentTimeMillis();
-                        
-                        // 만료되지 않은 토큰만 블랙리스트에 추가
-                        if (ttlMillis > 0) {
-                            authRedisService.addToBlacklist(accessToken, Duration.ofMillis(ttlMillis));
-                        }
-                    } catch (Exception e) {
-                        log.warn("⚠️ [로그아웃] 액세스 토큰 블랙리스트 처리 실패: {}", e.getMessage());
-                    }
-                });
+        // 쿠키에서 토큰 추출
+        String accessToken = jwtCookieUtil.resolveToken(request, "accessToken").orElse(null);
+        String refreshToken = jwtCookieUtil.resolveToken(request, "refreshToken").orElse(null);
 
-        // 쿠키에서 리프레시 토큰 추출 및 처리
-        jwtCookieService.getTokenFromCookies(request, JwtCookieService.REFRESH_TOKEN_COOKIE_NAME)
-                .ifPresent(refreshToken -> {
-                    try {
-                        // 리프레시 토큰도 블랙리스트에 추가
-                        Date expiration = jwtTokenProvider.getExpirationFromToken(refreshToken);
-                        long ttlMillis = expiration.getTime() - System.currentTimeMillis();
-                        
-                        if (ttlMillis > 0) {
-                            authRedisService.addToBlacklist(refreshToken, Duration.ofMillis(ttlMillis));
-                        }
-                        
-                        // Redis에서 저장된 리프레시 토큰도 삭제
-                        String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
-                        authRedisService.deleteRefreshToken(loginId);
-                    } catch (Exception e) {
-                        log.warn("⚠️ [로그아웃] 리프레시 토큰 처리 실패: {}", e.getMessage());
-                    }
-                });
-
-        // 브라우저 쿠키 제거
-        jwtCookieService.removeTokenCookies(response);
-        
-        log.info("✅ [로그아웃] 완료 - 토큰 블랙리스트 처리 및 쿠키 삭제 완료");
+        jwtLoginProcessor.processLogout(response, accessToken, refreshToken);
     }
 
     public String checkEmailDuplication(String email) {
@@ -257,13 +214,11 @@ public class AuthService {
                 });
 
         // 새 토큰 생성
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                new PrincipalDetails(member), null, new PrincipalDetails(member).getAuthorities()
-        );
+        authenticationHelper.setAuthentication(member);
+        
+        Authentication authentication = authenticationHelper.createAuthentication(member);
 
-        SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
-
-        authTokenService.generateAndSetTokens(authentication, response);
+        jwtLoginProcessor.processLogin(response, authentication);
     }
 
     /**
@@ -295,8 +250,6 @@ public class AuthService {
         // 이메일 발송
         emailService.sendPasswordResetEmail(email, token);
 
-        log.info("✅ [비밀번호 재설정] 인증 코드 발송 완료 - email: {}", email);
-        
         return "비밀번호 재설정 인증을 위한 6자리 숫자코드가 이메일로 발송되었습니다.";
     }
     
@@ -321,8 +274,6 @@ public class AuthService {
         
         // 인증 성공 시 Redis에서 코드 삭제 (일회성 코드)
         authRedisService.deletePasswordResetToken(email);
-        
-        log.info("✅ [비밀번호 재설정] 인증 코드 확인 성공 - email: {}", email);
         
         return true;
     }
