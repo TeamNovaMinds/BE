@@ -3,6 +3,7 @@ package novaminds.gradproj.domain.refrigerator.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentLoginId;
@@ -28,7 +29,7 @@ public class RefrigeratorSkinController {
     @PostMapping
     public ApiResponse<Long> registerRefrigeratorSkin(
             @CurrentLoginId String memberId,
-            @RequestBody RefrigeratorRequestDTO.RefrigeratorSkinCreateRequest request
+            @Valid @RequestBody RefrigeratorRequestDTO.RefrigeratorSkinCreateRequest request
     ) {
         return ApiResponse.onSuccess(refrigeratorSkinCommandService.registerRefrigeratorSkin(memberId, request));
     }
