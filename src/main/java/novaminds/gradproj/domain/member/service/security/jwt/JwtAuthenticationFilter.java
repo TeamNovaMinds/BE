@@ -1,25 +1,26 @@
 package novaminds.gradproj.domain.member.service.security.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.config.properties.JwtProperties;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
 import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -68,7 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@Nonnull HttpServletRequest request,
                                     @Nonnull HttpServletResponse response,
-                                    @Nonnull FilterChain filterChain) throws IOException {
+                                    @Nonnull FilterChain filterChain) throws ServletException {
 
         try {
             // 액세스 토큰 검증 및 처리
@@ -79,9 +80,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
 
+        } catch (AuthenticationException e) {
+            // AuthenticationException은 Spring Security가 처리하도록 그대로 전달
+            // CustomAuthenticationEntryPoint로 전달되어 처리된다.
+            throw e;
+        } catch (JwtException e) {
+            // JwtTokenProvider에서 발생한 예외를 AuthenticationException으로 변환하여 던진다.
+            throw new BadCredentialsException("유효하지 않은 JWT 토큰입니다.", e);
         } catch (Exception e) {
-            log.error("❌ [JWT 필터] 인증 처리 중 예외 발생: {}", e.getMessage(), e);
-            sendAuthenticationError(response, "인증 처리 중 오류가 발생했습니다.");
+            log.error("❌ [JWT 필터] 알 수 없는 예외 발생: {}", e.getMessage(), e);
+            // 그 외 예외는 일반적인 서버 에러로 처리될 수 있도록 던진다.
+            throw new ServletException(e.getMessage(), e);
         }
     }
 
@@ -150,16 +159,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void setAuthentication(String token) {
         PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromToken(token);
         authenticationHelper.setAuthentication(principalDetails);
-    }
-
-    /**
-     * 인증 실패 응답
-     */
-    private void sendAuthenticationError(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json;charset=UTF-8");
-
-        ApiResponse<Object> errorResponse = ApiResponse.onFailure("AUTH401", message, null);
-        response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
     }
 }
