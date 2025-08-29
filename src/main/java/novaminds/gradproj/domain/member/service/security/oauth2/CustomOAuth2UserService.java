@@ -14,9 +14,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -39,39 +38,45 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 사용자 정보 추출
         String email = oAuthAttributes.getEmail();
         String name = oAuthAttributes.getName();
-        String picture = oAuthAttributes.getPicture();
         String providerId = oAuthAttributes.getProviderId();
 
         // loginId 생성
         String loginId = generateLoginId(registrationId.toUpperCase(), providerId);
 
         // 사용자 조회 또는 생성(업데이트)
-        Member member = saveOrUpdate(loginId, email, name, picture, providerId, registrationId);
-
-        // 기본 냉장고 할당
-        memberOnboardingService.setupDefaultResources(member);
+        Member member = saveOrUpdateAndOnBoard(loginId, email, name, providerId, registrationId);
 
         return new PrincipalDetails(member, attributes);
     }
 
 
-    private Member saveOrUpdate(String loginId, String email, String name, String picture,
-                              String providerId, String registrationId) {
+    private Member saveOrUpdateAndOnBoard(String loginId, String email, String name,
+                                          String providerId, String registrationId) {
         // 기존 사용자 조회
-        Member member = memberRepository.findById(loginId)
-                .map(entity -> entity.updateOAuthInfo(name, picture)) // 기존 사용자 정보 업데이트
-                .orElseGet(() -> {
-                    // 새 사용자 생성
-                    OAuthAttributes oAuthAttributes = OAuthAttributes.builder()
-                            .name(name)
-                            .email(email)
-                            .picture(picture)
-                            .providerId(providerId)
-                            .build();
-                    return oAuthAttributes.toEntity(loginId, SocialType.valueOf(registrationId.toUpperCase()));
-                });
+        Optional<Member> memberOpt = memberRepository.findById(loginId);
 
-        return memberRepository.save(member);
+        if (memberOpt.isPresent()) {
+            // 기존 유저의 경우
+            Member member = memberOpt.get();
+            member.updateOAuthInfo(name);
+            return memberRepository.save(member);
+        } else {
+            // 신규 유저의 경우
+            OAuthAttributes oAuthAttributes = OAuthAttributes.builder()
+                    .name(name)
+                    .email(email)
+                    .providerId(providerId)
+                    .build();
+            Member newMember = oAuthAttributes.toEntity(loginId, SocialType.valueOf(registrationId.toUpperCase()));
+
+            // DB에 저장 먼저 한 후
+            Member savedMember = memberRepository.save(newMember);
+
+            // 냉장고 할당 및 생성
+            memberOnboardingService.setupDefaultResources(savedMember);
+
+            return savedMember;
+        }
     }
 
     private String generateLoginId(String provider, String providerId) {
