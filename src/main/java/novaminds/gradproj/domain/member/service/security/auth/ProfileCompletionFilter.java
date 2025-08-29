@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
+import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -67,11 +68,7 @@ public class ProfileCompletionFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");
 
-        ApiResponse<Object> errorResponse = ApiResponse.onFailure(
-                "PROFILE403",
-                "프로필 정보를 먼저 완성해주세요.",
-                null
-        );
+        ApiResponse<Object> errorResponse = ApiResponse.onFailure(ErrorStatus.PROFILE_NOT_COMPLETED);
 
         response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
     }
