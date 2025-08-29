@@ -10,3 +10,4 @@ spring:
       - jwt
       - s3
       - email
+      - redis

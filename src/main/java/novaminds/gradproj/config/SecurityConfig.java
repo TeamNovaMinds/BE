@@ -1,6 +1,8 @@
 package novaminds.gradproj.config;
 
 import lombok.RequiredArgsConstructor;
+import novaminds.gradproj.domain.member.service.security.auth.CustomAccessDeniedHandler;
+import novaminds.gradproj.domain.member.service.security.auth.ProfileCompletionFilter;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtAuthenticationFilter;
 import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.domain.member.service.security.oauth2.OAuth2SuccessHandler;
@@ -13,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -27,9 +30,12 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final AuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ProfileCompletionFilter profileCompletionFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -48,21 +54,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/auth/signup",
-                                "/auth/login",
-                                "/auth/check-email",
-                                "/auth/login/google",
-                                "/auth/login/naver",
-                                "/auth/reset-password",
-                                "/oauth2/**",
+                                "/api/auth/signup",
+                                "/api/auth/login",
+                                "/api/auth/check-email",
+                                "/api/auth/login/google", //TODO : 이건 없애고 프론트에서 바로 직접 접근하는게 나은 구조
+                                "/api/auth/login/naver", //TODO : 이건 없애고 프론트에서 바로 직접 접근하는게 나은 구조
+                                "/api/auth/reset-password",
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/webjars/**",
-                                "/favicon.ico"
+                                "/swagger-resources/**"
                         ).permitAll()
-                        .requestMatchers("/auth/additional-info-part1", "/auth/additional-info-part2")
+                        .requestMatchers("/api/auth/additional-info-part1", "/api/auth/additional-info-part2")
                         .authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
@@ -73,7 +76,12 @@ public class SecurityConfig {
                         )
                         .successHandler(oAuth2SuccessHandler)
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(profileCompletionFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -88,27 +96,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ 더 명확한 Origin 설정 (added)
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000"
         ));
 
-        // ✅ 모든 HTTP 메서드 허용 (added)
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
         ));
 
-        // ✅ 모든 헤더 허용 (added)
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // ✅ 인증 정보 허용 (가장 중요!) (added)
         configuration.setAllowCredentials(true);
 
-        // ✅ preflight 캐시 시간 (added)
         configuration.setMaxAge(3600L);
 
-        // ✅ 노출할 헤더 추가 (added)
         configuration.setExposedHeaders(Arrays.asList(
                 "Set-Cookie", "Authorization", "Access-Control-Allow-Origin"
         ));

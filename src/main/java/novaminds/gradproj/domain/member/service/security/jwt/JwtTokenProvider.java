@@ -1,15 +1,11 @@
 package novaminds.gradproj.domain.member.service.security.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.config.properties.JwtProperties;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +17,6 @@ import java.util.Date;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
-
-    public static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
-    public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
     private final JwtProperties jwtProperties;
 
@@ -40,7 +33,8 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(principalDetails.getUsername()) // loginId
-                .claim("role", principalDetails.getMember().getRole())
+                .claim("role", principalDetails.getMember().getRole().name())
+                .claim("profileCompleted", principalDetails.getMember().isProfileCompleted())
                 .claim("category", "access")
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -75,6 +69,37 @@ public class JwtTokenProvider {
         return claims.get("category", String.class);
     }
 
+    // 토큰에서 role 추출
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("role", String.class);
+    }
+
+    public PrincipalDetails createPrincipalFromToken(String token) {
+        // 토큰 파싱 및 검증을 딱 한 번만 수행
+        Claims claims = getClaims(token);
+
+        // claims에서 필요한 모든 정보를 직접 가져오기
+        String loginId = claims.getSubject();
+        String category = claims.get("category", String.class);
+
+        // Access Token의 경우, 모든 정보를 사용
+        if ("access".equals(category)) {
+            String role = claims.get("role", String.class);
+            boolean profileCompleted = claims.get("profileCompleted", Boolean.class);
+            return PrincipalDetails.fromJwtClaims(loginId, role, profileCompleted);
+        }
+
+        // Refresh Token의 경우, 최소한의 정보만 사용
+        if ("refresh".equals(category)) {
+            // 리프레시 토큰에는 role과 프로필 정보가 없으므로 기본값을 사용
+            return PrincipalDetails.fromJwtClaims(loginId, "USER", false);
+        }
+
+        // 지원하지 않는 토큰 타입인 경우 예외를 발생
+        throw new IllegalArgumentException("지원하지 않는 토큰 카테고리입니다: " + category);
+    }
+
     // 토큰 만료 확인
     public boolean isExpired(String token) {
         try {
@@ -93,10 +118,19 @@ public class JwtTokenProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (Exception ex) {
-            log.error("JWT 토큰 검증 실패: {}", ex.getMessage());
-            return false;
+        } catch (ExpiredJwtException e) {
+            log.warn("❌ [JWT 검증] 만료된 토큰입니다: {}", e.getMessage());
+            throw e;
+        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("❌ [JWT 검증] 유효하지 않은 토큰입니다: {}", e.getMessage());
+            throw new JwtException("유효하지 않은 토큰입니다.", e);
         }
+    }
+
+    // 토큰에서 만료 시간 추출
+    public Date getExpirationFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.getExpiration();
     }
 
     // Claims 추출
@@ -108,24 +142,19 @@ public class JwtTokenProvider {
                 .getPayload();
     }
 
-    // Cookie 생성 헬퍼 메서드
-    public Cookie createCookie(String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 개발 환경에서는 false, 나중에 https 적용하고나서는 true
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        return cookie;
-    }
-
-    public ResponseCookie createResponseCookie(String name, String value, int maxAge) {
-        return ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(false) // 개발 환경에서는 false
-                .path("/")
-                .maxAge(maxAge)
-                .sameSite("Lax") // CORS를 위한 필수 설정!
-                .domain("localhost")
-                .build();
+    /**
+     * 토큰의 남은 유효 시간을 밀리초로 반환
+     * 
+     * @param token JWT 토큰 (액세스 또는 리프레시)
+     * @return 남은 시간(밀리초), 이미 만료된 경우 음수 반환
+     */
+    public long getRemainingTime(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return claims.getExpiration().getTime() - System.currentTimeMillis();
+        } catch (Exception e) {
+            log.warn("토큰 남은 시간 계산 실패: {}", e.getMessage());
+            return 0; // 오류 시 0 반환 (만료로 간주)
+        }
     }
 }

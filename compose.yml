@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_PROFILES_ACTIVE: prod,oauth,jwt,s3,email
+      SPRING_PROFILES_ACTIVE: prod,oauth,jwt,s3,email,redis
     restart: unless-stopped
     networks:
       - app-network

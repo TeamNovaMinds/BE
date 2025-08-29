@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
     private final JavaMailSender emailSender;
-    private final GmailProperties gmailProperties; // ✅ GmailProperties를 다시 주입받습니다.
+    private final GmailProperties gmailProperties;
 
     public void sendPasswordResetEmail(String email, String token) {
         try {
@@ -22,7 +22,6 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             // 이메일 기본 정보 설정
-            // ✅ gmailProperties에서 사용자 이름을 가져옵니다.
             helper.setFrom(gmailProperties.getUsername(), "Just Fridge");
             helper.setTo(email);
             helper.setSubject("[Just Fridge] 비밀번호 재설정 인증 코드");
@@ -33,9 +32,6 @@ public class EmailService {
 
             // 이메일 발송
             emailSender.send(message);
-
-            log.info("✅ 비밀번호 재설정 이메일 발송 완료 - 수신자: {}", email);
-
         } catch (MessagingException e) {
             log.error("❌ 비밀번호 재설정 이메일 발송 실패 - 수신자: {}, 오류: {}", email, e.getMessage());
             throw new RuntimeException("이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.", e);

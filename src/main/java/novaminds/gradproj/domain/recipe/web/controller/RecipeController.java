@@ -31,7 +31,7 @@ import novaminds.gradproj.domain.recipe.service.RecipeService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/recipe")
+@RequestMapping("/api/recipe")
 public class RecipeController {
 
 	private final RecipeService recipeService;

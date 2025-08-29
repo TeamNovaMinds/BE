@@ -2,6 +2,7 @@ package novaminds.gradproj.domain.member.service.security.auth;
 
 import lombok.Getter;
 import novaminds.gradproj.domain.member.entity.Member;
+import novaminds.gradproj.domain.member.entity.Role;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,6 +28,23 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
     public PrincipalDetails(Member member, Map<String, Object> attributes) {
         this.member = member;
         this.attributes = attributes;
+    }
+
+    /**
+     * JWT Claims로부터 PrincipalDetails 생성 (DB 조회 없이)
+     * JWT 인증 필터에서 사용하여 성능을 최적화
+     */
+    public static PrincipalDetails fromJwtClaims(String loginId, String roleString, boolean profileCompleted) {
+        Role role = Role.valueOf(roleString);
+        
+        // JWT 검증 목적으로만 사용하는 최소한의 Member 객체 생성
+        Member jwtMember = Member.builder()
+                .loginId(loginId)
+                .role(role)
+                .isProfileCompleted(profileCompleted)
+                .build();
+                
+        return new PrincipalDetails(jwtMember);
     }
 
     @Override

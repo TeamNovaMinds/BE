@@ -2,6 +2,7 @@ package novaminds.gradproj.domain.member.web.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
-import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
 import novaminds.gradproj.domain.member.service.AuthService;
 import novaminds.gradproj.domain.member.web.dto.AuthRequest;
 import novaminds.gradproj.domain.member.web.dto.AuthResponse;
@@ -21,15 +21,12 @@ import java.io.IOException;
 
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "인증", description = "로그인/회원가입 관련 API")
 public class AuthRestController {
 
-    //테스트용 주석
-
     private final AuthService authService;
-    private final CustomOAuth2UserService customOAuth2UserService;
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입 (기본 정보)",
@@ -42,17 +39,6 @@ public class AuthRestController {
     ) {
         log.info("🔸 [API 호출] 회원가입 - email: {}", request.getEmail());
         return ApiResponse.onSuccess(authService.signup(request, response));
-    }
-
-    @GetMapping("/additional-info")
-    @Operation(summary = "추가 정보 입력",
-            description = "프로필 이미지와 닉네임과 관심 카테고리(1~3개)를 입력합니다. " +
-                    "JWT 토큰이 필요합니다.")
-    public ApiResponse<?> inputAdditionalInfo(
-            @CurrentUser Member member
-    ) {
-        log.info("🔸 [API 호출] 추가 정보 입력 - loginId: {}", member.getLoginId());
-        return ApiResponse.onSuccess(customOAuth2UserService.getAdditionalInfoRequirements());
     }
 
 /*    @Operation(
@@ -119,9 +105,9 @@ public class AuthRestController {
     }
 
     @PostMapping("/logout")
-    public ApiResponse<String> logout(HttpServletResponse response) {
+    public ApiResponse<String> logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("🔸 [API 호출] 로그아웃");
-        authService.logout(response);
+        authService.logout(request, response);
         return ApiResponse.onSuccess("로그아웃이 완료되었습니다.");
     }
 
