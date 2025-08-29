@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import novaminds.gradproj.config.properties.JwtProperties;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -27,6 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RedisConfig {
 
+    private final JwtProperties jwtProperties;
     private final RedisProperties redisProperties;
 
     @Bean
@@ -68,18 +70,13 @@ public class RedisConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
-        objectMapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-                ObjectMapper.DefaultTyping.NON_FINAL
-        );
-
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)))
                 .disableCachingNullValues();
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
-                "refreshToken", defaultConfig.entryTtl(Duration.ofDays(14)),
+                "refreshToken", defaultConfig.entryTtl(Duration.ofMillis(jwtProperties.getRefreshExpiration())),
                 "blacklist", defaultConfig.entryTtl(Duration.ofHours(2)),
                 "passwordReset", defaultConfig.entryTtl(Duration.ofMinutes(30))
         );
