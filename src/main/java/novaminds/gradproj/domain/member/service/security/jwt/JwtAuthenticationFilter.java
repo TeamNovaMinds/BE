@@ -105,8 +105,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwtTokenProvider.validateToken(token);
             setAuthentication(token);
             return true;
-        } catch (ExpiredJwtException e) {
-            // 4. 만료 예외 처리: 쿠키를 삭제하고 false를 반환하여 리프레시 토큰 처리 단계로 넘어감
+        } catch (JwtException e) {
+            // 4. 만료, 변조, 형식 오류 등 모든 JWT 관련 예외 발생 시
+            // : 쿠키를 삭제하고 false를 반환하여 리프레시 토큰 처리 단계로 넘어감
             jwtCookieUtil.deleteTokenCookie(response, "accessToken");
             return false;
         }
