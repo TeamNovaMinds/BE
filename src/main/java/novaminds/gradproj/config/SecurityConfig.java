@@ -1,6 +1,7 @@
 package novaminds.gradproj.config;
 
 import lombok.RequiredArgsConstructor;
+import novaminds.gradproj.domain.member.service.security.auth.CustomAccessDeniedHandler;
 import novaminds.gradproj.domain.member.service.security.auth.ProfileCompletionFilter;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtAuthenticationFilter;
 import novaminds.gradproj.domain.member.service.security.oauth2.CustomOAuth2UserService;
@@ -34,6 +35,7 @@ public class SecurityConfig {
     private final ProfileCompletionFilter profileCompletionFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -76,6 +78,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(profileCompletionFilter, JwtAuthenticationFilter.class);
