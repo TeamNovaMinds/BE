@@ -1,5 +1,6 @@
 package novaminds.gradproj.domain.member.service.security.oauth2;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.domain.member.entity.Member;
@@ -25,6 +26,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final MemberRepository memberRepository;
     private final MemberOnboardingService memberOnboardingService;
 
+    @Transactional
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
