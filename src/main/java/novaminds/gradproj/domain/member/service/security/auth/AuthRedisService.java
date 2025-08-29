@@ -98,7 +98,6 @@ public class AuthRedisService {
      * @param token 확인할 토큰
      * @return      블랙리스트에 등록되어 있으면 true, 그렇지 않으면 false
      */
-    @Cacheable(value = "blacklist", key = "#token")
     public boolean isBlacklisted(String token) {
         // Redis 키 생성
         String key = BLACKLIST_PREFIX + token;
