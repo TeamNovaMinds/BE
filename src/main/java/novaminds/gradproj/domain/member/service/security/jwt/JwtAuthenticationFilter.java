@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
 import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
+import novaminds.gradproj.domain.member.service.security.auth.CustomUserDetailsService;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -40,6 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
     private final AuthenticationHelper authenticationHelper;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected boolean shouldNotFilter(@Nonnull HttpServletRequest request) {
@@ -81,46 +83,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean processAccessToken(HttpServletRequest request, HttpServletResponse response) {
         return jwtCookieUtil.resolveToken(request, "accessToken")
                 .filter(StringUtils::hasText)
+                .filter(token -> !authRedisService.isBlacklisted(token))
                 .map(accessToken -> {
-                    // 블랙리스트 확인
-                    if (authRedisService.isBlacklisted(accessToken)) {
+                    try {
+                        // 토큰 유효성 검증 - 만료 시 ExpiredJwtException 발샐
+                        jwtTokenProvider.validateToken(accessToken);
+
+                        // 검증 성공 시 인증 정보 설정하고 true 반환
+                        setAuthentication(accessToken);
+                        return true;
+                    } catch (ExpiredJwtException e) {
+                        // Access Token 만료는 정상 흐름 중 하나 이므로 쿠키를 삭제하고 false 반환해서 doFilterInternal에서 refresh token 검증 단계로 넘어감
                         jwtCookieUtil.deleteTokenCookie(response, "accessToken");
                         return false;
                     }
-
-                    try {
-                        // 토큰 검증 및 인증 설정
-                        if (jwtTokenProvider.validateToken(accessToken)) {
-                            setAuthentication(accessToken);
-                            return true;
-                        }
-                    } catch (ExpiredJwtException e) {
-                        jwtCookieUtil.deleteTokenCookie(response, "accessToken");
-                    }
-                    return false;
                 })
                 .orElse(false);
     }
 
     /**
      * 리프레시 토큰으로 액세스 토큰 재발급
+     * 이때 refresh token 자체로 access token을 발급 받는 것이 아니라,
+     * access token을 재발급 받을 자격이 있는지 확인하는 것 뿐이다.
      */
     private void processRefreshToken(HttpServletRequest request, HttpServletResponse response) {
         jwtCookieUtil.resolveToken(request, "refreshToken")
                 .filter(StringUtils::hasText)
+                // 토큰의 유효성 먼저 검증
                 .filter(jwtTokenProvider::validateToken)
+                // 블랙리스트에 없는 토큰만 통과
+                .filter(token -> !authRedisService.isBlacklisted(token))
                 .ifPresent(refreshToken -> {
                     try {
                         String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
                         String storedToken = authRedisService.getRefreshToken(loginId);
 
                         if (refreshToken.equals(storedToken)) {
-                            // 인증 정보 설정
-                            setAuthentication(refreshToken);
-                            
-                            // 새로운 액세스 토큰 생성을 위한 Authentication 객체 생성
-                            PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromToken(refreshToken);
+
+                            // 데이터베이스에서 최신 사용자 정보를 가져오기
+                            PrincipalDetails principalDetails = (PrincipalDetails) customUserDetailsService.loadUserByUsername(loginId);
                             Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
+
+                            // 최신 정보로 인증 정보 설정
+                            authenticationHelper.setAuthentication(principalDetails);
 
                             // 액세스 토큰과 리프레쉬 토큰 재발급
                             jwtLoginProcessor.issueAndSetTokens(response, authentication);
