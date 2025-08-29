@@ -23,7 +23,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
         log.warn("❌ [인증 실패] 자격 증명이 없는 요청입니다: {}", authException.getMessage());
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -31,11 +31,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
         // ApiResponse를 사용하여 일관된 에러 응답을 생성합니다.
-        ApiResponse<Object> errorResponse = ApiResponse.onFailure(
-                ErrorStatus._UNAUTHORIZED.getCode(),
-                ErrorStatus._UNAUTHORIZED.getMessage(),
-                null
-        );
+        ApiResponse<Object> errorResponse = ApiResponse.onFailure(ErrorStatus._UNAUTHORIZED);
 
         // ObjectMapper를 사용하여 response body에 JSON을 작성합니다.
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
