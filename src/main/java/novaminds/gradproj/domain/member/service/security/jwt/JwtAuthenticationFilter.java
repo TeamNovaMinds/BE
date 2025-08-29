@@ -120,9 +120,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void processRefreshToken(HttpServletRequest request, HttpServletResponse response) {
         jwtCookieUtil.resolveToken(request, "refreshToken")
                 .filter(StringUtils::hasText)
-                // 토큰의 유효성 먼저 검증
+                // 1. 토큰의 유효성 먼저 검증
                 .filter(jwtTokenProvider::validateToken)
-                // 블랙리스트에 없는 토큰만 통과
+                // 2. refresh 카테고리만 허용
+                .filter(token -> "refresh".equals(jwtTokenProvider.getCategory(token)))
+                // 3. 블랙리스트에 없는 토큰만 통과
                 .filter(token -> !authRedisService.isBlacklisted(token))
                 .ifPresent(refreshToken -> {
                     try {
@@ -131,15 +133,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         if (refreshToken.equals(storedToken)) {
 
-                            // 데이터베이스에서 최신 사용자 정보를 가져오기
+                            // 4. 데이터베이스에서 최신 사용자 정보를 가져오기
                             PrincipalDetails principalDetails = (PrincipalDetails) customUserDetailsService.loadUserByUsername(loginId);
                             Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
 
-                            // 최신 정보로 인증 정보 설정
+                            // 5. 최신 정보로 인증 정보 설정
                             authenticationHelper.setAuthentication(principalDetails);
 
-                            // 액세스 토큰과 리프레쉬 토큰 재발급
+                            // 6. 액세스 토큰과 리프레쉬 토큰 재발급
                             jwtLoginProcessor.issueAndSetTokens(response, authentication);
+                        } else {
+                            // 저장된 refresh token과 불일치 할 경우 토큰 삭제
+                            jwtCookieUtil.deleteTokenCookie(response, "refreshToken");
                         }
                     } catch (Exception e) {
                         log.error("❌ [JWT 필터] 토큰 재발급 실패: {}", e.getMessage());
