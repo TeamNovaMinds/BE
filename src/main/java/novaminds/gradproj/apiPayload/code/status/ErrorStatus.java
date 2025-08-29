@@ -20,7 +20,7 @@ public enum ErrorStatus implements BaseErrorCode {
     _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
 
     // 멤버 관려 에러
-    EMAIL_PW_NOT_MACTHED(HttpStatus.BAD_REQUEST, "EMAIL400", "이메일 또는 비밀번호가 올바르지 않습니다."),
+    EMAIL_PW_NOT_MATCHED(HttpStatus.BAD_REQUEST, "EMAIL400", "이메일 또는 비밀번호가 올바르지 않습니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST,"EMAIL401" ,"이미 동일한 이메일로 생성된 계정이 존재합니다."),
     EMAIL_VERIFICATION_IN_PROGRESS(HttpStatus.BAD_REQUEST, "EMAIL402", "이미 진행 중인 이메일 인증이 있습니다. 이메일을 확인해주세요."),
     EMAIL_CHANGE_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST, "EMAIL403", "기존과 동일한 이메일로는 변경하실 수 없습니다."),
@@ -28,6 +28,7 @@ public enum ErrorStatus implements BaseErrorCode {
     GOOGLE_USER_CANNOT_CHANGE_PW(HttpStatus.BAD_REQUEST,"EMAIL405","구글 로그인 유저는 비밀번호 변경을 하실 수 없습니다."),
     EMAIL_CODE_INVALID(HttpStatus.BAD_REQUEST, "EMAIL406", "유효하지 않은 이메일 인증 코드입니다."),
     EMAIL_CODE_EXPIRED(HttpStatus.BAD_REQUEST,"EMAIL407","만료된 이메일 인증 코드입니다. 이메일 인증을 다시 요청해주세요."),
+
     PROFILE_NOT_COMPLETED(HttpStatus.FORBIDDEN, "PROFILE403", "프로필 정보를 먼저 완성해주세요."),
 
     NICKNAME_NOT_EXIST(HttpStatus.BAD_REQUEST, "MEMBER400", "닉네임은 필수 입니다."),
