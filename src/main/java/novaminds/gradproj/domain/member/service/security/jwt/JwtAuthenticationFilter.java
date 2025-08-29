@@ -36,6 +36,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String ACCESS_TOKEN_COOKIE = "accessToken";
+    private static final String REFRESH_TOKEN_COOKIE = "refreshToken";
+    private static final String CATEGORY_ACCESS = "access";
+    private static final String CATEGORY_REFRESH = "refresh";
+
     private final JwtLoginProcessor jwtLoginProcessor;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtCookieUtil jwtCookieUtil;
@@ -81,7 +86,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * @return 유효한 토큰인 경우 true, 그렇지 않으면 false
      */
     private boolean processAccessToken(HttpServletRequest request, HttpServletResponse response) {
-        var opt = jwtCookieUtil.resolveToken(request, "accessToken").filter(StringUtils::hasText);
+        var opt = jwtCookieUtil.resolveToken(request, ACCESS_TOKEN_COOKIE).filter(StringUtils::hasText);
         if (opt.isEmpty()) {
             return false;
         }
@@ -90,13 +95,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 1. 블랙리스트 확인 -> 블랙리스트에 있으면 쿠키를 삭제하고 실패 처리
         if (authRedisService.isBlacklisted(token)) {
-            jwtCookieUtil.deleteTokenCookie(response, "accessToken");
+            jwtCookieUtil.deleteTokenCookie(response, ACCESS_TOKEN_COOKIE);
             return false;
         }
 
         // 2. 토큰 카테고리가 'access'인지 확인 -> 아니면 쿠키를 삭제하고 실패 처리
-        if (!"access".equals(jwtTokenProvider.getCategory(token))) {
-            jwtCookieUtil.deleteTokenCookie(response, "accessToken");
+        if (!CATEGORY_ACCESS.equals(jwtTokenProvider.getCategory(token))) {
+            jwtCookieUtil.deleteTokenCookie(response, ACCESS_TOKEN_COOKIE);
             return false;
         }
 
@@ -105,11 +110,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwtTokenProvider.validateToken(token);
             setAuthentication(token);
             return true;
-        } catch (JwtException e) {
-            // 4. 만료, 변조, 형식 오류 등 모든 JWT 관련 예외 발생 시
-            // : 쿠키를 삭제하고 false를 반환하여 리프레시 토큰 처리 단계로 넘어감
-            jwtCookieUtil.deleteTokenCookie(response, "accessToken");
+        } catch (ExpiredJwtException e) {
+            // 4. 만료 예외 처리: 쿠키를 삭제하고 false를 반환하여 리프레시 토큰 처리 단계로 넘어감
+            jwtCookieUtil.deleteTokenCookie(response, ACCESS_TOKEN_COOKIE);
             return false;
+        }
+        catch (JwtException | IllegalArgumentException e) {
+            // 변조, 형식 오류 등 모든 JWT 관련 예외 발생 시
+            // 이때는 리프레시 토큰 처리로 넘어가지 않음
+            jwtCookieUtil.deleteTokenCookie(response, ACCESS_TOKEN_COOKIE);
+            throw e;
         }
     }
 
@@ -119,39 +129,52 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * access token을 재발급 받을 자격이 있는지 확인하는 것 뿐이다.
      */
     private void processRefreshToken(HttpServletRequest request, HttpServletResponse response) {
-        jwtCookieUtil.resolveToken(request, "refreshToken")
-                .filter(StringUtils::hasText)
-                // 1. 토큰의 유효성 먼저 검증
-                .filter(jwtTokenProvider::validateToken)
-                // 2. refresh 카테고리만 허용
-                .filter(token -> "refresh".equals(jwtTokenProvider.getCategory(token)))
-                // 3. 블랙리스트에 없는 토큰만 통과
-                .filter(token -> !authRedisService.isBlacklisted(token))
-                .ifPresent(refreshToken -> {
-                    try {
-                        String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
-                        String storedToken = authRedisService.getRefreshToken(loginId);
+        var opt = jwtCookieUtil.resolveToken(request, REFRESH_TOKEN_COOKIE).filter(StringUtils::hasText);
+        if (opt.isEmpty()) {
+            return;
+        }
 
-                        if (refreshToken.equals(storedToken)) {
+        String refreshToken = opt.get();
 
-                            // 4. 데이터베이스에서 최신 사용자 정보를 가져오기
-                            PrincipalDetails principalDetails = (PrincipalDetails) customUserDetailsService.loadUserByUsername(loginId);
-                            Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
+        // 블랙리스트에 있으면 쿠키를 정리하고 종료
+        if (authRedisService.isBlacklisted(refreshToken)) {
+            jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
+            return;
+        }
 
-                            // 5. 최신 정보로 인증 정보 설정
-                            authenticationHelper.setAuthentication(principalDetails);
+        try {
+            // 1. 토큰의 구조적 유효성을 검증합니다.
+            jwtTokenProvider.validateToken(refreshToken);
 
-                            // 6. 액세스 토큰과 리프레쉬 토큰 재발급
-                            jwtLoginProcessor.issueAndSetTokens(response, authentication);
-                        } else {
-                            // 저장된 refresh token과 불일치 할 경우 토큰 삭제
-                            jwtCookieUtil.deleteTokenCookie(response, "refreshToken");
-                        }
-                    } catch (Exception e) {
-                        log.error("❌ [JWT 필터] 토큰 재발급 실패: {}", e.getMessage());
-                        jwtCookieUtil.deleteTokenCookie(response, "refreshToken");
-                    }
-                });
+            // 2. 토큰의 카테고리가 'refresh'인지 확인합니다.
+            if (!CATEGORY_REFRESH.equals(jwtTokenProvider.getCategory(refreshToken))) {
+                jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
+                return;
+            }
+
+            // 3. Redis에 저장된 토큰과 일치하는지 확인합니다.
+            String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
+            String storedToken = authRedisService.getRefreshToken(loginId);
+
+            if (storedToken != null && refreshToken.equals(storedToken)) {
+                // 4. 데이터베이스에서 최신 사용자 정보를 가져오기
+                PrincipalDetails principalDetails = (PrincipalDetails) customUserDetailsService.loadUserByUsername(loginId);
+                Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
+
+                // 5. 최신 정보로 인증 정보 설정
+                authenticationHelper.setAuthentication(principalDetails);
+
+                // 6. 액세스 토큰과 리프레쉬 토큰 재발급
+                jwtLoginProcessor.issueAndSetTokens(response, authentication);
+            } else {
+                // 저장된 refresh token과 불일치 할 경우 토큰 삭제
+                jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
+            }
+        } catch (JwtException e) {
+            // 만료, 변조 등 모든 JWT 예외 발생 시 쿠키를 삭제하여 클라이언트 상태를 정리합니다.
+            log.warn("Refresh Token 처리 중 예외 발생 (쿠키 삭제): {}", e.getMessage());
+            jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
+        }
     }
 
     /**
