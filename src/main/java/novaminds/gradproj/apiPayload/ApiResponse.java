@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import novaminds.gradproj.apiPayload.code.BaseCode;
+import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.code.status.SuccessStatus;
-import org.springframework.http.ResponseEntity;
 
 @Getter
 @AllArgsConstructor
@@ -42,9 +42,8 @@ public class ApiResponse<T> {
         return new ApiResponse<>(false, code, message, data);
     }
 
-    public static ResponseEntity<ApiResponse> onSuccess(SuccessStatus status, Object result) {
-        return ResponseEntity.ok(
-                new ApiResponse(true, status.getCode(), status.getMessage(), result));
+    public static <T> ApiResponse<T> onFailure(ErrorStatus code) {
+        return new ApiResponse<>(false, code.getCode(), code.getMessage(), null);
     }
 
     public static <T> ApiResponse<T> onSuccess(String code, String message, T data) {
