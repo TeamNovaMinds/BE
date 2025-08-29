@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -24,12 +25,18 @@ public class JwtCookieUtil {
     /**
      * 쿠키에 토큰 추가
      */
-    public void addTokenToCookie(HttpServletResponse response, String cookieName, String token, int maxAge) {
+    public void addTokenToCookie(HttpServletResponse response, String cookieName, String token, long maxAgeInMillis) {
+
+        boolean isSecure = this.secureCookie;
+        if ("None".equalsIgnoreCase(sameSite)) {
+            isSecure = true;
+        }
+
         ResponseCookie cookie = ResponseCookie.from(cookieName, token)
                 .httpOnly(true)
-                .secure(secureCookie)
+                .secure(isSecure)
                 .path("/")
-                .maxAge(maxAge)
+                .maxAge(Duration.ofMillis(maxAgeInMillis))
                 .sameSite(sameSite)
                 .build();
 
@@ -54,9 +61,15 @@ public class JwtCookieUtil {
      * 쿠키 삭제
      */
     public void deleteTokenCookie(HttpServletResponse response, String cookieName) {
+
+        boolean isSecure = this.secureCookie;
+        if ("None".equalsIgnoreCase(sameSite)) {
+            isSecure = true;
+        }
+
         ResponseCookie cookie = ResponseCookie.from(cookieName, "")
                 .httpOnly(true)
-                .secure(secureCookie)
+                .secure(isSecure)
                 .path("/")
                 .maxAge(0)
                 .sameSite(sameSite)
