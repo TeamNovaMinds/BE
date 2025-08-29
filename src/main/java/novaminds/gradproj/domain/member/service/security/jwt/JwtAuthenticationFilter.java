@@ -170,10 +170,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 저장된 refresh token과 불일치 할 경우 토큰 삭제
                 jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
             }
-        } catch (JwtException e) {
-            // 만료, 변조 등 모든 JWT 예외 발생 시 쿠키를 삭제하여 클라이언트 상태를 정리합니다.
+        } catch (ExpiredJwtException e) {
+            // 만료된 리프레시 토큰은 쿠키에서 삭제
+            jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
+        } catch (JwtException | IllegalArgumentException e) {
+            // 변조, 형식 오류 등 모든 JWT 관련 예외 발생 시 쿠키에서 삭제
             log.warn("Refresh Token 처리 중 예외 발생 (쿠키 삭제): {}", e.getMessage());
             jwtCookieUtil.deleteTokenCookie(response, REFRESH_TOKEN_COOKIE);
+
         }
     }
 
