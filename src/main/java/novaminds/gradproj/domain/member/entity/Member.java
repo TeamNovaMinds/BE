@@ -142,11 +142,9 @@ public class Member extends BaseEntity {
 		this.isProfileCompleted = true;
 	}
 
-	public Member updateOAuthInfo(String name, String picture) {
+	public void updateOAuthInfo(String name) {
 		this.name = name;
-		this.profileImage = picture;
-		return this;
-	}
+    }
 
 	public void updateProfileImage(String profileImageUrl) {
 		this.profileImage = profileImageUrl;
