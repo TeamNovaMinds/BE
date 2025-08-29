@@ -81,24 +81,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * @return 유효한 토큰인 경우 true, 그렇지 않으면 false
      */
     private boolean processAccessToken(HttpServletRequest request, HttpServletResponse response) {
-        return jwtCookieUtil.resolveToken(request, "accessToken")
-                .filter(StringUtils::hasText)
-                .filter(token -> !authRedisService.isBlacklisted(token))
-                .map(accessToken -> {
-                    try {
-                        // 토큰 유효성 검증 - 만료 시 ExpiredJwtException 발샐
-                        jwtTokenProvider.validateToken(accessToken);
+        var opt = jwtCookieUtil.resolveToken(request, "accessToken").filter(StringUtils::hasText);
+        if (opt.isEmpty()) {
+            return false;
+        }
 
-                        // 검증 성공 시 인증 정보 설정하고 true 반환
-                        setAuthentication(accessToken);
-                        return true;
-                    } catch (ExpiredJwtException e) {
-                        // Access Token 만료는 정상 흐름 중 하나 이므로 쿠키를 삭제하고 false 반환해서 doFilterInternal에서 refresh token 검증 단계로 넘어감
-                        jwtCookieUtil.deleteTokenCookie(response, "accessToken");
-                        return false;
-                    }
-                })
-                .orElse(false);
+        String token = opt.get();
+
+        // 1. 블랙리스트 확인 -> 블랙리스트에 있으면 쿠키를 삭제하고 실패 처리
+        if (authRedisService.isBlacklisted(token)) {
+            jwtCookieUtil.deleteTokenCookie(response, "accessToken");
+            return false;
+        }
+
+        // 2. 토큰 카테고리가 'access'인지 확인 -> 아니면 쿠키를 삭제하고 실패 처리
+        if (!"access".equals(jwtTokenProvider.getCategory(token))) {
+            jwtCookieUtil.deleteTokenCookie(response, "accessToken");
+            return false;
+        }
+
+        try {
+            // 3. 토큰 유효성 검증 (만료 시 ExpiredJwtException 발생)
+            jwtTokenProvider.validateToken(token);
+            setAuthentication(token);
+            return true;
+        } catch (ExpiredJwtException e) {
+            // 4. 만료 예외 처리: 쿠키를 삭제하고 false를 반환하여 리프레시 토큰 처리 단계로 넘어감
+            jwtCookieUtil.deleteTokenCookie(response, "accessToken");
+            return false;
+        }
     }
 
     /**
