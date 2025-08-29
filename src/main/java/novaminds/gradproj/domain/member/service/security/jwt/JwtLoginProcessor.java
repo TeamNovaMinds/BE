@@ -31,8 +31,8 @@ public class JwtLoginProcessor {
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
         // 쿠키에 토큰 저장
-        int accessTokenMaxAge = jwtProperties.getExpiration().intValue(); // 24시간
-        int refreshTokenMaxAge = jwtProperties.getRefreshExpiration().intValue(); // 7일
+        long accessTokenMaxAge = jwtProperties.getExpiration(); // 24시간
+        long refreshTokenMaxAge = jwtProperties.getRefreshExpiration(); // 7일
 
         jwtCookieUtil.addTokenToCookie(response, "accessToken", accessToken, accessTokenMaxAge);
         jwtCookieUtil.addTokenToCookie(response, "refreshToken", refreshToken, refreshTokenMaxAge);
@@ -44,7 +44,7 @@ public class JwtLoginProcessor {
         authRedisService.saveRefreshToken(
                 loginId,
                 refreshToken,
-                Duration.ofDays(7)
+                Duration.ofMillis(jwtProperties.getRefreshExpiration())
         );
     }
 
@@ -53,22 +53,30 @@ public class JwtLoginProcessor {
      */
     public void processLogout(HttpServletResponse response, String accessToken, String refreshToken) {
         // 액세스 토큰 블랙리스트 추가
-        if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
-            long remainingTime = jwtTokenProvider.getRemainingTime(accessToken);
-            if (remainingTime > 0) {
-                authRedisService.addToBlacklist(accessToken, Duration.ofMillis(remainingTime));
+        if (accessToken != null) {
+            try {
+                long remainingTime = jwtTokenProvider.getRemainingTime(accessToken);
+                if (remainingTime > 0) {
+                    authRedisService.addToBlacklist(accessToken, Duration.ofMillis(remainingTime));
+                }
+            } catch (Exception e) {
+                log.debug("액세스 토큰 블랙리스트 처리 스킵: {}", e.getMessage());
             }
         }
 
         // 리프레시 토큰 처리
-        if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
-            String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
-            authRedisService.deleteRefreshToken(loginId);
+        if (refreshToken != null) {
+            try {
+                String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
+                authRedisService.deleteRefreshToken(loginId);
+                long remainingTime = jwtTokenProvider.getRemainingTime(refreshToken);
 
-            // 리프레시 토큰도 블랙리스트 추가
-            long remainingTime = jwtTokenProvider.getRemainingTime(refreshToken);
-            if (remainingTime > 0) {
-                authRedisService.addToBlacklist(refreshToken, Duration.ofMillis(remainingTime));
+                // 리프레시 토큰도 블랙리스트 추가
+                if (remainingTime > 0) {
+                    authRedisService.addToBlacklist(refreshToken, Duration.ofMillis(remainingTime));
+                }
+            } catch (Exception e) {
+                log.debug("리프레시 토큰 블랙리스트 처리 스킵: {}", e.getMessage());
             }
         }
 
