@@ -13,6 +13,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -80,7 +81,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 // 동시성 문제로 다른 요청이 먼저 회원을 생성한 경우
                 log.warn("데이터 충돌 발생! 사용자를 다시 조회합니다. loginId: {}", loginId);
                 savedMember = memberRepository.findById(loginId)
-                        .orElseThrow(() -> new OAuth2AuthenticationException("동시 요청 후 사용자 조회 실패"));
+                        .orElseThrow(() -> new OAuth2AuthenticationException(
+                                new OAuth2Error("server_error", "동시 요청 후 사용자 조회 실패", null)
+                        ));
             }
 
             // 냉장고 할당 및 생성
