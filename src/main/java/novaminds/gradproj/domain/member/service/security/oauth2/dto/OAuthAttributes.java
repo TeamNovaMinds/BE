@@ -14,7 +14,6 @@ public class OAuthAttributes {
     private Map<String, Object> attributes;
     private String name;
     private String email;
-    private String picture;
     private String providerId;
 
     @Builder
@@ -23,7 +22,6 @@ public class OAuthAttributes {
         this.attributes = attributes;
         this.name = name;
         this.email = email;
-        this.picture = picture;
         this.providerId = providerId;
     }
 
@@ -42,7 +40,6 @@ public class OAuthAttributes {
         return OAuthAttributes.builder()
                 .name((String) attributes.get("name"))
                 .email((String) attributes.get("email"))
-                .picture((String) attributes.get("picture"))
                 .providerId(String.valueOf(attributes.get("sub")))
                 .attributes(attributes)
                 .build();
@@ -55,7 +52,6 @@ public class OAuthAttributes {
         return OAuthAttributes.builder()
                 .name((String) response.get("name"))
                 .email((String) response.get("email"))
-                .picture((String) response.get("profile_image"))
                 .providerId((String) response.get("id"))
                 .attributes(attributes)
                 .build();
@@ -69,7 +65,6 @@ public class OAuthAttributes {
         return OAuthAttributes.builder()
                 .name((String) profile.get("nickname"))
                 .email((String) kakaoAccount.get("email"))
-                .picture((String) profile.get("profile_image_url"))
                 .providerId(String.valueOf(attributes.get("id")))
                 .attributes(attributes)
                 .build();
@@ -87,7 +82,6 @@ public class OAuthAttributes {
                 .password(UUID.randomUUID().toString()) // OAuth는 패스워드 불필요
                 .providerId(providerId)
                 .role(Role.USER)
-                .profileImage(picture)
                 .socialType(socialType)
                 .isProfileCompleted(false)
                 .build();
