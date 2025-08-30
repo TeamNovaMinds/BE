@@ -18,17 +18,15 @@ import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
 import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieUtil;
-import novaminds.gradproj.domain.member.service.security.jwt.JwtTokenProvider;
-import novaminds.gradproj.global.service.S3Service;
 import novaminds.gradproj.domain.member.web.dto.AuthRequest;
 import novaminds.gradproj.domain.member.web.dto.AuthResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -100,21 +98,18 @@ public class AuthService {
             Member member,
             AuthRequest.AdditionalInfoNicknameRequest request
     ) {
+        try {
+            // 닉네임 업데이트
+            member.updateNickname(request.getNickname());
 
-        // 닉네임 중복 확인 (현재 사용자의 닉네임과 다른 경우에만)
-        if (!member.getNickname().equals(request.getNickname()) &&
-                memberRepository.findByNickname(request.getNickname()).isPresent()
-        ) {
+            // 프로필 이미지 업데이트
+            member.updateProfileImage(request.getProfileImgUrl());
+
+            return AuthResponse.AdditionalInfoResponse.from(member);
+        } catch (DataIntegrityViolationException e) {
+            // DB constraint 위반 시 적절한 예외로 변환 - 여기서 위반할만한 건 닉네임 중복되는 예외밖에 없음
             throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
-
-        // 닉네임 업데이트
-        member.updateNickname(request.getNickname());
-
-        // 프로필 이미지 업데이트
-        member.updateProfileImage(request.getProfileImgUrl());
-
-        return AuthResponse.AdditionalInfoResponse.from(member);
     }
 
     // 추가 정보 입력 (관심 카테고리)
@@ -180,6 +175,14 @@ public class AuthService {
             throw new GeneralException(ErrorStatus.EMAIL_ALREADY_EXISTS);
         }
         return "사용 가능한 이메일입니다.";
+    }
+
+    public String checkNicknameDuplication(String nickname) {
+        // 닉네임 중복 확인
+        if (memberRepository.findByNickname(nickname).isPresent()) {
+            throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
+        }
+        return "사용 가능한 닉네임입니다.";
     }
 
     /**
