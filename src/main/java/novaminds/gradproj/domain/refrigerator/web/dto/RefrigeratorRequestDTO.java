@@ -55,13 +55,4 @@ public class RefrigeratorRequestDTO {
         @NotNull(message = "보관 방식은 필수입니다.")
         private StorageType storageType;
     }
-
-    @Getter
-    @NoArgsConstructor
-    @Schema(description = "삭제할 보관된 재료 ID 리스트")
-    public static class DeleteIngredient {
-
-        @Schema(description = "삭제할 보관된 재료 ID 목록")
-        List<Long> storedItemId;
-    }
 }
