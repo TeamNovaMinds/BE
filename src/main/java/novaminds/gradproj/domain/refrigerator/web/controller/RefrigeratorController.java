@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/refrigerators")
@@ -71,7 +72,7 @@ public class RefrigeratorController {
     @DeleteMapping("/ingredients")
     public ApiResponse<String> removeMyIngredients(
             @CurrentUser Member member,
-            @RequestParam("ids") List<Long> storedItemIds
+            @RequestParam("ids") Set<Long> storedItemIds
     ) {
         refrigeratorCommandService.removeMyIngredients(member, storedItemIds);
         return ApiResponse.onSuccess("재료가 성공적으로 삭제되었습니다.");

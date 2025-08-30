@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -132,7 +133,7 @@ public class RefrigeratorCommandService {
      */
     public void removeMyIngredients(
             Member member,
-            List<Long> storedItemIds
+            Set<Long> storedItemIds
     ) {
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();
