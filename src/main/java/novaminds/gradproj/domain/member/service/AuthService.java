@@ -41,13 +41,11 @@ import java.util.*;
 public class AuthService {
 
     private final EmailService emailService;
-    private final S3Service s3Service;
 
     private final MemberRepository memberRepository;
     private final MemberInterestCategoryRepository memberInterestCategoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
     private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
     private final MemberOnboardingService memberOnboardingService;
@@ -100,39 +98,26 @@ public class AuthService {
     @Transactional
     public AuthResponse.AdditionalInfoResponse completeProfilePart1(
             Member member,
-            AuthRequest.AdditionalInfoNicknameRequest request,
-            MultipartFile profileImage
+            AuthRequest.AdditionalInfoNicknameRequest request
     ) {
 
         // 닉네임 중복 확인 (현재 사용자의 닉네임과 다른 경우에만)
         if (!member.getNickname().equals(request.getNickname()) &&
-                memberRepository.findByNickname(request.getNickname()).isPresent()) {
-            log.error("❌ [추가 정보 입력] 닉네임 중복 - {}", request.getNickname());
+                memberRepository.findByNickname(request.getNickname()).isPresent()
+        ) {
             throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
         }
 
         // 닉네임 업데이트
         member.updateNickname(request.getNickname());
 
-        if (profileImage != null && !profileImage.isEmpty()) {
-            try {
-                if (member.getProfileImage() != null && member.getProfileImage().contains("amazonaws.com")) {
-                    s3Service.deleteFile(member.getProfileImage());
-                }
-
-                String profileImgUrl = s3Service.uploadFile(profileImage, "profile");
-                member.updateProfileImage(profileImgUrl);
-            } catch (Exception e) {
-                log.error("❌ [추가 정보 입력] 프로필 이미지 업로드 실패", e);
-                throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.", e);
-            }
-        }
-
+        // 프로필 이미지 업데이트
+        member.updateProfileImage(request.getProfileImgUrl());
 
         return AuthResponse.AdditionalInfoResponse.from(member);
     }
 
-    // 추가 정보 입력 (닉네임, 프로필 이미지)
+    // 추가 정보 입력 (관심 카테고리)
     @Transactional
     public AuthResponse.AdditionalInfoResponse completeProfilePart2(
             Member member,
@@ -159,7 +144,7 @@ public class AuthService {
     public AuthResponse.LoginResponse login(AuthRequest.LoginRequest request, HttpServletResponse response) {
         // 이메일로 사용자 조회
         Member member = memberRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MACTHED));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MATCHED));
 
         // 인증 처리
         Authentication authentication = authenticationManager.authenticate(
@@ -195,30 +180,6 @@ public class AuthService {
             throw new GeneralException(ErrorStatus.EMAIL_ALREADY_EXISTS);
         }
         return "사용 가능한 이메일입니다.";
-    }
-
-    // 토큰 재발급
-    @Transactional
-    public void refreshToken(String refreshToken, HttpServletResponse response) {
-
-        // 리프레시 토큰 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
-        }
-
-        String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
-        Member member = memberRepository.findById(loginId)
-                .orElseThrow(() -> {
-                    log.error("❌ [토큰 재발급] 사용자 없음 - loginId: {}", loginId);
-                    return new IllegalArgumentException("사용자를 찾을 수 없습니다.");
-                });
-
-        // 새 토큰 생성
-        authenticationHelper.setAuthentication(member);
-        
-        Authentication authentication = authenticationHelper.createAuthentication(member);
-
-        jwtLoginProcessor.issueAndSetTokens(response, authentication);
     }
 
     /**
