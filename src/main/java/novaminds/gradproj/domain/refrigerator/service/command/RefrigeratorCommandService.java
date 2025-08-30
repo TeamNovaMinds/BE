@@ -17,10 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,8 +80,22 @@ public class RefrigeratorCommandService {
 
         // 새로 추가하거나 업데이트할 StoredItem들 저장할 리스트
         List<StoredItem> itemsToSave = new ArrayList<>();
-        
-        for (var ingredientItem : request.getIngredients()) {
+
+        // 요청으로 들어온 Item들의 중복을 제거하는 과정
+        var uniqueItems = request.getIngredients().stream()
+                .collect(Collectors.toMap(
+                        // 1번 인자: Key Mapper (키 생성 규칙)
+                        item -> item.getIngredientId() + "|" + item.getStorageType().name(),
+                        // 2번 인자: Value Mapper (값 생성 규칙)
+                        item -> item,
+                        // 3번 인자: Merge Function (중복 키 처리 규칙) -> 중복 되는 키가 있을 경우 앞의 키와 값을 사용
+                        (a, b) -> a,
+                        // 4번 인자: Map Supplier (어떤 종류의 Map을 만들 것인가) -> 중복은 제거하되, 원래 요청에 들어있던 재료들의 순서는 그대로 유지하기 위해서
+                        LinkedHashMap::new
+                ))
+                .values();
+
+        for (var ingredientItem : uniqueItems) {
             Ingredient ingredient = ingredientMap.get(ingredientItem.getIngredientId());
             if (ingredient == null) {
                 throw new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND);
