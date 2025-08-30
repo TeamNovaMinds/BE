@@ -105,7 +105,7 @@ public class AuthService {
         if (!member.getNickname().equals(request.getNickname()) &&
                 memberRepository.findByNickname(request.getNickname()).isPresent()
         ) {
-            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+            throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
 
         // 닉네임 업데이트
