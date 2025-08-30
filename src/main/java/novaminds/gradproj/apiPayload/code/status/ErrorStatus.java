@@ -69,6 +69,12 @@ public enum ErrorStatus implements BaseErrorCode {
     //재료 관련 에러
     INGREDIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "INGREDIENT401", "재료를 찾을 수 없습니다."),
 
+    //냉장고 관련 에러
+    REFRIGERATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "REFRIGERATOR401", "냉장고를 찾을 수 없습니다."),
+    INVALID_STORAGE_TYPE(HttpStatus.BAD_REQUEST, "REFRIGERATOR402", "유효하지 않은 보관 방식입니다."),
+    STORED_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "REFRIGERATOR403", "냉장고 재료를 찾을 수 없습니다."),
+    STORED_ITEM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REFRIGERATOR404", "해당 냉장고 재료에 대한 접근 권한이 없습니다."),
+
     //레시피 관련 에러
     RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE401", "해당 레시피를 찾을 수 없습니다."),
     RECIPE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "RECIPE402", "레시피 삭제 권한이 없습니다."),
