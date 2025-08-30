@@ -6,6 +6,8 @@ import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.refrigerator.converter.RefrigeratorConverter;
 import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
+import novaminds.gradproj.domain.refrigerator.repository.StoredItemRepository;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +21,9 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class RefrigeratorQueryService {
 
-    public RefrigeratorResponseDTO.IngredientResponse getMyIngredients(Member member) {
+    private final StoredItemRepository storedItemRepository;
+
+    public RefrigeratorResponseDTO.IngredientResponse getMyIngredients(Member member, StorageType storageType) {
 
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();
@@ -27,8 +31,10 @@ public class RefrigeratorQueryService {
             throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
         }
 
-        // 냉장고 속 저장된 재료들 조회
-        List<StoredItem> storedItems = refrigerator.getStoredItems();
+        // 냉장고 속 저장된 재료들 조회, 보관 방법에 따라 조회
+        List<StoredItem> storedItems = storedItemRepository.findStoredItems(
+                refrigerator.getId(), storageType
+        );
 
         // DTO 변환
         return RefrigeratorConverter.toIngredientResponse(storedItems);
