@@ -139,7 +139,7 @@ public class RefrigeratorCommandService {
      */
     public void removeMyIngredients(
             Member member,
-            RefrigeratorRequestDTO.DeleteIngredientRequest request
+            RefrigeratorRequestDTO.DeleteIngredient request
     ) {
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();

@@ -67,7 +67,7 @@ public class RefrigeratorController {
     @DeleteMapping("/ingredients")
     public ApiResponse<String> removeMyIngredients(
             @CurrentUser Member member,
-            @RequestBody RefrigeratorRequestDTO.DeleteIngredientRequest request
+            @RequestBody RefrigeratorRequestDTO.DeleteIngredient request
     ) {
         refrigeratorCommandService.removeMyIngredients(member, request);
         return ApiResponse.onSuccess("재료가 성공적으로 삭제되었습니다.");
