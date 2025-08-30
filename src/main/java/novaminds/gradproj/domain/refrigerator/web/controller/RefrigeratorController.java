@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/refrigerators")
 @RequiredArgsConstructor
@@ -69,9 +71,9 @@ public class RefrigeratorController {
     @DeleteMapping("/ingredients")
     public ApiResponse<String> removeMyIngredients(
             @CurrentUser Member member,
-            @RequestBody RefrigeratorRequestDTO.DeleteIngredient request
+            @RequestParam("ids") List<Long> storedItemIds
     ) {
-        refrigeratorCommandService.removeMyIngredients(member, request);
+        refrigeratorCommandService.removeMyIngredients(member, storedItemIds);
         return ApiResponse.onSuccess("재료가 성공적으로 삭제되었습니다.");
     }
 }

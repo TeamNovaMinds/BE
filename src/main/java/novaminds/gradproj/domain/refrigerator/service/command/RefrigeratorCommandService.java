@@ -128,20 +128,17 @@ public class RefrigeratorCommandService {
      * 냉장고에 보관된 재료 삭제
      *
      * @param member 재료를 삭제할 회원
-     * @param request 삭제할 재료의 ID를 담은 요청
+     * @param storedItemIds 삭제할 재료의 ID 리스트
      */
     public void removeMyIngredients(
             Member member,
-            RefrigeratorRequestDTO.DeleteIngredient request
+            List<Long> storedItemIds
     ) {
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();
         if (refrigerator == null) {
             throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
         }
-
-        // 삭제할 재료 ID
-        List<Long> storedItemIds = request.getStoredItemId();
 
         // 해당 StoredItem들이 실제로 이 냉장고에 속하는지 확인
         List<StoredItem> storedItemsToDelete = storedItemRepository.findAllById(storedItemIds);
