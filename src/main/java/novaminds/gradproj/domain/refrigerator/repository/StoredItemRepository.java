@@ -7,7 +7,7 @@ import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 
 import java.util.Optional;
 
-public interface StoredItemRepository extends JpaRepository<StoredItem, Long> {
+public interface StoredItemRepository extends JpaRepository<StoredItem, Long>, StoredItemRepositoryCustom {
 
     Optional<StoredItem> findByRefrigeratorIdAndIngredientIdAndStorageType(Long refrigeratorId, Long ingredientId, StorageType storageType);
 }
