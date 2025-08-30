@@ -159,10 +159,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (storedToken != null && refreshToken.equals(storedToken)) {
                 // 4. 데이터베이스에서 최신 사용자 정보를 가져오기
                 PrincipalDetails principalDetails = (PrincipalDetails) customUserDetailsService.loadUserByUsername(loginId);
-                Authentication authentication = authenticationHelper.createAuthentication(principalDetails);
 
                 // 5. 최신 정보로 인증 정보 설정
-                authenticationHelper.setAuthentication(principalDetails);
+                Authentication authentication = authenticationHelper.setAuthentication(principalDetails);
 
                 // 6. 액세스 토큰과 리프레쉬 토큰 재발급
                 jwtLoginProcessor.issueAndSetTokens(response, authentication);

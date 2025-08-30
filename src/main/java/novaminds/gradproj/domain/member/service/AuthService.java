@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
+import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtLoginProcessor;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.entity.Role;
@@ -16,7 +17,6 @@ import novaminds.gradproj.domain.member.entity.MemberInterestCategory;
 import novaminds.gradproj.domain.member.repository.MemberInterestCategoryRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
-import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieUtil;
 import novaminds.gradproj.domain.member.web.dto.AuthRequest;
 import novaminds.gradproj.domain.member.web.dto.AuthResponse;
@@ -24,6 +24,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,12 +44,12 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final MemberInterestCategoryRepository memberInterestCategoryRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
     private final MemberOnboardingService memberOnboardingService;
     private final JwtLoginProcessor jwtLoginProcessor;
     private final AuthenticationHelper authenticationHelper;
+    private final AuthenticationManager authenticationManager;
 
     // 랜덤 인증번호 생성용 정적 필드
     private static final SecureRandom secureRandom = new SecureRandom();
@@ -82,9 +83,7 @@ public class AuthService {
 
         memberOnboardingService.setupDefaultResources(savedMember);
 
-        authenticationHelper.setAuthentication(savedMember);
-        
-        Authentication authentication = authenticationHelper.createAuthentication(savedMember);
+        Authentication authentication = authenticationHelper.setAuthentication(savedMember);
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
@@ -146,7 +145,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(member.getLoginId(), request.getPassword())
         );
 
-        authenticationHelper.setAuthentication((PrincipalDetails) authentication.getPrincipal());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
