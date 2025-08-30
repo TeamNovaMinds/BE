@@ -10,6 +10,7 @@ import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
 import novaminds.gradproj.domain.refrigerator.service.command.RefrigeratorCommandService;
 import novaminds.gradproj.domain.refrigerator.service.query.RefrigeratorQueryService;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorRequestDTO;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,7 @@ public class RefrigeratorController {
         return ApiResponse.onSuccess("재료 추가가 완료되었습니다.");
     }
 
-    @Operation(summary = "냉장고 속 재료 조회", description = "사용자의 냉장고에 보관 중인 재료들을 모두 조회합니다.")
+    @Operation(summary = "냉장고 속 재료 조회", description = "사용자의 냉장고에 보관 중인 재료들을 조회합니다. 보관 방법에 따라 조회 재료를 필터링할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER401", description = "사용자를 찾을 수 없습니다."),
@@ -51,9 +52,10 @@ public class RefrigeratorController {
     })
     @GetMapping("/ingredients")
     public ApiResponse<RefrigeratorResponseDTO.IngredientResponse> getMyIngredients(
-            @CurrentUser Member member
+            @CurrentUser Member member,
+            @RequestParam(required = false) StorageType storageType
     ) {
-        var response = refrigeratorQueryService.getMyIngredients(member);
+        var response = refrigeratorQueryService.getMyIngredients(member, storageType);
         return ApiResponse.onSuccess(response);
     }
 
