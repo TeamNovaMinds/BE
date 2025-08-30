@@ -110,15 +110,8 @@ public class RefrigeratorCommandService {
                 // 새로운 유통기한이 더 길면 기존 아이템 삭제 후 새로 추가
                 if (newExpirationDate.isAfter(existingItem.getExpirationDate())) {
 
-                    // 기존 재료 삭제
-                    storedItemRepository.delete(existingItem);
-                    refrigerator.removeStoredItems(existingItem);
-
-                    // 새로운 재료 추가
-                    StoredItem updatedItem = RefrigeratorConverter.toStoredItem(
-                            refrigerator, ingredient, newExpirationDate, ingredientItem.getStorageType()
-                    );
-                    itemsToSave.add(updatedItem);
+                    // 유통 기한을 새로 업데이트
+                    existingItem.updateExpirationDate(newExpirationDate);
                 }
                 // 기존에 재료가 존재하나 유통기한이 더 길거나 같으면 아무것도 하지 않음
             }

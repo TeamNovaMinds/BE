@@ -39,4 +39,8 @@ public class StoredItem extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "storage_type", nullable = false, length = 20)
     private StorageType storageType;
+
+    public void updateExpirationDate(LocalDate newExpirationDate) {
+        this.expirationDate = newExpirationDate;
+    }
 }
