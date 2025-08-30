@@ -23,7 +23,7 @@ import java.io.IOException;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "인증", description = "로그인/회원가입 관련 API")
-public class AuthRestController {
+public class AuthController {
 
     private final AuthService authService;
 
@@ -110,6 +110,16 @@ public class AuthRestController {
             @RequestParam("email") String email
     ) {
         return ApiResponse.onSuccess(authService.checkEmailDuplication(email));
+    }
+
+    @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복확인",
+            description = "닉네임 중복 여부를 확인합니다. " +
+                    "사용 가능한 닉네임이면 isSuccess: true를 반환합니다.")
+    public ApiResponse<String> checkNicknameDuplication(
+            @RequestParam("nickname") String nickname
+    ) {
+        return ApiResponse.onSuccess(authService.checkNicknameDuplication(nickname));
     }
 
     @GetMapping("reset-password")
