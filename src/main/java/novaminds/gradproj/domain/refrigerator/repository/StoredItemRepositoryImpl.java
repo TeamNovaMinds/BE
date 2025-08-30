@@ -20,6 +20,9 @@ public class StoredItemRepositoryImpl implements StoredItemRepositoryCustom {
     @Override
     public List<StoredItem> findStoredItems(Long refrigeratorId, StorageType storageType) {
 
+        // 보관 방법에 따른 동적 조건 추가
+        // null - 모든 재료 조회
+        // 특정 값 - 해당 타입의 재료만 조회
         BooleanExpression storageTypeExp = createStorageTypeExp(storageType);
 
         return queryFactory
