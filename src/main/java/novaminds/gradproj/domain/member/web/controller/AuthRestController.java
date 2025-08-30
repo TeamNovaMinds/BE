@@ -15,7 +15,6 @@ import novaminds.gradproj.domain.member.web.dto.AuthRequest;
 import novaminds.gradproj.domain.member.web.dto.AuthResponse;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -37,7 +36,6 @@ public class AuthRestController {
             @Valid @RequestBody AuthRequest.SignupRequest request,
             HttpServletResponse response
     ) {
-        log.info("🔸 [API 호출] 회원가입 - email: {}", request.getEmail());
         return ApiResponse.onSuccess(authService.signup(request, response));
     }
 
@@ -55,12 +53,9 @@ public class AuthRestController {
                     "JWT 토큰이 필요합니다.")
     public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
             @CurrentUser Member member,
-            @Valid @RequestPart("data") AuthRequest.AdditionalInfoNicknameRequest request,
-            @RequestPart(value = "profileImg", required = false) MultipartFile profileImg
+            @Valid @RequestBody AuthRequest.AdditionalInfoNicknameRequest request
     ) {
-        log.info("🔸 [API 호출] 추가 정보 입력 (이미지 포함) - loginId: {}, 이미지: {}",
-            member, profileImg != null ? profileImg.getOriginalFilename() : "없음");
-        return ApiResponse.onSuccess(authService.completeProfilePart1(member, request, profileImg));
+        return ApiResponse.onSuccess(authService.completeProfilePart1(member, request));
     }
 
     @PostMapping(value = "/additional-info-part2")
@@ -82,7 +77,6 @@ public class AuthRestController {
             @Valid @RequestBody AuthRequest.LoginRequest request,
             HttpServletResponse response
     ) {
-        log.info("🔸 [API 호출] 로그인 - email: {}", request.getEmail());
         return ApiResponse.onSuccess(authService.login(request, response));
     }
 
@@ -91,7 +85,6 @@ public class AuthRestController {
             description = "구글 로그인 페이지로 리다이렉트하는 API\n" +
                     "리다이렉트해야하므로 swagger에서는 테스트 불가!")
     public void googleLogin(HttpServletResponse response) throws IOException {
-        log.info("🔸 [API 호출] 구글 로그인 리다이렉트");
         response.sendRedirect("/oauth2/authorization/google");
     }
 
@@ -100,13 +93,11 @@ public class AuthRestController {
             description = "네이버 로그인 페이지로 리다이렉트하는 API\n" +
                     "리다이렉트해야하므로 swagger에서는 테스트 불가!")
     public void naverLogin(HttpServletResponse response) throws IOException {
-        log.info("🔸 [API 호출] 네이버 로그인 리다이렉트");
         response.sendRedirect("/oauth2/authorization/naver");
     }
 
     @PostMapping("/logout")
     public ApiResponse<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        log.info("🔸 [API 호출] 로그아웃");
         authService.logout(request, response);
         return ApiResponse.onSuccess("로그아웃이 완료되었습니다.");
     }
@@ -118,7 +109,6 @@ public class AuthRestController {
     public ApiResponse<String> checkEmailDuplication(
             @RequestParam("email") String email
     ) {
-        log.info("🔸 [API 호출] 이메일 중복확인 - email: {}", email);
         return ApiResponse.onSuccess(authService.checkEmailDuplication(email));
     }
 
@@ -128,20 +118,6 @@ public class AuthRestController {
     public ApiResponse<String> sendResetPasswordToken (
             @RequestParam("email") String email
     ) {
-        log.info("🔸 [API 호출] 비밀번호 재설정 이메일 전송 - email: {}", email);
         return ApiResponse.onSuccess(authService.sendPasswordResetEmail(email));
-    }
-
-    @PostMapping("/refresh")
-    public ApiResponse<String> refresh(
-            @CookieValue(value = "refreshToken", required = false) String refreshToken,
-            HttpServletResponse response
-    ) {
-        log.info("🔸 [API 호출] 토큰 재발급");
-        if (refreshToken == null) {
-            throw new IllegalArgumentException("리프레시 토큰이 없습니다.");
-        }
-        authService.refreshToken(refreshToken, response);
-        return ApiResponse.onSuccess("토큰이 재발급되었습니다.");
     }
 }
