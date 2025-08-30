@@ -47,7 +47,7 @@ public class AuthController {
                             schema = @Schema(implementation = AuthRequest.AdditionalInfoRequest.class))
             )
     )*/
-    @PostMapping(value = "/additional-info-part1", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/additional-info-part1")
     @Operation(summary = "추가 정보 입력",
             description = "프로필 이미지와 닉네임을 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
