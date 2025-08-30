@@ -87,11 +87,7 @@ public class RefrigeratorConverter {
 
     public static RefrigeratorResponseDTO.StoredIngredientResponse toStoredIngredientResponse(StoredItem storedItem) {
 
-        String storageType = switch (storedItem.getStorageType()) {
-            case ROOM_TEMPERATURE -> "실온";
-            case REFRIGERATOR -> "냉장";
-            case FREEZER -> "냉동";
-        };
+        String storageType = storedItem.getStorageType().getStorageName();
 
         return RefrigeratorResponseDTO.StoredIngredientResponse.builder()
                 .id(storedItem.getId())
