@@ -122,7 +122,7 @@ public class RefrigeratorCommandService {
         List<StoredItem> savedStoredItems = storedItemRepository.saveAll(itemsToSave);
         
         // Refrigerator 엔티티의 storedItems 리스트에 추가 (연관관계 관리)
-        savedStoredItems.forEach(refrigerator::addStoredItems);
+        savedStoredItems.forEach(refrigerator::addStoredItem);
     }
 
     /**
@@ -162,7 +162,7 @@ public class RefrigeratorCommandService {
         storedItemRepository.deleteAll(storedItemsToDelete);
 
         // Refrigerator 엔티티의 storedItems 리스트에서 제거
-        storedItemsToDelete.forEach(refrigerator::removeStoredItems);
+        storedItemsToDelete.forEach(refrigerator::removeStoredItem);
     }
 
 

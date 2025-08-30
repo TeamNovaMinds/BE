@@ -36,11 +36,11 @@ public class Refrigerator extends BaseEntity {
         this.member = member;
     }
 
-    public void addStoredItems(StoredItem storedItem) {
+    public void addStoredItem(StoredItem storedItem) {
         storedItems.add(storedItem);
     }
 
-    public void removeStoredItems(StoredItem storedItem) {
+    public void removeStoredItem(StoredItem storedItem) {
         storedItems.remove(storedItem);
     }
 }
