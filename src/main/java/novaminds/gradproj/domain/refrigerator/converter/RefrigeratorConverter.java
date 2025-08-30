@@ -6,7 +6,14 @@ import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkinImage;
+import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
+import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
+import novaminds.gradproj.domain.ingredient.entity.Ingredient;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RefrigeratorConverter {
@@ -64,6 +71,43 @@ public class RefrigeratorConverter {
         return MemberRefrigeratorSkin.builder()
                 .member(member)
                 .skin(skin)
+                .build();
+    }
+
+    public static RefrigeratorResponseDTO.IngredientResponse toIngredientResponse(List<StoredItem> storedItems) {
+        var storedIngredientResponses = storedItems.stream()
+                .map(RefrigeratorConverter::toStoredIngredientResponse)
+                .toList();
+
+        return RefrigeratorResponseDTO.IngredientResponse.builder()
+                .addedCount(storedItems.size())
+                .storedIngredients(storedIngredientResponses)
+                .build();
+    }
+
+    public static RefrigeratorResponseDTO.StoredIngredientResponse toStoredIngredientResponse(StoredItem storedItem) {
+
+        String storageType = storedItem.getStorageType().getStorageName();
+
+        return RefrigeratorResponseDTO.StoredIngredientResponse.builder()
+                .id(storedItem.getId())
+                .ingredientName(storedItem.getIngredient().getIngredientName())
+                .expirationDate(storedItem.getExpirationDate())
+                .storageType(storageType)
+                .build();
+    }
+
+    public static StoredItem toStoredItem(
+            Refrigerator refrigerator, 
+            Ingredient ingredient, 
+            LocalDate expirationDate, 
+            StorageType storageType
+    ) {
+        return StoredItem.builder()
+                .refrigerator(refrigerator)
+                .ingredient(ingredient)
+                .expirationDate(expirationDate)
+                .storageType(storageType)
                 .build();
     }
 }

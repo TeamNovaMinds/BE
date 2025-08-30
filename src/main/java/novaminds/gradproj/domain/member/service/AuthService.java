@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
+import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtLoginProcessor;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.entity.Role;
@@ -16,19 +17,17 @@ import novaminds.gradproj.domain.member.entity.MemberInterestCategory;
 import novaminds.gradproj.domain.member.repository.MemberInterestCategoryRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
-import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieUtil;
-import novaminds.gradproj.domain.member.service.security.jwt.JwtTokenProvider;
-import novaminds.gradproj.global.service.S3Service;
 import novaminds.gradproj.domain.member.web.dto.AuthRequest;
 import novaminds.gradproj.domain.member.web.dto.AuthResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -41,18 +40,16 @@ import java.util.*;
 public class AuthService {
 
     private final EmailService emailService;
-    private final S3Service s3Service;
 
     private final MemberRepository memberRepository;
     private final MemberInterestCategoryRepository memberInterestCategoryRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
     private final JwtCookieUtil jwtCookieUtil;
     private final AuthRedisService authRedisService;
     private final MemberOnboardingService memberOnboardingService;
     private final JwtLoginProcessor jwtLoginProcessor;
     private final AuthenticationHelper authenticationHelper;
+    private final AuthenticationManager authenticationManager;
 
     // 랜덤 인증번호 생성용 정적 필드
     private static final SecureRandom secureRandom = new SecureRandom();
@@ -86,9 +83,7 @@ public class AuthService {
 
         memberOnboardingService.setupDefaultResources(savedMember);
 
-        authenticationHelper.setAuthentication(savedMember);
-        
-        Authentication authentication = authenticationHelper.createAuthentication(savedMember);
+        Authentication authentication = authenticationHelper.setAuthentication(savedMember);
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
@@ -100,39 +95,23 @@ public class AuthService {
     @Transactional
     public AuthResponse.AdditionalInfoResponse completeProfilePart1(
             Member member,
-            AuthRequest.AdditionalInfoNicknameRequest request,
-            MultipartFile profileImage
+            AuthRequest.AdditionalInfoNicknameRequest request
     ) {
+        try {
+            // 닉네임 업데이트
+            member.updateNickname(request.getNickname());
 
-        // 닉네임 중복 확인 (현재 사용자의 닉네임과 다른 경우에만)
-        if (!member.getNickname().equals(request.getNickname()) &&
-                memberRepository.findByNickname(request.getNickname()).isPresent()) {
-            log.error("❌ [추가 정보 입력] 닉네임 중복 - {}", request.getNickname());
-            throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+            // 프로필 이미지 업데이트
+            member.updateProfileImage(request.getProfileImgUrl());
+
+            return AuthResponse.AdditionalInfoResponse.from(member);
+        } catch (DataIntegrityViolationException e) {
+            // DB constraint 위반 시 적절한 예외로 변환 - 여기서 위반할만한 건 닉네임 중복되는 예외밖에 없음
+            throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
-
-        // 닉네임 업데이트
-        member.updateNickname(request.getNickname());
-
-        if (profileImage != null && !profileImage.isEmpty()) {
-            try {
-                if (member.getProfileImage() != null && member.getProfileImage().contains("amazonaws.com")) {
-                    s3Service.deleteFile(member.getProfileImage());
-                }
-
-                String profileImgUrl = s3Service.uploadFile(profileImage, "profile");
-                member.updateProfileImage(profileImgUrl);
-            } catch (Exception e) {
-                log.error("❌ [추가 정보 입력] 프로필 이미지 업로드 실패", e);
-                throw new RuntimeException("프로필 이미지 업로드에 실패했습니다.", e);
-            }
-        }
-
-
-        return AuthResponse.AdditionalInfoResponse.from(member);
     }
 
-    // 추가 정보 입력 (닉네임, 프로필 이미지)
+    // 추가 정보 입력 (관심 카테고리)
     @Transactional
     public AuthResponse.AdditionalInfoResponse completeProfilePart2(
             Member member,
@@ -159,14 +138,14 @@ public class AuthService {
     public AuthResponse.LoginResponse login(AuthRequest.LoginRequest request, HttpServletResponse response) {
         // 이메일로 사용자 조회
         Member member = memberRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MACTHED));
+                .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MATCHED));
 
         // 인증 처리
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(member.getLoginId(), request.getPassword())
         );
 
-        authenticationHelper.setAuthentication((PrincipalDetails) authentication.getPrincipal());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
@@ -197,28 +176,12 @@ public class AuthService {
         return "사용 가능한 이메일입니다.";
     }
 
-    // 토큰 재발급
-    @Transactional
-    public void refreshToken(String refreshToken, HttpServletResponse response) {
-
-        // 리프레시 토큰 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
+    public String checkNicknameDuplication(String nickname) {
+        // 닉네임 중복 확인
+        if (memberRepository.findByNickname(nickname).isPresent()) {
+            throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
-
-        String loginId = jwtTokenProvider.getLoginIdFromToken(refreshToken);
-        Member member = memberRepository.findById(loginId)
-                .orElseThrow(() -> {
-                    log.error("❌ [토큰 재발급] 사용자 없음 - loginId: {}", loginId);
-                    return new IllegalArgumentException("사용자를 찾을 수 없습니다.");
-                });
-
-        // 새 토큰 생성
-        authenticationHelper.setAuthentication(member);
-        
-        Authentication authentication = authenticationHelper.createAuthentication(member);
-
-        jwtLoginProcessor.issueAndSetTokens(response, authentication);
+        return "사용 가능한 닉네임입니다.";
     }
 
     /**

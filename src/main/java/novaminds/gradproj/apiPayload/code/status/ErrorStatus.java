@@ -32,9 +32,10 @@ public enum ErrorStatus implements BaseErrorCode {
     PROFILE_NOT_COMPLETED(HttpStatus.FORBIDDEN, "PROFILE403", "프로필 정보를 먼저 완성해주세요."),
 
     NICKNAME_NOT_EXIST(HttpStatus.BAD_REQUEST, "MEMBER400", "닉네임은 필수 입니다."),
-    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER401", "사용자를 찾을 수 없습니다."),
-    MEMBER_NOT_ADMIN(HttpStatus.FORBIDDEN, "MEMBER402", "관리자 권한이 필요합니다."),
-    ALREADY_LOGGED_OUT(HttpStatus.BAD_REQUEST, "MEMBER403", "이미 로그아웃된 사용자입니다."),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "MEMBER401", "이미 동일한 닉네임이 존재합니다."),
+    MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER402", "사용자를 찾을 수 없습니다."),
+    MEMBER_NOT_ADMIN(HttpStatus.FORBIDDEN, "MEMBER403", "관리자 권한이 필요합니다."),
+    ALREADY_LOGGED_OUT(HttpStatus.BAD_REQUEST, "MEMBER404", "이미 로그아웃된 사용자입니다."),
     WITHDRAWAL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "MEMBER501", "계정 탈퇴 처리 중 오류가 발생했습니다."),
 
     // 비밀번호 관련 에러 추가
@@ -68,6 +69,11 @@ public enum ErrorStatus implements BaseErrorCode {
 
     //재료 관련 에러
     INGREDIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "INGREDIENT401", "재료를 찾을 수 없습니다."),
+
+    //냉장고 관련 에러
+    REFRIGERATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "REFRIGERATOR401", "냉장고를 찾을 수 없습니다."),
+    STORED_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "REFRIGERATOR403", "냉장고 재료를 찾을 수 없습니다."),
+    STORED_ITEM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REFRIGERATOR404", "해당 냉장고 재료에 대한 접근 권한이 없습니다."),
 
     //레시피 관련 에러
     RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE401", "해당 레시피를 찾을 수 없습니다."),
