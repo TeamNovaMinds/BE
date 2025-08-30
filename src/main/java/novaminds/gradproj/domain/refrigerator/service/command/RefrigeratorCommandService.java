@@ -112,7 +112,7 @@ public class RefrigeratorCommandService {
 
                     // 기존 재료 삭제
                     storedItemRepository.delete(existingItem);
-                    refrigerator.removestoredItems(existingItem);
+                    refrigerator.removeStoredItems(existingItem);
 
                     // 새로운 재료 추가
                     StoredItem updatedItem = RefrigeratorConverter.toStoredItem(
@@ -128,7 +128,7 @@ public class RefrigeratorCommandService {
         List<StoredItem> savedStoredItems = storedItemRepository.saveAll(itemsToSave);
         
         // Refrigerator 엔티티의 storedItems 리스트에 추가 (연관관계 관리)
-        savedStoredItems.forEach(refrigerator::addstoredItems);
+        savedStoredItems.forEach(refrigerator::addStoredItems);
     }
 
     /**
@@ -171,7 +171,7 @@ public class RefrigeratorCommandService {
         storedItemRepository.deleteAll(storedItemsToDelete);
 
         // Refrigerator 엔티티의 storedItems 리스트에서 제거
-        storedItemsToDelete.forEach(refrigerator::removestoredItems);
+        storedItemsToDelete.forEach(refrigerator::removeStoredItems);
     }
 
 
