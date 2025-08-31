@@ -175,7 +175,7 @@ public class RecipeCommandService {
                 .toList();
 
         // 4. RecipeImage를 새 RecipeImage로 교체
-        // updateImages() 메소드 내부 로직에 의해 기존의 이미지들은 고아객체가 되어서 삭제된다.
+        // updateImages() 메소드 내부 로직에 의해 기존의 이미지들은 고아객체가 되어서 삭제됨
         recipe.updateImages(newImages);
     }
 
