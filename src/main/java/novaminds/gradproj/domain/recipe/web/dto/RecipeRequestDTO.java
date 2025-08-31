@@ -24,6 +24,8 @@ public class RecipeRequestDTO {
 		@Size(max=100, message = "레시피 제목은 최대 100자 입니다.")
 		private String title;
 
+        private List<String> recipeImages;
+
 		private String description;
 
 		@NotNull(message = "레시피 카테고리는 필수입니다.")
@@ -63,7 +65,7 @@ public class RecipeRequestDTO {
 	public static class RecipeOrderDTO{
 		private Integer order;
 		private String description;
-		private Integer imageIndex;
+		private String stepImage;
 	}
 
 	@Builder
