@@ -64,6 +64,7 @@ public enum ErrorStatus implements BaseErrorCode {
     IMAGE_FORMAT_BAD_REQUEST(HttpStatus.BAD_REQUEST,"IMAGE400","이미지 파일만 업로드할 수 있습니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE501", "이미지 업로드에 실패했습니다. 다시 시도해주세요."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "지원하지 않는 파일 형식입니다. (이미지 파일만 허용됩니다.)"),
+    INVALID_S3_URL(HttpStatus.BAD_REQUEST, "S3_401", "유효하지 않은 S3 URL입니다."),
     S3_FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_500", "S3 파일 삭제에 실패했습니다."),
     S3_PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_501", "Presigned URL 생성에 실패했습니다."),
 
