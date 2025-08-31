@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.apiPayload.ApiResponse;
-import novaminds.gradproj.global.s3.service.PresignedS3Service;
+import novaminds.gradproj.global.s3.service.S3Service;
 import novaminds.gradproj.global.s3.web.dto.S3RequestDTO;
 import novaminds.gradproj.global.s3.web.dto.S3ResponseDTO;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "S3 Image", description = "S3에 저장할 이미지에 대해서 presigned URL을 발급하는 API")
 public class S3Controller {
 
-    private final PresignedS3Service s3Service;
+    private final S3Service s3Service;
 
     @Operation(summary = "이미지용 presigned URL 발급 API", description = "이미지 업로드를 위한 S3 presigned URL을 발급합니다.")
     @ApiResponses({
