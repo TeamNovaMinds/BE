@@ -6,26 +6,20 @@ import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 import novaminds.gradproj.domain.ingredient.repository.IngredientRepository;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.recipe.entity.*;
-import novaminds.gradproj.domain.recipe.repository.RecipeImageRepository;
 import novaminds.gradproj.domain.recipe.repository.RecipeLikeRepository;
 import novaminds.gradproj.domain.recipe.repository.RecipeRepository;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeRequestDTO;
-import novaminds.gradproj.domain.recipe.web.dto.RecipeResponseDTO;
 import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
 
-import static novaminds.gradproj.global.s3.service.PresignedS3Service.validateS3Urls;
+import static novaminds.gradproj.global.s3.service.S3Service.validateS3Urls;
 
-import novaminds.gradproj.global.service.S3Service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,10 +30,14 @@ public class RecipeCommandService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeLikeRepository recipeLikeRepository;
-    private final RecipeImageRepository recipeImageRepository;
-    private final S3Service s3Service;
 
-    //레시피 등록
+    /**
+     * 새로운 레시피를 생성하고 데이터베이스에 저장
+     *
+     * @param member 레시피 작성하는 회원
+     * @param request 레시피 생성에 필요한 정보
+     * @return 생성된 레시피의 ID
+     */
     public Long createRecipe(
             Member member,
             RecipeRequestDTO.CreateRecipeDTO request
@@ -58,7 +56,6 @@ public class RecipeCommandService {
                 .map(imageUrl -> RecipeConverter.toRecipeImage(imageUrl, newRecipe, imageUrls.indexOf(imageUrl)))
                 .forEach(newRecipe::addRecipeImage);
 
-
         // 5. RecipeOrder 엔티티 생성 및 추가
         request.getOrders().stream()
                 .map(dto -> RecipeConverter.toRecipeOrder(dto, newRecipe))
@@ -69,155 +66,214 @@ public class RecipeCommandService {
                 .map(RecipeRequestDTO.RecipeIngredientDTO::getIngredientId)
                 .toList();
 
-        // 7. 배치 조회
+        // 7. ID 리스트들을 통해 한번에 배치 조회
+        Map<Long, Ingredient> ingredientMap = validateAndGetIngredients(ingredientIds);
+
+        // 8. RecipeIngredient 엔티티 생성 및 추가
+        request.getIngredients().stream()
+                .map(dto -> RecipeConverter.toRecipeIngredient(dto, newRecipe, ingredientMap.get(dto.getIngredientId())))
+                .forEach(newRecipe::addRecipeIngredient);
+
+        // 9. Recipe 엔티티 저장
+        Recipe savedRecipe = recipeRepository.save(newRecipe);
+
+        return savedRecipe.getId();
+    }
+
+    /**
+     * 레시피 정보를 수정
+     *
+     * @param recipeId 수정할 레시피의 ID
+     * @param memberId 레시피 수정하는 회원의 ID
+     * @param request 수정할 레시피 정보
+     * @return 수정된 레시피의 ID
+     */
+    public Long updateRecipe(
+            Long recipeId,
+            String memberId,
+            RecipeRequestDTO.CreateRecipeDTO request
+    ) {
+        // 1. 수정할 레시피 조회
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+        // 2. 레시피의 수정 권한 확인
+        if (!recipe.getAuthor().getLoginId().equals(memberId)) {
+            throw new GeneralException(ErrorStatus.RECIPE_NOT_AUTHORIZED);
+        }
+
+        // 3. 레시피 기본 정보(제목, 설명, 카테고리) 업데이트
+        recipe.updateRecipe(request);
+
+        // 4. 레시피와 연관된 엔티티들(이미지, 재료, 순서) 업데이트
+        updateRecipeImages(recipe, request.getRecipeImages());
+        updateRecipeIngredients(recipe, request.getIngredients());
+        updateRecipeOrders(recipe, request.getOrders());
+
+        return recipeId;
+    }
+
+    /**
+     * 레시피를 삭제
+     *
+     * @param recipeId 삭제할 레시피의 ID
+     * @param member 레시피 삭제하는 회원의 ID
+     */
+    public void deleteRecipe(Long recipeId, Member member){
+        // 1. 삭제할 레시피 조회
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+        // 2. 레시피 삭제 권한 확인
+        if(!recipe.getAuthor().getLoginId().equals(member.getLoginId())){
+            throw new GeneralException(ErrorStatus.RECIPE_NOT_AUTHORIZED);
+        }
+
+        // 3. 레시피를 삭제합니다.
+        recipeRepository.delete(recipe);
+    }
+
+    //좋아요 추가 및 취소.
+    @Transactional
+    public boolean toggleRecipeLike(Long recipeId, Member member) {
+        // 1. 레시피를 조회합니다. 없으면 예외가 발생합니다.
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+        // 2. 사용자의 좋아요 존재 여부를 확인하고, 결과에 따라 분기 처리합니다.
+        return recipeLikeRepository.findByMemberLoginIdAndRecipeId(member.getLoginId(), recipeId)
+                .map(recipeLike -> {
+                    // 3-1. 좋아요가 이미 존재하면(map 실행), 삭제 로직을 호출하고 false를 반환합니다.
+                    deleteRecipeLike(recipe, recipeLike);
+                    return false;
+                })
+                .orElseGet(() -> {
+                    // 3-2. 좋아요가 존재하지 않으면(orElseGet 실행), 생성 로직을 호출하고 true를 반환합니다.
+                    createAndSaveRecipeLike(recipe, member);
+                    return true;
+                });
+    }
+
+    /**
+     * 레시피 이미지들을 새 이미지로 교체
+     * 기존 목록을 다 지우고 새 목록으로 전체 교체하는 방식 사용
+     *
+     * @param recipe 이미지를 수정할 Recipe 엔티티
+     * @param imageUrls 새로운 이미지 URL 목록
+     */
+    private void updateRecipeImages(Recipe recipe, List<String> imageUrls) {
+
+        // 1. 업데이트할 RecipeImage URL 목록이 null이면 바로 종료
+        if (imageUrls == null) return;
+
+        // 2. S3 URL 유효성 검증
+        validateS3Urls(imageUrls);
+
+        // 3. RecipeImage List로 변환
+        List<RecipeImage> newImages = imageUrls.stream()
+                .map(url -> RecipeConverter.toRecipeImage(url, recipe, imageUrls.indexOf(url)))
+                .toList();
+
+        // 4. RecipeImage를 새 RecipeImage로 교체
+        // updateImages() 메소드 내부 로직에 의해 기존의 이미지들은 고아객체가 되어서 삭제된다.
+        recipe.updateImages(newImages);
+    }
+
+    /**
+     * 레시피 재료 목록을 새로운 재료로 교체
+     * 기존 목록을 다 지우고 새 목록으로 전체 교체하는 방식 사용
+     *
+     * @param recipe 재료를 수정할 Recipe 엔티티
+     * @param ingredientDTOs 새로운 재료 목록
+     */
+    private void updateRecipeIngredients(Recipe recipe, List<RecipeRequestDTO.RecipeIngredientDTO> ingredientDTOs) {
+
+        // 1. 업데이트할 Ingredient 목록이 null이면 바로 종료
+        if (ingredientDTOs == null) return;
+
+        // 2. Ingredient ID List 추출
+        List<Long> ingredientIds = ingredientDTOs.stream()
+                .map(RecipeRequestDTO.RecipeIngredientDTO::getIngredientId)
+                .toList();
+
+        // 3. ID 리스트들을 통해 한번에 배치 조회
+        Map<Long, Ingredient> ingredientMap = validateAndGetIngredients(ingredientIds);
+
+        // 4. RecipeIngredient List로 변환
+        List<RecipeIngredient> newIngredients = ingredientDTOs.stream()
+                .map(dto -> RecipeConverter.toRecipeIngredient(dto, recipe, ingredientMap.get(dto.getIngredientId())))
+                .toList();
+
+        // 5. RecipeIngredient를 새 RecipeIngredient로 교체
+        recipe.updateIngredients(newIngredients);
+    }
+
+    /**
+     * 레시피 조리 순서 목록을 새로운 목록으로 교체
+     * 기존 목록을 다 지우고 새 목록으로 전체 교체하는 방식 사용
+     *
+     * @param recipe 조리 순서를 수정할 Recipe 엔티티
+     * @param orderDTOs 새로운 조리 순서 정보 DTO 목록
+     */
+    private void updateRecipeOrders(Recipe recipe, List<RecipeRequestDTO.RecipeOrderDTO> orderDTOs) {
+
+        // 1. 업데이트할 RecipeOrder 목록이 null이면 바로 종료
+        if (orderDTOs == null) return;
+
+        // 2. RecipeOrder List로 변환
+        List<RecipeOrder> newOrders = orderDTOs.stream()
+                .map(dto -> RecipeConverter.toRecipeOrder(dto, recipe))
+                .toList();
+
+        // RecipeOrder를 새 RecipeOrder로 교체
+        recipe.updateOrders(newOrders);
+    }
+
+    /**
+     * 재료 ID 목록으로 재료들을 한번에 배치 조회
+     * 재료 ID 가 실제로 존재하는지 확인하고, Ingredient 맵을 반환
+     *
+     * @param ingredientIds 조회할 재료 ID 목록
+     * @return 재료 ID를 키로 하는 Ingredient 맵
+     */
+    private Map<Long, Ingredient> validateAndGetIngredients(List<Long> ingredientIds) {
+
+        // 1. Ingredient ID 목록을 통해 한번에 배치 조회
         Map<Long, Ingredient> ingredientMap = ingredientRepository.findAllById(ingredientIds).stream()
                 .collect(Collectors.toMap(Ingredient::getId, ingredient -> ingredient));
 
-        // 8. 존재하지 않는 ingredientId 검증
+        // 2. 요청에 담겨온 모든 ID 목록이 전부 조회되었는지 검증
+        // 만약 존재하지 않는 ID가 요청되었으면 예외 발생
         ingredientIds.forEach(id -> {
             if (!ingredientMap.containsKey(id)) {
                 throw new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND);
             }
         });
 
-        // 9. RecipeIngredient 엔티티 생성 및 추가
-        request.getIngredients().stream()
-                .map(dto -> RecipeConverter.toRecipeIngredient(dto, newRecipe, ingredientMap.get(dto.getIngredientId())))
-                .forEach(newRecipe::addRecipeIngredient);
-
-        // 10. Recipe 엔티티 저장
-        Recipe savedRecipe = recipeRepository.save(newRecipe);
-
-        return savedRecipe.getId();
+        return ingredientMap;
     }
 
-    //레시피 수정
-    public RecipeResponseDTO.RecipeResultDTO updateRecipe(Long recipeId, Member member, RecipeRequestDTO.RecipeUpdateDTO request,
-                                                          List<MultipartFile> newRecipeImages, List<MultipartFile> newStepImages) {
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+    /**
+     * RecipeLike 엔티티를 삭제하고 Recipe의 좋아요 개수를 감소시킵니다.
+     * @param recipe 좋아요가 취소될 레시피
+     * @param recipeLike 삭제할 RecipeLike 엔티티
+     */
+    private void deleteRecipeLike(Recipe recipe, RecipeLike recipeLike) {
+        recipeLikeRepository.delete(recipeLike);
+        recipe.removeRecipeLike(recipeLike); // 좋아요 수 및 작성자 포인트 감소 로직 호출
+    }
 
-        if (!recipe.getAuthor().getLoginId().equals(member.getLoginId())) {
-            throw new GeneralException(ErrorStatus.MEMBER_NOT_FOUND);
-        }
-
-        //기본 정보 업뎃
-        if (request.getTitle() != null)
-            recipe.updateTitle(request.getTitle());
-        if (request.getDescription() != null)
-            recipe.updateDescription(request.getDescription());
-        if (request.getRecipeCategory() != null)
-            recipe.updateRecipeCategory(request.getRecipeCategory());
-        if (request.getCookingTimeMinutes() != null)
-            recipe.updateCookingTimeMinutes(request.getCookingTimeMinutes());
-        if (request.getDifficulty() != null)
-            recipe.updateDifficulty(request.getDifficulty());
-        if (request.getServings() != null)
-            recipe.updateServings(request.getServings());
-
-        //완성 사진 업데이트
-        if (request.getDeletedRecipeImages() != null && !request.getDeletedRecipeImages().isEmpty()) {
-            recipeImageRepository.deleteAllById(request.getDeletedRecipeImages());
-        }
-        if (newRecipeImages != null && !newRecipeImages.isEmpty()) {
-            List<String> recipeImageUrls = newRecipeImages.stream()
-                    .map(image -> s3Service.uploadFile(image, "recipe-images"))
-                    .toList();
-            for (int i = 0; i < recipeImageUrls.size(); i++) {
-                RecipeImage recipeImage = RecipeImage.builder()
-                        .recipe(recipe)
-                        .imageUrl(recipeImageUrls.get(i))
-                        .imageOrder(recipe.getRecipeImages().size() + i) // 기존 이미지 순서 뒤에 붙임
-                        .isMain(false) // 메인 이미지 변경 로직은 별도 구현 필요
-                        .build();
-                recipe.getRecipeImages().add(recipeImage);
-            }
-        }
-
-        //order 업데이트 (기존 것 모두 삭제 후, 요청받은 것으로 새로 추가)
-        recipe.getRecipeIngredients().clear();
-        recipe.getRecipeOrders().clear();
-
-        List<String> stepImageUrls = (newStepImages != null && !newStepImages.isEmpty())
-                ? newStepImages.stream()
-                .map(image -> s3Service.uploadFile(image, "recipe-step-images"))
-                .toList()
-                : Collections.emptyList();
-
-        if (request.getIngredients() != null) {
-            List<RecipeIngredient> recipeIngredients = request.getIngredients().stream().map(dto -> {
-                Ingredient ingredient = ingredientRepository.findById(dto.getIngredientId())
-                        .orElseThrow(() -> new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND));
-                return RecipeIngredient.builder().recipe(recipe).ingredient(ingredient).amount(dto.getAmount()).build();
-            }).toList();
-            recipe.getRecipeIngredients().addAll(recipeIngredients);
-        }
-
-        if (request.getOrders() != null) {
-            List<RecipeOrder> recipeOrders = request.getOrders().stream().map(dto -> {
-                String imageUrl = null;
-//                if (dto.getImageIndex() != null && dto.getImageIndex() < stepImageUrls.size()) {
-//                    imageUrl = stepImageUrls.get(dto.getImageIndex());
-//                } TODO : 로직 수정 예정
-                return RecipeOrder.builder()
-                        .recipe(recipe)
-                        .order(dto.getOrder())
-                        .description(dto.getDescription())
-                        .ImgUrl(imageUrl)
-                        .build();
-            }).toList();
-            recipe.getRecipeOrders().addAll(recipeOrders);
-        }
-
-        return RecipeResponseDTO.RecipeResultDTO.builder()
-                .recipeId(recipeId)
+    /**
+     * 새로운 RecipeLike 엔티티를 생성 및 저장하고 Recipe의 좋아요 개수를 증가시킵니다.
+     * @param recipe 좋아요가 추가될 레시피
+     * @param member 좋아요를 누른 회원
+     */
+    private void createAndSaveRecipeLike(Recipe recipe, Member member) {
+        RecipeLike newLike = RecipeLike.builder()
+                .member(member)
+                .recipe(recipe)
                 .build();
-    }
-
-    //레시피 삭제
-    public void deleteRecipe(Long recipeId, Member member){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
-
-        if(!recipe.getAuthor().getLoginId().equals(member.getLoginId())){
-            throw new GeneralException(ErrorStatus.RECIPE_DELETE_FORBIDDEN);
-        }
-
-        recipeRepository.delete(recipe);
-    }
-
-    //좋아요 추가 및 취소.
-    @Transactional
-    public RecipeResponseDTO.LikeDTO RecipeLike(Long recipeId, Member member){
-
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
-
-        Optional<RecipeLike> existLike = recipeLikeRepository.findByMemberLoginIdAndRecipeId(member.getLoginId(), recipeId);
-
-        //front에서 총 좋아요 개수와 함께 반환해주는 값
-        //지금 응답이 좋아요 추가인지 취소인지 보기 쉽게 판단 도와주려고.
-        boolean isLiked;
-
-        if (existLike.isPresent()){
-            RecipeLike recipeLike = existLike.get();
-            recipe.removeRecipeLike(recipeLike);
-            recipeLikeRepository.delete(recipeLike);
-            isLiked = false;
-        }else {
-            RecipeLike newLike = RecipeLike.builder()
-                    .member(member)
-                    .recipe(recipe)
-                    .build();
-            recipe.addRecipeLike(newLike);
-            recipeLikeRepository.save(newLike);
-            isLiked = true;
-        }
-
-        return RecipeResponseDTO.LikeDTO.builder()
-                .recipeId(recipe.getId())
-                .isLiked(isLiked)
-                .likeCount(recipe.getRecipeLikes().size())
-                .build();
+        recipeLikeRepository.save(newLike);
+        recipe.addRecipeLike(newLike); // 좋아요 수 및 작성자 포인트 증가 로직 호출
     }
 }
