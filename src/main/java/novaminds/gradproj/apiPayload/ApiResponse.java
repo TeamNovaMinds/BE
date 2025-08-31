@@ -32,6 +32,9 @@ public class ApiResponse<T> {
             return new ApiResponse<>(true, code.getReasonHttpStatus().getCode() , code.getReasonHttpStatus().getMessage(), result);
     }
 
+    public static <T> ApiResponse<T> onSuccess(String message, T data) {
+        return new ApiResponse<>(true, SuccessStatus._OK.getCode(), message, data);
+    }
 
     // 실패한 경우 응답 생성
     public static <T> ApiResponse<T> onFailure(String code, T data) {
