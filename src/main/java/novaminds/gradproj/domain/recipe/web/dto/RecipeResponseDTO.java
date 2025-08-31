@@ -18,14 +18,6 @@ import novaminds.gradproj.domain.member.entity.Member;
 
 public class RecipeResponseDTO {
 
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class RecipeResultDTO {
-		private Long recipeId;
-	}
-
 	//레시피 상세보기 dto
 	@Builder
 	@Getter
@@ -113,7 +105,7 @@ public class RecipeResponseDTO {
 			return OrderDTO.builder()
 				.order(recipeOrder.getOrder())
 				.description(recipeOrder.getDescription())
-				.imageUrl(recipeOrder.getImgUrl())
+				.imageUrl(recipeOrder.getImageUrl())
 				.build();
 		}
 	}
