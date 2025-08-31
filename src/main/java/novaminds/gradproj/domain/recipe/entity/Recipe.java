@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.recipe.web.dto.RecipeRequestDTO;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.member.entity.Member;
 
@@ -112,27 +113,27 @@ public class Recipe extends BaseEntity {
     }
 
     //레시피 업데이트 관련 메서드들
-    public void updateTitle(String title) {
-        this.title = title;
+    public void updateRecipe(RecipeRequestDTO.CreateRecipeDTO request) {
+        this.title = request.getTitle();
+        this.description = request.getDescription();
+        this.recipeCategory = request.getRecipeCategory();
+        this.cookingTimeMinutes = request.getCookingTimeMinutes();
+        this.difficulty = request.getDifficulty();
+        this.servings = request.getServings();
     }
 
-    public void updateDescription(String description) {
-        this.description = description;
+    public void updateImages(List<RecipeImage> newImages) {
+        this.recipeImages.clear();
+        this.recipeImages.addAll(newImages);
     }
 
-    public void updateRecipeCategory(RecipeCategory recipeCategory) {
-        this.recipeCategory = recipeCategory;
+    public void updateIngredients(List<RecipeIngredient> newIngredients) {
+        this.recipeIngredients.clear();
+        this.recipeIngredients.addAll(newIngredients);
     }
 
-    public void updateCookingTimeMinutes(Integer cookingTimeMinutes) {
-        this.cookingTimeMinutes = cookingTimeMinutes;
-    }
-
-    public void updateDifficulty(Difficulty difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public void updateServings(Integer servings) {
-        this.servings = servings;
+    public void updateOrders(List<RecipeOrder> newOrders) {
+        this.recipeOrders.clear();
+        this.recipeOrders.addAll(newOrders);
     }
 }
