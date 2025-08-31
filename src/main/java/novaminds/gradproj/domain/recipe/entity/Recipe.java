@@ -75,6 +75,18 @@ public class Recipe extends BaseEntity {
     @Builder.Default
     private List<RecipeOrder> recipeOrders = new ArrayList<>();
 
+    public void addRecipeImage(RecipeImage image) {
+        this.recipeImages.add(image);
+    }
+
+    public void addRecipeOrder(RecipeOrder order) {
+        this.recipeOrders.add(order);
+    }
+
+    public void addRecipeIngredient(RecipeIngredient ingredient) {
+        this.recipeIngredients.add(ingredient);
+    }
+
     private void increaseLikes() {
         this.likes++;
     }
