@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -105,6 +106,42 @@ public class PresignedS3Service {
         // 만약 key 뒤에 쿼리 스트링이 있을 경우 제거
         int queryIndex = key.indexOf('?');
         return queryIndex > 0 ? key.substring(0, queryIndex) : key;
+    }
+
+    // S3 URL 목록 검증 (static)
+    public static void validateS3Urls(List<String> urls) {
+        if (urls != null) {
+            urls.forEach(PresignedS3Service::validateS3Url);
+        }
+    }
+
+    // 단일 S3 URL 검증 (static)
+    public static void validateS3Url(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
+        }
+
+        // S3에 저장된 것이 맞는지 확인
+        if (!url.contains("amazonaws.com/") || !url.startsWith("https://")) {
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
+        }
+
+        // amazonaws.com/ 기준으로 분할하여 key 추출 검증
+        String[] parts = url.split("amazonaws.com/");
+        if (parts.length <= 1) {
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
+        }
+
+        String key = parts[1];
+        
+        // 만약 key 뒤에 쿼리 스트링이 있을 경우 제거
+        int queryIndex = key.indexOf('?');
+        key = queryIndex > 0 ? key.substring(0, queryIndex) : key;
+        
+        // key가 비어있으면 잘못된 URL
+        if (key.trim().isEmpty()) {
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
+        }
     }
 
     private String generatePresignedUrl(String key, String contentType) {
