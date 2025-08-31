@@ -78,6 +78,7 @@ public enum ErrorStatus implements BaseErrorCode {
 
     //레시피 관련 에러
     RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE401", "해당 레시피를 찾을 수 없습니다."),
+    RECIPE_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "BOOK_STORY_402", "레시피 수정/삭제 권한이 없습니다."),
     RECIPE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "RECIPE402", "레시피 삭제 권한이 없습니다."),
     ;
 
