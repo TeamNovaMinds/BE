@@ -22,7 +22,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PresignedS3Service {
+public class S3Service {
 
     private final S3Presigner s3Presigner;
     private final S3Client s3Client;
@@ -63,29 +63,17 @@ public class PresignedS3Service {
     }
 
     // 파일 삭제 - 이건 우리가 직접 수행
-    public void deleteImage(String key) {
-        // key가 null이거나 비어있으면 예외 발생
-        if (key == null || key.trim().isEmpty()) {
-            throw new GeneralException(ErrorStatus.S3_FILE_DELETE_FAILED);
-        }
-
-        try {
-            // S3에 파일 삭제 요청 객체 생성
-            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                    .bucket(s3Properties.getS3().getBucket())
-                    .key(key)
-                    .build();
-
-            // S3에 파일 삭제 요청
-            s3Client.deleteObject(deleteRequest);
-        } catch (Exception e) {
-            log.error("S3 파일 삭제 실패: {}", key, e);
-            throw new GeneralException(ErrorStatus.S3_FILE_DELETE_FAILED, e.getMessage());
+    public void deleteImageByUrl(String url) {
+        String key = extractKeyFromUrl(url);
+        if (key != null) {
+            deleteImage(key);
+        } else {
+            log.warn("S3에서 키 추출 실패 {}", url);
         }
     }
 
     // url에서 key 추출
-    public String extractKeyFromUrl(String url) {
+    private String extractKeyFromUrl(String url) {
         if (url == null || url.trim().isEmpty()) {
             return null;
         }
@@ -108,10 +96,32 @@ public class PresignedS3Service {
         return queryIndex > 0 ? key.substring(0, queryIndex) : key;
     }
 
+    // 키를 통한 이미지 삭제
+    private void deleteImage(String key) {
+        // key가 null이거나 비어있으면 예외 발생
+        if (key == null || key.trim().isEmpty()) {
+            throw new GeneralException(ErrorStatus.S3_FILE_DELETE_FAILED);
+        }
+
+        try {
+            // S3에 파일 삭제 요청 객체 생성
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(s3Properties.getS3().getBucket())
+                    .key(key)
+                    .build();
+
+            // S3에 파일 삭제 요청
+            s3Client.deleteObject(deleteRequest);
+        } catch (Exception e) {
+            log.error("S3 파일 삭제 실패: {}", key, e);
+            throw new GeneralException(ErrorStatus.S3_FILE_DELETE_FAILED, e.getMessage());
+        }
+    }
+
     // S3 URL 목록 검증 (static)
     public static void validateS3Urls(List<String> urls) {
         if (urls != null) {
-            urls.forEach(PresignedS3Service::validateS3Url);
+            urls.forEach(S3Service::validateS3Url);
         }
     }
 
