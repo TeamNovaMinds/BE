@@ -2,20 +2,15 @@ package novaminds.gradproj.domain.recipe.web.controller;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import novaminds.gradproj.domain.recipe.service.command.RecipeCommandService;
+import novaminds.gradproj.domain.recipe.service.query.RecipeQueryService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,25 +22,26 @@ import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeRequestDTO;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeResponseDTO;
-import novaminds.gradproj.domain.recipe.service.RecipeService;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipe")
 public class RecipeController {
 
-	private final RecipeService recipeService;
+    private final RecipeQueryService recipeQueryService;
+    private final RecipeCommandService recipeCommandService;
 
 	//레시피 등록
-	@PostMapping(value = "/create",
-				 consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-	public ApiResponse<RecipeResponseDTO.RecipeResultDTO> createRecipe(
-			@CurrentUser Member author,
-			@Valid @RequestPart("data")RecipeRequestDTO.CreateRecipeDTO request,
-			@RequestPart(value = "recipeImages", required = false)List<MultipartFile> recipeImages,
-			@RequestPart(value = "stepImages", required = false)List<MultipartFile> stepImages
+    @Operation(summary = "레시피 등록", description = "레시피를 등록합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
+    })
+	@PostMapping("/create")
+	public ApiResponse<Long> createRecipe(
+			@CurrentUser Member member,
+			@Valid @RequestBody RecipeRequestDTO.CreateRecipeDTO request
 	){
-		RecipeResponseDTO.RecipeResultDTO result = recipeService.createRecipe(author, request, recipeImages, stepImages);
+		Long result = recipeCommandService.createRecipe(member, request);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -59,7 +55,7 @@ public class RecipeController {
 		@RequestPart(value = "recipeImages", required = false) List<MultipartFile> newRecipeImages,
 		@RequestPart(value = "stepImages", required = false) List<MultipartFile> newStepImages
 	){
-		RecipeResponseDTO.RecipeResultDTO result = recipeService.updateRecipe(recipeId, member, request, newRecipeImages, newStepImages);
+		RecipeResponseDTO.RecipeResultDTO result = recipeCommandService.updateRecipe(recipeId, member, request, newRecipeImages, newStepImages);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -70,7 +66,7 @@ public class RecipeController {
 		@PathVariable("recipeId") Long recipeId,
 		@CurrentUser Member member
 	){
-		recipeService.deleteRecipe(recipeId, member);
+        recipeCommandService.deleteRecipe(recipeId, member);
 		return ApiResponse.onSuccess("레시피가 성공적으로 삭제되었습니다.");
 	}
 
@@ -80,7 +76,7 @@ public class RecipeController {
 	public ApiResponse<RecipeResponseDTO.RecipeDetailDTO> getRecipeDetail(
 			@PathVariable("recipeId") Long recipeId
 	){
-		RecipeResponseDTO.RecipeDetailDTO result = recipeService.getRecipeDetail(recipeId);
+		RecipeResponseDTO.RecipeDetailDTO result = recipeQueryService.getRecipeDetail(recipeId);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -91,7 +87,7 @@ public class RecipeController {
 			@PathVariable("recipeId") Long recipeId,
 			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable
 	) {
-		Page<RecipeResponseDTO.CommentDTO> result = recipeService.getComments(recipeId, pageable);
+		Page<RecipeResponseDTO.CommentDTO> result = recipeQueryService.getComments(recipeId, pageable);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -102,7 +98,7 @@ public class RecipeController {
 			@RequestParam("category")RecipeCategory category,
 		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
 	){
-		Page<RecipeResponseDTO.ListByCategoryDTO> result = recipeService.getRecipeByCategory(category, pageable);
+		Page<RecipeResponseDTO.ListByCategoryDTO> result = recipeQueryService.getRecipeByCategory(category, pageable);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -113,7 +109,7 @@ public class RecipeController {
 		@PathVariable("recipeId") Long recipeId,
 		@CurrentUser Member member
 	) {
-		RecipeResponseDTO.LikeDTO result = recipeService.RecipeLike(recipeId, member);
+		RecipeResponseDTO.LikeDTO result = recipeCommandService.RecipeLike(recipeId, member);
 		return ApiResponse.onSuccess(result);
 	}
 }
