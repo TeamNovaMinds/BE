@@ -67,4 +67,12 @@ public class RecipeRequestDTO {
 		private String description;
 		private String stepImage;
 	}
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentCreateRequest {
+        private String content;
+    }
 }
