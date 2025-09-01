@@ -8,5 +8,5 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserCommandService {
+public class MemberCommandService {
 }
