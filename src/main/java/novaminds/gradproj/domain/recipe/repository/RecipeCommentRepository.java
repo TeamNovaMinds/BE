@@ -36,10 +36,14 @@ public interface RecipeCommentRepository extends JpaRepository<RecipeComment, Lo
     //댓글이 특정 레시피에 속하는지 확인
     boolean existsByIdAndRecipeId(Long id, Long recipeId);
     
-    // 여러 레시피 ID에 대한 댓글 수를 배치 조회
+    // 여러 레시피 ID에 대한 댓글 수를 배치 조회 - JPQL은 Map<> 으로 반환 지원
     @Query("SELECT c.recipe.id, COUNT(c) " +
            "FROM RecipeComment c " +
            "WHERE c.recipe.id IN :recipeIds " +
            "GROUP BY c.recipe.id")
     Map<Long, Long> countCommentsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
+
+    // 댓글 ID와 작성자 ID를 함께 조회 - 네이티브 쿼리는 Map<> 변환 지원 X
+    @Query(value = "SELECT id, author_id FROM recipe_comments WHERE id IN :commentIds", nativeQuery = true)
+    List<Object[]> findCommentIdAndAuthorId(@Param("commentIds") List<Long> commentIds);
 }
