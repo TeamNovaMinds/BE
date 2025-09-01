@@ -20,7 +20,6 @@ public class RecipeResponseDTO {
     @AllArgsConstructor
     public static class RecipeListResponse {
         private List<RecipeResponse> recipes; // 레시피 목록
-        private int currentPage;
         private boolean hasNext;        // 다음 페이지 존재 여부
         private Long nextCursor;        // 다음 페이지를 위한 커서 (마지막 레시피 ID)
     }
