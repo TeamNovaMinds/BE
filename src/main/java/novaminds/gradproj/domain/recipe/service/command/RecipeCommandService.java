@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -55,8 +56,8 @@ public class RecipeCommandService {
         List<String> imageUrls = request.getRecipeImages();
 
         // 4. RecipeImage 엔티티 생성 및 추가
-        imageUrls.stream()
-                .map(imageUrl -> RecipeConverter.toRecipeImage(imageUrl, newRecipe, imageUrls.indexOf(imageUrl)))
+        IntStream.range(0, imageUrls.size())
+                .mapToObj(i -> RecipeConverter.toRecipeImage(imageUrls.get(i), newRecipe, i))
                 .forEach(newRecipe::addRecipeImage);
 
         // 5. RecipeOrder 엔티티 생성 및 추가
@@ -183,8 +184,8 @@ public class RecipeCommandService {
         validateS3Urls(imageUrls);
 
         // 3. RecipeImage List로 변환
-        List<RecipeImage> newImages = imageUrls.stream()
-                .map(url -> RecipeConverter.toRecipeImage(url, recipe, imageUrls.indexOf(url)))
+        List<RecipeImage> newImages = IntStream.range(0, imageUrls.size())
+                .mapToObj(i -> RecipeConverter.toRecipeImage(imageUrls.get(i), recipe, i))
                 .toList();
 
         // 4. RecipeImage를 새 RecipeImage로 교체
