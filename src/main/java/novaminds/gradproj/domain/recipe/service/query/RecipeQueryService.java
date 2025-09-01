@@ -211,17 +211,17 @@ public class RecipeQueryService {
                 ))
                 .toList();
 
-        // 2. 댓글 ID들로 작성자 ID만 외래키 조회 (N+1 방지)
-        List<String> authorIds = recipeCommentRepository.findAuthorIdsByCommentIds(commentIds);
-
-        // 3. 댓글 ID → 작성자 ID 매핑 생성
-        Map<Long, String> commentIdToAuthorId = commentIds.stream()
+        // 2. 댓글 ID → 작성자 ID 매핑 생성, 배치 조회 사용
+        Map<Long, String> commentIdToAuthorId = recipeCommentRepository.findCommentIdAndAuthorId(commentIds)
+                .stream()
                 .collect(Collectors.toMap(
-                    commentId -> commentId,
-                    commentId -> authorIds.get(commentIds.indexOf(commentId))
+                        row -> ((Long) row[0]),
+                        row -> (String) row[1]
                 ));
 
-        // 4. 작성자 정보 배치 조회
+        List<String> authorIds = commentIdToAuthorId.values().stream().toList();
+
+        // 3. 작성자 정보 배치 조회
         Map<String, MemberResponseDTO.AuthorInfo> authorInfos = 
             memberQueryService.getAuthorInfoMap(authorIds);
 
