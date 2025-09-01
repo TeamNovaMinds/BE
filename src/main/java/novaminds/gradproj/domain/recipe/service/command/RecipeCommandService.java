@@ -8,6 +8,7 @@ import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.recipe.entity.*;
 import novaminds.gradproj.domain.recipe.repository.RecipeLikeRepository;
 import novaminds.gradproj.domain.recipe.repository.RecipeRepository;
+import novaminds.gradproj.domain.recipe.repository.RecipeCommentRepository;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeRequestDTO;
 import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
 
@@ -30,6 +31,7 @@ public class RecipeCommandService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeLikeRepository recipeLikeRepository;
+    private final RecipeCommentRepository recipeCommentRepository;
 
     /**
      * 새로운 레시피를 생성하고 데이터베이스에 저장
@@ -275,5 +277,50 @@ public class RecipeCommandService {
                 .build();
         recipeLikeRepository.save(newLike);
         recipe.addRecipeLike(newLike); // 좋아요 수 및 작성자 포인트 증가 로직 호출
+    }
+
+    /**
+     * 레시피에 댓글을 작성합니다.
+     *
+     * @param member 댓글 작성하는 회원
+     * @param recipeId 댓글을 작성할 레시피 ID
+     * @param parentCommentId 대댓글인 경우 부모 댓글 ID (null이면 일반 댓글)
+     * @param request 댓글 내용
+     * @return 생성된 댓글의 ID
+     */
+    public Long createComment(
+            Member member,
+            Long recipeId,
+            Long parentCommentId,
+            RecipeRequestDTO.CommentCreateRequest request
+    ) {
+        // 1. 레시피 존재 확인
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
+
+        // 2. 대댓글인 경우 부모 댓글 존재 확인
+        RecipeComment parentComment = null;
+        if (parentCommentId != null) {
+            parentComment = recipeCommentRepository.findById(parentCommentId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
+            
+            // 부모 댓글이 같은 레시피에 속하는지 확인
+            if (!recipeCommentRepository.existsByIdAndRecipeId(parentCommentId, recipeId)) {
+                throw new GeneralException(ErrorStatus.COMMENT_NOT_MATCH_RECIPE);
+            }
+
+            // 대댓글의 대댓글은 금지! (2단계까지만 허용)
+            if (parentComment.getParentComment() != null) {
+                throw new GeneralException(ErrorStatus.COMMENT_DEPTH_LIMIT_EXCEEDED);
+            }
+        }
+
+        // 3. 댓글 엔티티 생성
+        RecipeComment newComment = RecipeConverter.toRecipeComment(request, recipe, member, parentComment);
+
+        // 4. 댓글 저장
+        RecipeComment savedComment = recipeCommentRepository.save(newComment);
+
+        return savedComment.getId();
     }
 }
