@@ -41,7 +41,7 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
         Member jwtMember = Member.builder()
                 .loginId(loginId)
                 .role(role)
-                .isProfileCompleted(profileCompleted)
+                .profileCompleted(profileCompleted)
                 .build();
                 
         return new PrincipalDetails(jwtMember);
