@@ -11,9 +11,8 @@ import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
 import novaminds.gradproj.domain.member.service.AuthService;
-import novaminds.gradproj.domain.member.web.dto.AuthRequest;
-import novaminds.gradproj.domain.member.web.dto.AuthResponse;
-import org.springframework.http.MediaType;
+import novaminds.gradproj.domain.member.web.dto.MemberRequestDTO;
+import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -32,8 +31,8 @@ public class AuthController {
             description = "이메일, 비밀번호, 이름으로 기본 회원가입을 진행합니다. " +
                     "회원가입 완료 시 JWT 토큰이 발급되며, " +
                     "isProfileCompleted가 false이므로 추가 정보 입력 페이지로 이동해야 합니다.")
-    public ApiResponse<AuthResponse.SignupResponse> signup(
-            @Valid @RequestBody AuthRequest.SignupRequest request,
+    public ApiResponse<MemberResponseDTO.SignupResponse> signup(
+            @Valid @RequestBody MemberRequestDTO.SignupRequest request,
             HttpServletResponse response
     ) {
         return ApiResponse.onSuccess(authService.signup(request, response));
@@ -51,9 +50,9 @@ public class AuthController {
     @Operation(summary = "추가 정보 입력",
             description = "프로필 이미지와 닉네임을 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
-    public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
+    public ApiResponse<MemberResponseDTO.AdditionalInfoResponse> completeProfile(
             @CurrentUser Member member,
-            @Valid @RequestBody AuthRequest.AdditionalInfoNicknameRequest request
+            @Valid @RequestBody MemberRequestDTO.AdditionalInfoNicknameRequest request
     ) {
         return ApiResponse.onSuccess(authService.completeProfilePart1(member, request));
     }
@@ -62,19 +61,20 @@ public class AuthController {
     @Operation(summary = "추가 정보 입력",
             description = "관심 카테고리(1~3개)를 입력합니다. " +
                     "JWT 토큰이 필요합니다.")
-    public ApiResponse<AuthResponse.AdditionalInfoResponse> completeProfile(
+    public ApiResponse<MemberResponseDTO.AdditionalInfoResponse> completeProfile(
             @CurrentUser Member member,
-            @Valid @RequestBody AuthRequest.AdditionalInfoInterestRequest request
+            @Valid @RequestBody MemberRequestDTO.AdditionalInfoInterestRequest request,
+            HttpServletResponse response
     ) {
-        return ApiResponse.onSuccess(authService.completeProfilePart2(member, request));
+        return ApiResponse.onSuccess(authService.completeProfilePart2(member, request, response));
     }
 
     @PostMapping("/login")
     @Operation(summary = "로그인",
             description = "이메일과 비밀번호로 로그인합니다. " +
                     "isProfileCompleted가 false면 추가 정보 입력 페이지로 이동해야 합니다.")
-    public ApiResponse<AuthResponse.LoginResponse> login(
-            @Valid @RequestBody AuthRequest.LoginRequest request,
+    public ApiResponse<MemberResponseDTO.LoginResponse> login(
+            @Valid @RequestBody MemberRequestDTO.LoginRequest request,
             HttpServletResponse response
     ) {
         return ApiResponse.onSuccess(authService.login(request, response));
