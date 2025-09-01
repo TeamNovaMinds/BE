@@ -152,7 +152,7 @@ public class RecipeController {
             @CurrentUser Member member,
             @PathVariable Long recipeId,
             @RequestParam(required = false) Long parentCommentId,
-            @RequestBody RecipeRequestDTO.CommentCreateRequest request
+            @Valid @RequestBody RecipeRequestDTO.CommentCreateRequest request
     ) {
         Long resultCommentId = recipeCommandService.createComment(member, recipeId, parentCommentId, request);
         return ApiResponse.onSuccess(resultCommentId);

@@ -73,6 +73,8 @@ public class RecipeRequestDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CommentCreateRequest {
+        @NotBlank(message = "댓글 내용은 필수입니다.")
+        @Size(max = 500, message = "댓글 내용은 최대 500자 입니다.")
         private String content;
     }
 }
