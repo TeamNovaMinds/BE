@@ -49,27 +49,27 @@ public class RecipeController {
     })
     @PatchMapping("/{recipeId}")
     public ApiResponse<Long> updateRecipe(
-            @PathVariable("recipeId") Long recipeId,
             @CurrentLoginId String memberId,
+            @PathVariable("recipeId") Long recipeId,
             @Valid @RequestBody RecipeRequestDTO.CreateRecipeDTO request
     ){
-        Long result = recipeCommandService.updateRecipe(recipeId, memberId, request);
+        Long result = recipeCommandService.updateRecipe(memberId, recipeId, request);
         return ApiResponse.onSuccess(result);
     }
 
-	//레시피 삭제
+    //레시피 삭제
     @Operation(summary = "레시피 삭제", description = "해당 레시피를 삭제합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
-	@DeleteMapping("/{recipeId}")
-	public ApiResponse<String> deleteRecipe(
-		@PathVariable("recipeId") Long recipeId,
-		@CurrentUser Member member
-	){
-        recipeCommandService.deleteRecipe(recipeId, member);
-		return ApiResponse.onSuccess("레시피가 성공적으로 삭제되었습니다.");
-	}
+    @DeleteMapping("/{recipeId}")
+    public ApiResponse<String> deleteRecipe(
+            @CurrentUser Member member,
+            @PathVariable("recipeId") Long recipeId
+    ) {
+        recipeCommandService.deleteRecipe(member, recipeId);
+        return ApiResponse.onSuccess("레시피가 성공적으로 삭제되었습니다.");
+    }
 
 	//레시피 상세 보기
     @Operation(summary = "레시피 상세 조회", description = "특정 레시피 상세 내용 보기")
@@ -78,10 +78,10 @@ public class RecipeController {
     })
 	@GetMapping("/{recipeId}")
 	public ApiResponse<RecipeResponseDTO.RecipeDetailResponse> getRecipeDetail(
-            @PathVariable("recipeId") Long recipeId,
-            @CurrentLoginId String memberId
+            @CurrentLoginId String memberId,
+            @PathVariable("recipeId") Long recipeId
 	){
-		var result = recipeQueryService.getRecipeDetail(recipeId, memberId);
+		var result = recipeQueryService.getRecipeDetail(memberId, recipeId);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -92,11 +92,11 @@ public class RecipeController {
     })
 	@GetMapping("/{recipeId}/comments")
 	public ApiResponse<RecipeResponseDTO.CommentListResponse> getComments(
+            @CurrentLoginId String memberId,
             @PathVariable("recipeId") Long recipeId,
-            @RequestParam(required = false) Long cursorId,
-            @CurrentLoginId String memberId
+            @RequestParam(required = false) Long cursorId
 	) {
-		var result = recipeQueryService.getComments(recipeId, cursorId, memberId);
+		var result = recipeQueryService.getComments(memberId, recipeId, cursorId);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -115,28 +115,28 @@ public class RecipeController {
             @RequestParam(required = false) RecipeCategory category,
             @RequestParam(required = false) Long cursorId
     ) {
-        var result = recipeQueryService.getRecipe(category, cursorId, memberId);
+        var result = recipeQueryService.getRecipe(memberId, category, cursorId);
         return ApiResponse.onSuccess(result);
     }
 
-	//좋아요 추가 및 취소.
+    //좋아요 추가 및 취소.
     @Operation(summary = "레시피 좋아요 토글", description = "특정 레시피에 대한 좋아요를 추가하거나 취소합니다. (토글 방식)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
-	@PostMapping("/{recipeId}/like")
-	public ApiResponse<Long> toggleLike(
-		@PathVariable("recipeId") Long recipeId,
-		@CurrentUser Member member
-	) {
-		boolean isLiked = recipeCommandService.toggleRecipeLike(recipeId, member);
+    @PostMapping("/{recipeId}/like")
+    public ApiResponse<Long> toggleLike(
+            @CurrentUser Member member,
+            @PathVariable("recipeId") Long recipeId
+    ) {
+        boolean isLiked = recipeCommandService.toggleRecipeLike(member, recipeId);
 
         if (isLiked) {
             return ApiResponse.onSuccess("좋아요가 추가되었습니다.", recipeId);
         } else {
             return ApiResponse.onSuccess("좋아요가 취소되었습니다.", recipeId);
         }
-	}
+    }
 
     @Operation(summary = "레시피 댓글 작성 API", description = "레시피에 댓글 또는 대댓글을 작성합니다.")
     @Parameters({
