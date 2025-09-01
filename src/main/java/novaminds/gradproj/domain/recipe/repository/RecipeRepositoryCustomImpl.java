@@ -24,7 +24,6 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
         return queryFactory
                 .selectFrom(recipe)
                 .leftJoin(recipe.author).fetchJoin()
-                .leftJoin(recipe.recipeImages).fetchJoin()
                 .where(
                         categoryCondition(category),
                         cursorCondition(cursorId)
