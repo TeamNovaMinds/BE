@@ -8,6 +8,7 @@ import novaminds.gradproj.domain.member.service.query.MemberQueryService;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import novaminds.gradproj.domain.recipe.repository.projection.CommentAuthorInfo;
 import novaminds.gradproj.domain.recipe.repository.projection.RecipeCommentCount;
+import novaminds.gradproj.domain.recipe.repository.projection.RecipeMainImage;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeResponseDTO;
 import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
 import org.springframework.stereotype.Service;
@@ -67,7 +68,8 @@ public class RecipeQueryService {
         // 4. 배치 조회로 N+1 문제 해결
         List<Long> recipeIds = recipes.stream().map(Recipe::getId).toList();
         final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
-        final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds);
+        final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
         final Map<Long, Long> commentCounts = recipeCommentRepository.countCommentsByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeCommentCount::getRecipeId, RecipeCommentCount::getCnt));
         final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());

@@ -1,5 +1,6 @@
 package novaminds.gradproj.domain.recipe.repository;
 
+import novaminds.gradproj.domain.recipe.repository.projection.RecipeMainImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,5 +20,5 @@ public interface RecipeImageRepository extends JpaRepository<RecipeImage, Long> 
             "FROM RecipeImage ri " +
             "WHERE ri.recipe.id IN :recipeIds " +
                 "AND ri.isMain = true")
-    Map<Long, String> findMainImageUrlsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
+    List<RecipeMainImage> findMainImageUrlsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
 }
