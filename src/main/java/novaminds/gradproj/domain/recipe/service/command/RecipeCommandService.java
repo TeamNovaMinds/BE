@@ -38,6 +38,7 @@ public class RecipeCommandService {
      *
      * @param member 레시피 작성하는 회원
      * @param request 레시피 생성에 필요한 정보
+     *
      * @return 생성된 레시피의 ID
      */
     public Long createRecipe(
@@ -85,14 +86,15 @@ public class RecipeCommandService {
     /**
      * 레시피 정보를 수정
      *
-     * @param recipeId 수정할 레시피의 ID
      * @param memberId 레시피 수정하는 회원의 ID
+     * @param recipeId 수정할 레시피의 ID
      * @param request 수정할 레시피 정보
+     *
      * @return 수정된 레시피의 ID
      */
     public Long updateRecipe(
-            Long recipeId,
             String memberId,
+            Long recipeId,
             RecipeRequestDTO.CreateRecipeDTO request
     ) {
         // 1. 수정할 레시피 조회
@@ -118,10 +120,10 @@ public class RecipeCommandService {
     /**
      * 레시피를 삭제
      *
-     * @param recipeId 삭제할 레시피의 ID
      * @param member 레시피 삭제하는 회원의 ID
+     * @param recipeId 삭제할 레시피의 ID
      */
-    public void deleteRecipe(Long recipeId, Member member){
+    public void deleteRecipe(Member member, Long recipeId){
         // 1. 삭제할 레시피 조회
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(()->new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
@@ -136,8 +138,17 @@ public class RecipeCommandService {
     }
 
     //좋아요 추가 및 취소.
+
+    /**
+     * 레시피에 좋아요 추가 및 취소
+     *
+     * @param member 레시피에 좋아요를 누르는 회원의 ID
+     * @param recipeId 좋아요를 누르거나 취소할 레시피의 ID
+     *
+     * @return 해당 레시피에 좋아요를 누르면 true, 취소하면 false 반환
+     */
     @Transactional
-    public boolean toggleRecipeLike(Long recipeId, Member member) {
+    public boolean toggleRecipeLike(Member member, Long recipeId) {
         // 1. 레시피를 조회합니다. 없으면 예외가 발생합니다.
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
@@ -256,7 +267,8 @@ public class RecipeCommandService {
     }
 
     /**
-     * RecipeLike 엔티티를 삭제하고 Recipe의 좋아요 개수를 감소시킵니다.
+     * RecipeLike 엔티티를 삭제하고 Recipe의 좋아요 개수를 감소
+     * .
      * @param recipe 좋아요가 취소될 레시피
      * @param recipeLike 삭제할 RecipeLike 엔티티
      */
@@ -266,7 +278,8 @@ public class RecipeCommandService {
     }
 
     /**
-     * 새로운 RecipeLike 엔티티를 생성 및 저장하고 Recipe의 좋아요 개수를 증가시킵니다.
+     * 새로운 RecipeLike 엔티티를 생성 및 저장하고 Recipe의 좋아요 개수를 증가시.
+     *
      * @param recipe 좋아요가 추가될 레시피
      * @param member 좋아요를 누른 회원
      */
@@ -280,12 +293,13 @@ public class RecipeCommandService {
     }
 
     /**
-     * 레시피에 댓글을 작성합니다.
+     * 레시피에 댓글을 작성.
      *
      * @param member 댓글 작성하는 회원
      * @param recipeId 댓글을 작성할 레시피 ID
      * @param parentCommentId 대댓글인 경우 부모 댓글 ID (null이면 일반 댓글)
      * @param request 댓글 내용
+     *
      * @return 생성된 댓글의 ID
      */
     public Long createComment(
