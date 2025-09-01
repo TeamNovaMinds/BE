@@ -20,7 +20,7 @@ public interface RecipeCommentRepository extends JpaRepository<RecipeComment, Lo
     @Query("SELECT COUNT(c) " +
             "FROM RecipeComment c " +
             "WHERE c.recipe.id = :recipeId")
-    int countCommentsByRecipeId(@Param("recipeId") Long recipeId);
+    Long countCommentsByRecipeId(@Param("recipeId") Long recipeId);
 
     //댓글 ID들로 작성자 ID만 조회
     @Query(value = "SELECT author_id " +

@@ -112,7 +112,7 @@ public class RecipeQueryService {
         List<RecipeIngredient> ingredients = recipeIngredientRepository.findByRecipeIdWithIngredient(recipeId);
         List<RecipeOrder> orders = recipeOrderRepository.findByRecipeIdOrderByOrder(recipeId);
         List<RecipeComment> previewComments = recipeCommentRepository.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtDesc(recipeId);
-        int totalCommentCount = recipeCommentRepository.countCommentsByRecipeId(recipeId);
+        int totalCommentCount = recipeCommentRepository.countCommentsByRecipeId(recipeId).intValue();
 
         // 4. 댓글 작성자들 배치 조회
         RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(previewComments);
