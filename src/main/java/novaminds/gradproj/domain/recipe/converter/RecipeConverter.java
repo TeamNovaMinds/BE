@@ -173,9 +173,9 @@ public class RecipeConverter {
                 .writtenByMe(writtenByMe)
                 .createdAt(recipe.getCreatedAt())
                 .authorInfo(authorInfo)
-                .recipeRecipeImageDTOList(recipeImageDTOS)
-                .recipeIngredientDTOList(recipeIngredientDTOS)
-                .recipeOrderDTOList(recipeOrderDTOS)
+                .recipeImageDTOs(recipeImageDTOS)
+                .recipeIngredientDTOs(recipeIngredientDTOS)
+                .recipeOrderDTOs(recipeOrderDTOS)
                 .commentPreview(commentPreview)
                 .build();
     }
