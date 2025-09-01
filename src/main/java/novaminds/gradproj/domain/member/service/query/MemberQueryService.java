@@ -1,8 +1,8 @@
 package novaminds.gradproj.domain.member.service.query;
 
 import novaminds.gradproj.domain.member.converter.MemberConverter;
-import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
+import novaminds.gradproj.domain.member.repository.projection.AuthorInfoProjection;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +30,10 @@ public class MemberQueryService {
             return Map.of();
         }
 
-        return memberRepository.findAllById(memberIds).stream()
+        return memberRepository.findAuthorInfoByLoginIds(memberIds).stream()
                 .collect(Collectors.toMap(
-                        Member::getLoginId,
-                        MemberConverter::toAuthorInfo
-                ));
+                        AuthorInfoProjection::getLoginId,
+                        proj -> MemberConverter.toAuthorInfo(proj.getNickname(), proj.getProfileImage()))
+                );
     }
 }
