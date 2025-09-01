@@ -31,7 +31,7 @@ public class RecipeConverter {
                 .recipe(recipe)
                 .order(dto.getOrder())
                 .description(dto.getDescription())
-                .imageUrl(dto.getStepImage())
+                .imageUrl(dto.getImageUrl())
                 .build();
     }
 

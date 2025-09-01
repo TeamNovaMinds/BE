@@ -65,7 +65,7 @@ public class RecipeRequestDTO {
 	public static class RecipeOrderDTO{
 		private Integer order;
 		private String description;
-		private String stepImage;
+		private String imageUrl;
 	}
 
     @Builder
