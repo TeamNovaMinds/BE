@@ -1,13 +1,12 @@
 package novaminds.gradproj.domain.recipe.web.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentLoginId;
 import novaminds.gradproj.domain.recipe.service.command.RecipeCommandService;
 import novaminds.gradproj.domain.recipe.service.query.RecipeQueryService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +22,7 @@ import novaminds.gradproj.domain.recipe.web.dto.RecipeResponseDTO;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/recipes")
+@Tag(name = "레시피 관련 API", description = "레시피 등록 수정 및 조회하는 API 입니다.")
 public class RecipeController {
 
     private final RecipeQueryService recipeQueryService;
@@ -77,10 +77,11 @@ public class RecipeController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
 	@GetMapping("/{recipeId}")
-	public ApiResponse<RecipeResponseDTO.RecipeDetailDTO> getRecipeDetail(
-			@PathVariable("recipeId") Long recipeId
+	public ApiResponse<RecipeResponseDTO.RecipeDetailResponse> getRecipeDetail(
+            @PathVariable("recipeId") Long recipeId,
+            @CurrentLoginId String memberId
 	){
-		RecipeResponseDTO.RecipeDetailDTO result = recipeQueryService.getRecipeDetail(recipeId);
+		var result = recipeQueryService.getRecipeDetail(recipeId, memberId);
 		return ApiResponse.onSuccess(result);
 	}
 
@@ -90,25 +91,31 @@ public class RecipeController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
 	@GetMapping("/{recipeId}/comments")
-	public ApiResponse<Page<RecipeResponseDTO.CommentDTO>> getComments(
-			@PathVariable("recipeId") Long recipeId,
-			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable
+	public ApiResponse<RecipeResponseDTO.CommentListResponse> getComments(
+            @PathVariable("recipeId") Long recipeId,
+            @RequestParam(required = false) Long cursorId,
+            @CurrentLoginId String memberId
 	) {
-		Page<RecipeResponseDTO.CommentDTO> result = recipeQueryService.getComments(recipeId, pageable);
+		var result = recipeQueryService.getComments(recipeId, cursorId, memberId);
 		return ApiResponse.onSuccess(result);
 	}
 
     //카테고리 별 레시피.
     @Operation(summary = "카테고리 별 레시피 목록 조회", description = "카테고리 별로 레시피 목록을 조회")
+    @Parameters({
+            @Parameter(name = "category", description = "조회하려고 하는 category 종류 (없으면 모든 카테고리 동시 조회)", required = false, example = "KOREAN"),
+            @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
+    })
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
     @GetMapping
-    public ApiResponse<Page<RecipeResponseDTO.ListByCategoryDTO>> getRecipesByCategory(
-            @RequestParam("category") RecipeCategory category,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    public ApiResponse<RecipeResponseDTO.RecipeListResponse> getRecipes(
+            @CurrentLoginId String memberId,
+            @RequestParam(required = false) RecipeCategory category,
+            @RequestParam(required = false) Long cursorId
     ) {
-        Page<RecipeResponseDTO.ListByCategoryDTO> result = recipeQueryService.getRecipeByCategory(category, pageable);
+        var result = recipeQueryService.getRecipe(category, cursorId, memberId);
         return ApiResponse.onSuccess(result);
     }
 
@@ -130,4 +137,26 @@ public class RecipeController {
             return ApiResponse.onSuccess("좋아요가 취소되었습니다.", recipeId);
         }
 	}
+
+    @Operation(summary = "레시피 댓글 작성 API", description = "레시피에 댓글 또는 대댓글을 작성합니다.")
+    @Parameters({
+            @Parameter(name = "recipeId", description = "댓글을 작성할 레시피 ID", required = true, example = "1"),
+            @Parameter(name = "parentCommentId", description = "대댓글 작성 시 부모 댓글 ID (대댓글이 아닌 경우 생략 가능)", required = false, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+    })
+    @PostMapping("/{recipeId}/comments")
+    public ApiResponse<Long> createComment(
+            @CurrentUser Member member,
+            @PathVariable Long recipeId,
+            @RequestParam(required = false) Long parentCommentId,
+            @RequestBody RecipeRequestDTO.CommentCreateRequest request
+    ) {
+        Long resultCommentId = recipeCommandService.createComment(member, recipeId, parentCommentId, request);
+        return ApiResponse.onSuccess(resultCommentId);
+    }
+
+
 }
