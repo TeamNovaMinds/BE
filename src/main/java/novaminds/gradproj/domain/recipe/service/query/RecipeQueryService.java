@@ -105,7 +105,7 @@ public class RecipeQueryService {
     public RecipeResponseDTO.RecipeDetailResponse getRecipeDetail(String memberId, Long recipeId){
 
         // 1. 레시피 기본 정보 조회 (작성자만 fetch join)
-        Recipe recipe = recipeRepository.findRecipeWithAuthorById(recipeId)
+        Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.RECIPE_NOT_FOUND));
 
         // 2. 사용자별 동적 정보 조회

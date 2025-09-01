@@ -9,6 +9,7 @@ import novaminds.gradproj.domain.recipe.entity.Recipe;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long>, RecipeRepositoryCustom {
 
+    @Override
     @EntityGraph(attributePaths = {"author"})
-    Optional<Recipe> findRecipeWithAuthorById(Long recipeId);
+    Optional<Recipe> findById(Long recipeId);
 }
