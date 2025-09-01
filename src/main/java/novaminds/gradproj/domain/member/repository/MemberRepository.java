@@ -1,5 +1,6 @@
 package novaminds.gradproj.domain.member.repository;
 
+import novaminds.gradproj.domain.member.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -12,5 +13,5 @@ public interface MemberRepository extends JpaRepository<Member, String> {
 
     Optional<Member> findByNickname(String nickname);
 
-    boolean existsByLoginIdAndRole(String loginId, novaminds.gradproj.domain.member.entity.Role role);
+    boolean existsByLoginIdAndRole(String loginId, Role role);
 }
