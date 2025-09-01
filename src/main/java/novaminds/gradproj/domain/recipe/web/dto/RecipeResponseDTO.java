@@ -2,6 +2,7 @@ package novaminds.gradproj.domain.recipe.web.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -9,11 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
-import novaminds.gradproj.domain.recipe.entity.Difficulty;
-import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
-import novaminds.gradproj.domain.recipe.entity.RecipeImage;
-import novaminds.gradproj.domain.recipe.entity.RecipeIngredient;
-import novaminds.gradproj.domain.recipe.entity.RecipeOrder;
+import novaminds.gradproj.domain.recipe.entity.*;
 
 public class RecipeResponseDTO {
 
@@ -70,9 +67,9 @@ public class RecipeResponseDTO {
         private LocalDateTime createdAt;
 
         private MemberResponseDTO.AuthorInfo authorInfo;
-        private List<ImageDTO> recipeImages;
-        private List<IngredientDTO> ingredients;
-        private List<OrderDTO> orders;
+        private List<RecipeImageDTO> recipeRecipeImageDTOS;
+        private List<RecipeIngredientDTO> recipeIngredientDTOS;
+        private List<RecipeOrderDTO> recipeOrderDTOS;
         private CommentPreviewListResponse commentPreview;
     }
 
@@ -116,12 +113,12 @@ public class RecipeResponseDTO {
 	@Getter
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class ImageDTO{
+	public static class RecipeImageDTO {
 		private String imageUrl;
 		private boolean isMain;
 
-		public static ImageDTO from(RecipeImage recipeImage) {
-			return ImageDTO.builder()
+		public static RecipeImageDTO from(novaminds.gradproj.domain.recipe.entity.RecipeImage recipeImage) {
+			return RecipeImageDTO.builder()
 				.imageUrl(recipeImage.getImageUrl())
 				.isMain(recipeImage.isMain())
 				.build();
@@ -132,36 +129,44 @@ public class RecipeResponseDTO {
 	@Getter
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class IngredientDTO{
+	public static class RecipeIngredientDTO {
 
 		private String name;
 		private String amount;
 		private String description;
 
-		public static IngredientDTO from(RecipeIngredient recipeIngredient) {
-			return IngredientDTO.builder()
+		public static RecipeIngredientDTO from(novaminds.gradproj.domain.recipe.entity.RecipeIngredient recipeIngredient) {
+			return RecipeIngredientDTO.builder()
 				.name(recipeIngredient.getIngredient().getIngredientName())
 				.amount(recipeIngredient.getAmount())
 				.build();
 		}
 	}
 
-
 	@Builder
 	@Getter
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class OrderDTO{
+	public static class RecipeOrderDTO {
 		private Integer order;
 		private String description;
 		private String imageUrl;
 
-		public static OrderDTO from(RecipeOrder recipeOrder) {
-			return OrderDTO.builder()
+		public static RecipeOrderDTO from(novaminds.gradproj.domain.recipe.entity.RecipeOrder recipeOrder) {
+			return RecipeOrderDTO.builder()
 				.order(recipeOrder.getOrder())
 				.description(recipeOrder.getDescription())
 				.imageUrl(recipeOrder.getImageUrl())
 				.build();
 		}
+	}
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+	public static class CommentAuthor {
+		private Map<Long, String> commentIdToAuthorId;
+		private Map<String, MemberResponseDTO.AuthorInfo> authorInfos;
 	}
 }
