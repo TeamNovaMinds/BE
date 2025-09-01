@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
-import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtLoginProcessor;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.entity.Role;
@@ -18,8 +17,8 @@ import novaminds.gradproj.domain.member.repository.MemberInterestCategoryReposit
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieUtil;
-import novaminds.gradproj.domain.member.web.dto.AuthRequest;
-import novaminds.gradproj.domain.member.web.dto.AuthResponse;
+import novaminds.gradproj.domain.member.web.dto.MemberRequestDTO;
+import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -55,7 +54,7 @@ public class AuthService {
     private static final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
-    public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
+    public MemberResponseDTO.SignupResponse signup(MemberRequestDTO.SignupRequest request, HttpServletResponse response) {
 
         // 이메일 중복 확인
         if (memberRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -76,7 +75,7 @@ public class AuthService {
                 .nickname(tempNickname)
                 .role(Role.USER)
                 .socialType(SocialType.LOCAL)
-                .isProfileCompleted(false)
+                .profileCompleted(false)
                 .build();
 
         Member savedMember = memberRepository.save(member);
@@ -87,15 +86,15 @@ public class AuthService {
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
-        return AuthResponse.SignupResponse.from(savedMember);
+        return MemberResponseDTO.SignupResponse.from(savedMember);
     }
 
 
     // 추가 정보 입력 (닉네임, 프로필 이미지)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfilePart1(
+    public MemberResponseDTO.AdditionalInfoResponse completeProfilePart1(
             Member member,
-            AuthRequest.AdditionalInfoNicknameRequest request
+            MemberRequestDTO.AdditionalInfoNicknameRequest request
     ) {
         try {
             // 닉네임 업데이트
@@ -104,7 +103,7 @@ public class AuthService {
             // 프로필 이미지 업데이트
             member.updateProfileImage(request.getProfileImgUrl());
 
-            return AuthResponse.AdditionalInfoResponse.from(member);
+            return MemberResponseDTO.AdditionalInfoResponse.from(member);
         } catch (DataIntegrityViolationException e) {
             // DB constraint 위반 시 적절한 예외로 변환 - 여기서 위반할만한 건 닉네임 중복되는 예외밖에 없음
             throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
@@ -113,9 +112,10 @@ public class AuthService {
 
     // 추가 정보 입력 (관심 카테고리)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfilePart2(
+    public MemberResponseDTO.AdditionalInfoResponse completeProfilePart2(
             Member member,
-            AuthRequest.AdditionalInfoInterestRequest request
+            MemberRequestDTO.AdditionalInfoInterestRequest request,
+            HttpServletResponse response
     ) {
         // 기존 관심 카테고리 삭제
         memberInterestCategoryRepository.deleteByMemberLoginId(member.getLoginId());
@@ -130,12 +130,16 @@ public class AuthService {
         // 프로필 완료 상태로 변경
         member.completeProfile();
 
-        return AuthResponse.AdditionalInfoResponse.from(member);
+        // 프로필 완성 후 새로운 JWT 토큰 발급 (profileCompleted=true)
+        Authentication authentication = authenticationHelper.setAuthentication(member);
+        jwtLoginProcessor.issueAndSetTokens(response, authentication);
+
+        return MemberResponseDTO.AdditionalInfoResponse.from(member);
     }
 
     // 로그인
     @Transactional
-    public AuthResponse.LoginResponse login(AuthRequest.LoginRequest request, HttpServletResponse response) {
+    public MemberResponseDTO.LoginResponse login(MemberRequestDTO.LoginRequest request, HttpServletResponse response) {
         // 이메일로 사용자 조회
         Member member = memberRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MATCHED));
@@ -149,7 +153,7 @@ public class AuthService {
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
-        return AuthResponse.LoginResponse.from(member);
+        return MemberResponseDTO.LoginResponse.from(member);
     }
 
     /**
