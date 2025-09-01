@@ -77,14 +77,17 @@ public class Recipe extends BaseEntity {
     private List<RecipeOrder> recipeOrders = new ArrayList<>();
 
     public void addRecipeImage(RecipeImage image) {
+        image.setRecipe(this);
         this.recipeImages.add(image);
     }
 
     public void addRecipeOrder(RecipeOrder order) {
+        order.setRecipe(this);
         this.recipeOrders.add(order);
     }
 
     public void addRecipeIngredient(RecipeIngredient ingredient) {
+        ingredient.setRecipe(this);
         this.recipeIngredients.add(ingredient);
     }
 

@@ -41,4 +41,8 @@ public class RecipeImage {
             s3Service.deleteImageByUrl(this.imageUrl);
         }
     }
+
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
+    }
 }
