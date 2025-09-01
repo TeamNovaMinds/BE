@@ -58,9 +58,9 @@ public class Member extends BaseEntity {
 	@Column(name = "social_type", nullable = false, length = 20)
 	private SocialType socialType;
 
-	@Column(name = "is_profile_completed", nullable = false)
+	@Column(name = "profile_completed", nullable = false)
 	@Builder.Default
-	private boolean isProfileCompleted = false;
+	private boolean profileCompleted = false;
 
 	@Column(nullable = false)
 	@Builder.Default
@@ -139,7 +139,7 @@ public class Member extends BaseEntity {
 	}
 
     public void completeProfile() {
-		this.isProfileCompleted = true;
+		this.profileCompleted = true;
 	}
 
 	public void updateOAuthInfo(String name) {
