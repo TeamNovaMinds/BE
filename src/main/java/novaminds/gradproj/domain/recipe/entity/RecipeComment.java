@@ -41,7 +41,7 @@ public class RecipeComment extends BaseEntity {
 
     //대댓글 리스트
     @OneToMany(mappedBy = "parentComment")
-    @OrderBy("createdAt DESC")
+    @OrderBy("createdAt ASC")
     @Builder.Default
     private List<RecipeComment> children = new ArrayList<>();
 
