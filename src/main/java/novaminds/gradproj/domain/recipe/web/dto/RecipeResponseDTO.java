@@ -66,9 +66,9 @@ public class RecipeResponseDTO {
         private LocalDateTime createdAt;
 
         private MemberResponseDTO.AuthorInfo authorInfo;
-        private List<RecipeImageDTO> recipeRecipeImageDTOS;
-        private List<RecipeIngredientDTO> recipeIngredientDTOS;
-        private List<RecipeOrderDTO> recipeOrderDTOS;
+        private List<RecipeImageDTO> recipeRecipeImageDTOList;
+        private List<RecipeIngredientDTO> recipeIngredientDTOList;
+        private List<RecipeOrderDTO> recipeOrderDTOList;
         private CommentPreviewListResponse commentPreview;
     }
 
