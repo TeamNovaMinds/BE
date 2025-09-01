@@ -111,7 +111,7 @@ public class RecipeQueryService {
         List<RecipeImage> images = recipeImageRepository.findByRecipeIdOrderByImageOrder(recipeId);
         List<RecipeIngredient> ingredients = recipeIngredientRepository.findByRecipeIdWithIngredient(recipeId);
         List<RecipeOrder> orders = recipeOrderRepository.findByRecipeIdOrderByOrder(recipeId);
-        List<RecipeComment> previewComments = recipeCommentRepository.findPreviewComments(recipeId);
+        List<RecipeComment> previewComments = recipeCommentRepository.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtDesc(recipeId);
         int totalCommentCount = recipeCommentRepository.countCommentsByRecipeId(recipeId);
 
         // 4. 댓글 작성자들 배치 조회
