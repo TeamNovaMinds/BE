@@ -2,60 +2,115 @@ package novaminds.gradproj.domain.recipe.web.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import novaminds.gradproj.domain.recipe.entity.Difficulty;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
-import novaminds.gradproj.domain.recipe.entity.RecipeComment;
 import novaminds.gradproj.domain.recipe.entity.RecipeImage;
 import novaminds.gradproj.domain.recipe.entity.RecipeIngredient;
 import novaminds.gradproj.domain.recipe.entity.RecipeOrder;
-import novaminds.gradproj.domain.member.entity.Member;
 
 public class RecipeResponseDTO {
 
-	//레시피 상세보기 dto
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class RecipeDetailDTO{
-		private Long recipeId;
-		private String title;
-		private String description;
-		private RecipeCategory recipeCategory;
-		private Integer cookingTimeMinutes;
-		private Difficulty difficulty;
-		private Integer servings;
-		private LocalDateTime createdAt;
-		private Integer likeCount;
-		private CommentPreviewDTO commentPreview; // 댓글 미리보기 정보
-		private AuthorDTO author;
-		private List<ImageDTO> recipeImages;
-		private List<IngredientDTO> ingredients;
-		private List<OrderDTO> orders;
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecipeListResponse {
+        private List<RecipeResponse> recipes; // 레시피 목록
+        private int currentPage;
+        private boolean hasNext;        // 다음 페이지 존재 여부
+        private Long nextCursor;        // 다음 페이지를 위한 커서 (마지막 레시피 ID)
+    }
 
-	}
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecipeResponse {
+        private Long recipeId;
+        private String title;
+        private String mainImageUrl;
+        private MemberResponseDTO.AuthorInfo authorInfo; // 작성자 정보 (공용 DTO 활용)
+        private Integer cookingTimeMinutes;
+        private Difficulty difficulty;
+        private int likeCount;
+        private int commentCount;
 
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class AuthorDTO{
-		private String nickname;
-		private String profileImageUrl;
+        private boolean likedByMe;      // 현재 사용자가 좋아요를 눌렀는지 여부
+        private boolean writtenByMe;    // 현재 사용자가 작성했는지 여부
 
-		public static AuthorDTO from(Member member) {
-			return AuthorDTO.builder()
-				.nickname(member.getNickname())
-				.profileImageUrl(member.getProfileImage())
-				.build();
-		}
-	}
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
+        private LocalDateTime createdAt;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecipeDetailResponse {
+        private Long recipeId;
+        private String title;
+        private String description;
+        private RecipeCategory recipeCategory;
+        private Integer cookingTimeMinutes;
+        private Difficulty difficulty;
+        private Integer servings;
+        private int likeCount;
+
+        private boolean likedByMe;      // 현재 사용자가 좋아요를 눌렀는지 여부
+        private boolean writtenByMe;    // 현재 사용자가 작성했는지 여부
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
+        private LocalDateTime createdAt;
+
+        private MemberResponseDTO.AuthorInfo authorInfo;
+        private List<ImageDTO> recipeImages;
+        private List<IngredientDTO> ingredients;
+        private List<OrderDTO> orders;
+        private CommentPreviewListResponse commentPreview;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentPreviewListResponse {
+        private int totalCommentCount; // 전체 댓글 수
+        private List<CommentResponse> previewComments; // 미리 보여줄 댓글 3개
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentListResponse {
+        private List<CommentResponse> comments;
+        private boolean hasNext;
+        private Long nextCursor;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentResponse {
+        private Long commentId;
+        private String content;
+        private MemberResponseDTO.AuthorInfo authorInfo; // 작성자 정보 (공용 DTO 활용)
+
+        private boolean writtenByMe; // 현재 사용자가 작성했는지 여부
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
+        private LocalDateTime createdAt;
+
+        private List<CommentResponse> replies; // 대댓글 목록
+    }
 
 	@Builder
 	@Getter
@@ -108,70 +163,5 @@ public class RecipeResponseDTO {
 				.imageUrl(recipeOrder.getImageUrl())
 				.build();
 		}
-	}
-
-	//전체 댓글 더보기 할 때 사용할 dto
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class CommentDTO{
-		private Long commentId;
-		private String content;
-		private LocalDateTime createdAt;
-		private AuthorDTO author;
-		private List<CommentDTO> children;
-
-		public static CommentDTO from(RecipeComment comment) {
-			return CommentDTO.builder()
-				.commentId(comment.getId())
-				.content(comment.getContent())
-				.createdAt(comment.getCreatedAt())
-				.author(AuthorDTO.from(comment.getAuthor()))
-				.children(comment.getChildren().stream()
-					.map(CommentDTO::from)
-					.collect(Collectors.toList()))
-				.build();
-		}
-	}
-
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class CommentPreviewDTO{
-		private long totalCount;
-		private List<CommentDTO> previewComments;
-	}
-
-	//category별 레시피 조회
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class ListByCategoryDTO{
-		private Long recipeId;
-		private String title;
-		private RecipeCategory recipeCategory;
-		private String mainImageUrl;
-		private String authorNickname;
-		private String authorProfileImg;
-		private Integer cookingTimeMinutes;
-		private Difficulty difficulty;
-		private Integer servings;
-		private Long likeCount;
-		private Long commentCount;
-		private LocalDateTime createdAt;
-
-	}
-
-	@Getter
-	@Builder
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class LikeDTO {
-		private Long recipeId;
-		private boolean isLiked; // 현재 나의 좋아요 상태
-		private int likeCount;   // 변경 후 총 좋아요 개수
 	}
 }
