@@ -38,14 +38,6 @@ public class AuthController {
         return ApiResponse.onSuccess(authService.signup(request, response));
     }
 
-/*    @Operation(
-            summary = "추가 정보 입력",
-            description = "닉네임, 관심 카테고리, 프로필 이미지 업로드",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            schema = @Schema(implementation = AuthRequest.AdditionalInfoRequest.class))
-            )
-    )*/
     @PostMapping(value = "/additional-info-part1")
     @Operation(summary = "추가 정보 입력",
             description = "프로필 이미지와 닉네임을 입력합니다. " +
