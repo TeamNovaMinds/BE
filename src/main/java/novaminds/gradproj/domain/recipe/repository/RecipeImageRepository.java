@@ -16,9 +16,9 @@ public interface RecipeImageRepository extends JpaRepository<RecipeImage, Long> 
     List<RecipeImage> findByRecipeIdOrderByImageOrder(Long recipeId);
 
     // 여러 레시피 ID에 대한 대표 이미지 URL을 배치 조회
-    @Query("SELECT ri.recipe.id, ri.imageUrl " +
+    @Query("SELECT DISTINCT ri.recipe.id, ri.imageUrl " +
             "FROM RecipeImage ri " +
             "WHERE ri.recipe.id IN :recipeIds " +
-                "AND ri.isMain = true")
+            "AND ri.isMain = true")
     List<RecipeMainImage> findMainImageUrlsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
 }
