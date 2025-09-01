@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.member.entity.Member;
 
-public class AuthResponse {
+public class MemberResponseDTO {
 
     @Getter
     @NoArgsConstructor
@@ -64,5 +64,14 @@ public class AuthResponse {
                 .isProfileCompleted(member.isProfileCompleted())
                 .build();
         }
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuthorInfo {
+        private String nickname;
+        private String profileImageUrl;
     }
 }

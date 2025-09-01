@@ -7,7 +7,7 @@ import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 
 import java.util.List;
 
-public class AuthRequest {
+public class MemberRequestDTO {
 
     @Getter
     @NoArgsConstructor
