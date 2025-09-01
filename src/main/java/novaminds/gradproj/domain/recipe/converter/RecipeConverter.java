@@ -228,7 +228,7 @@ public class RecipeConverter {
                             .authorInfo(replyAuthorInfo)
                             .writtenByMe(replyWrittenByMe)
                             .createdAt(reply.getCreatedAt())
-                            .replies(null) // 대댓글의 대댓글은 허용하지 않음
+                            .replies(List.of()) // 대댓글의 대댓글은 허용하지 않기 때문에 빈 리스트
                             .build();
                 })
                 .toList();
