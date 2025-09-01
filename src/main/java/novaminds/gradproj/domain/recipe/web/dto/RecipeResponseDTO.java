@@ -116,7 +116,7 @@ public class RecipeResponseDTO {
 		private String imageUrl;
 		private boolean isMain;
 
-		public static RecipeImageDTO from(novaminds.gradproj.domain.recipe.entity.RecipeImage recipeImage) {
+		public static RecipeImageDTO from(RecipeImage recipeImage) {
 			return RecipeImageDTO.builder()
 				.imageUrl(recipeImage.getImageUrl())
 				.isMain(recipeImage.isMain())
@@ -134,11 +134,12 @@ public class RecipeResponseDTO {
 		private String amount;
 		private String description;
 
-		public static RecipeIngredientDTO from(novaminds.gradproj.domain.recipe.entity.RecipeIngredient recipeIngredient) {
-			return RecipeIngredientDTO.builder()
-				.name(recipeIngredient.getIngredient().getIngredientName())
-				.amount(recipeIngredient.getAmount())
-				.build();
+		public static RecipeIngredientDTO from(RecipeIngredient recipeIngredient) {
+            return RecipeIngredientDTO.builder()
+                    .name(recipeIngredient.getIngredient().getIngredientName())
+                    .amount(recipeIngredient.getAmount())
+                    .description(recipeIngredient.getDescription())
+                    .build();
 		}
 	}
 
@@ -151,7 +152,7 @@ public class RecipeResponseDTO {
 		private String description;
 		private String imageUrl;
 
-		public static RecipeOrderDTO from(novaminds.gradproj.domain.recipe.entity.RecipeOrder recipeOrder) {
+		public static RecipeOrderDTO from(RecipeOrder recipeOrder) {
 			return RecipeOrderDTO.builder()
 				.order(recipeOrder.getOrder())
 				.description(recipeOrder.getDescription())
