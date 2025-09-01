@@ -1,12 +1,13 @@
 package novaminds.gradproj.domain.recipe.repository;
 
+import novaminds.gradproj.domain.recipe.repository.projection.CommentAuthorInfo;
+import novaminds.gradproj.domain.recipe.repository.projection.RecipeCommentCount;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Map;
 
 import novaminds.gradproj.domain.recipe.entity.RecipeComment;
 
@@ -22,24 +23,19 @@ public interface RecipeCommentRepository extends JpaRepository<RecipeComment, Lo
             "WHERE c.recipe.id = :recipeId")
     Long countCommentsByRecipeId(@Param("recipeId") Long recipeId);
 
-    //댓글 ID들로 작성자 ID만 조회
-    @Query(value = "SELECT author_id " +
-            "FROM recipe_comments " +
-            "WHERE id IN :commentIds",
-            nativeQuery = true)
-    List<String> findAuthorIdsByCommentIds(@Param("commentIds") List<Long> commentIds);
-
     //댓글이 특정 레시피에 속하는지 확인
     boolean existsByIdAndRecipeId(Long id, Long recipeId);
-    
-    // 여러 레시피 ID에 대한 댓글 수를 배치 조회 - JPQL은 Map<> 으로 반환 지원
-    @Query("SELECT c.recipe.id, COUNT(c) " +
-           "FROM RecipeComment c " +
-           "WHERE c.recipe.id IN :recipeIds " +
-           "GROUP BY c.recipe.id")
-    Map<Long, Long> countCommentsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
 
-    // 댓글 ID와 작성자 ID를 함께 조회 - 네이티브 쿼리는 Map<> 변환 지원 X
-    @Query(value = "SELECT id, author_id FROM recipe_comments WHERE id IN :commentIds", nativeQuery = true)
-    List<Object[]> findCommentIdAndAuthorId(@Param("commentIds") List<Long> commentIds);
+    // 여러 레시피 ID에 대한 댓글 수를 배치 조회
+    @Query("SELECT c.recipe.id, COUNT(c) " +
+            "FROM RecipeComment c " +
+            "WHERE c.recipe.id IN :recipeIds " +
+            "GROUP BY c.recipe.id")
+    List<RecipeCommentCount> countCommentsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
+
+    // 댓글 ID와 작성자 ID를 함께 조회 - c.author.loginId 에서 N+1 문제 발생 XXX -> JPA가 효율적인 JOIN으로 문제 해결
+    @Query("SELECT c.id as id, c.author.loginId as authorId " +
+            "FROM RecipeComment c " +
+            "WHERE c.id IN :commentIds")
+    List<CommentAuthorInfo> findCommentIdAndAuthorId(@Param("commentIds") List<Long> commentIds);
 }

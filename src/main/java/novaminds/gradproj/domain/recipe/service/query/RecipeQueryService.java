@@ -6,6 +6,8 @@ import novaminds.gradproj.domain.recipe.entity.*;
 import novaminds.gradproj.domain.recipe.repository.*;
 import novaminds.gradproj.domain.member.service.query.MemberQueryService;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
+import novaminds.gradproj.domain.recipe.repository.projection.CommentAuthorInfo;
+import novaminds.gradproj.domain.recipe.repository.projection.RecipeCommentCount;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeResponseDTO;
 import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
 import org.springframework.stereotype.Service;
@@ -66,7 +68,8 @@ public class RecipeQueryService {
         List<Long> recipeIds = recipes.stream().map(Recipe::getId).toList();
         final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
         final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds);
-        final Map<Long, Long> commentCounts = recipeCommentRepository.countCommentsByRecipeIds(recipeIds);
+        final Map<Long, Long> commentCounts = recipeCommentRepository.countCommentsByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeCommentCount::getRecipeId, RecipeCommentCount::getCnt));
         final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
 
         // 5. 최종 DTO 리스트로 변환 (배치 조회된 데이터 활용으로 N+1 완전 해결)
@@ -212,12 +215,8 @@ public class RecipeQueryService {
                 .toList();
 
         // 2. 댓글 ID → 작성자 ID 매핑 생성, 배치 조회 사용
-        Map<Long, String> commentIdToAuthorId = recipeCommentRepository.findCommentIdAndAuthorId(commentIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        row -> ((Long) row[0]),
-                        row -> (String) row[1]
-                ));
+        Map<Long, String> commentIdToAuthorId = recipeCommentRepository.findCommentIdAndAuthorId(commentIds).stream()
+                .collect(Collectors.toMap(CommentAuthorInfo::getId, CommentAuthorInfo::getAuthorId));
 
         List<String> authorIds = commentIdToAuthorId.values().stream().toList();
 
