@@ -126,17 +126,44 @@ public class Recipe extends BaseEntity {
     }
 
     public void updateImages(List<RecipeImage> newImages) {
+        // 기존 자식들의 부모 참조를 null로 설정 (연관관계 정리)
+        this.recipeImages.forEach(image -> image.setRecipe(null));
         this.recipeImages.clear();
-        this.recipeImages.addAll(newImages);
+
+        // 새로운 자식들을 추가하고, 부모 참조를 this로 설정 (새로운 연관관계 설정)
+        if (newImages != null) {
+            newImages.forEach(image -> {
+                this.recipeImages.add(image);
+                image.setRecipe(this);
+            });
+        }
     }
 
     public void updateIngredients(List<RecipeIngredient> newIngredients) {
+        // 기존 자식들의 부모 참조를 null로 설정
+        this.recipeIngredients.forEach(ingredient -> ingredient.setRecipe(null));
         this.recipeIngredients.clear();
-        this.recipeIngredients.addAll(newIngredients);
+
+        // 새로운 자식들을 추가하고, 부모 참조를 this로 설정
+        if (newIngredients != null) {
+            newIngredients.forEach(ingredient -> {
+                this.recipeIngredients.add(ingredient);
+                ingredient.setRecipe(this);
+            });
+        }
     }
 
     public void updateOrders(List<RecipeOrder> newOrders) {
+        // 기존 자식들의 부모 참조를 null로 설정
+        this.recipeOrders.forEach(order -> order.setRecipe(null));
         this.recipeOrders.clear();
-        this.recipeOrders.addAll(newOrders);
+
+        // 새로운 자식들을 추가하고, 부모 참조를 this로 설정
+        if (newOrders != null) {
+            newOrders.forEach(order -> {
+                this.recipeOrders.add(order);
+                order.setRecipe(this);
+            });
+        }
     }
 }
