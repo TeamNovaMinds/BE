@@ -46,14 +46,15 @@ public class RecipeCommandService {
             Member member,
             RecipeRequestDTO.CreateRecipeDTO request
     ){
-        // 1. S3 URL 검증
-        validateS3Urls(request.getRecipeImages());
 
-        // 2. 새 레시피 엔티티
+        // 1. 요청에서 imageUrls를 가져오고, null일 경우 빈 리스트로 처리
+        List<String> imageUrls = request.getRecipeImages() != null ? request.getRecipeImages() : List.of();
+
+        // 2. S3 URL 검증
+        validateS3Urls(imageUrls);
+
+        // 3. 새 레시피 엔티티
         Recipe newRecipe = RecipeConverter.toRecipe(member, request);
-
-        // 3. 요청에서 imageUrl 가져옴
-        List<String> imageUrls = request.getRecipeImages();
 
         // 4. RecipeImage 엔티티 생성 및 추가
         IntStream.range(0, imageUrls.size())
