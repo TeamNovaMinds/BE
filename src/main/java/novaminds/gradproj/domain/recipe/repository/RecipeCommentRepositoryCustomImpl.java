@@ -39,6 +39,7 @@ public class RecipeCommentRepositoryCustomImpl implements RecipeCommentRepositor
         // 조회된 ID를 기반으로 실제 데이터 조회 (fetch join 포함)
         return queryFactory
                 .selectFrom(recipeComment)
+                .distinct()
                 .leftJoin(recipeComment.children).fetchJoin()
                 .where(recipeComment.id.in(parentCommentIds)) // IN 절로 정확히 필요한 만큼만 조회
                 .orderBy(recipeComment.id.asc())
