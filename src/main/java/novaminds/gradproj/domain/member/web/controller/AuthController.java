@@ -161,10 +161,10 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
     })
-    @GetMapping("reset-password")
+    @PostMapping("reset-password")
     public ApiResponse<String> sendResetPasswordToken (
-            @RequestParam("email") String email
+            @RequestBody MemberRequestDTO.PasswordResetRequest request
     ) {
-        return ApiResponse.onSuccess(authService.sendPasswordResetEmail(email));
+        return ApiResponse.onSuccess(authService.sendPasswordResetEmail(request));
     }
 }

@@ -60,4 +60,12 @@ public class MemberRequestDTO {
         @Size(min = 1, max = 3, message = "관심 카테고리는 1개 이상 3개 이하로 선택해야 합니다")
         private List<RecipeCategory> interestCategories;
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class PasswordResetRequest {
+        @NotBlank(message = "이메일은 필수 입력값입니다")
+        @Email(message = "유효한 이메일 형식이 아닙니다")
+        private String email;
+    }
 }
