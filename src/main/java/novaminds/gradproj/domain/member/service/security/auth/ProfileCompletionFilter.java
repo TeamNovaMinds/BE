@@ -27,6 +27,7 @@ public class ProfileCompletionFilter extends OncePerRequestFilter {
     // 프로필 미완성 상태에서도 허용되는 경로
     private final List<String> excludedPaths = List.of(
             "/api/auth/logout",
+            "/api/auth/signup",
             "/api/auth/additional-info-part1",
             "/api/auth/additional-info-part2",
             "/api/auth/check-email",

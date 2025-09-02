@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.member.service.security.auth.AuthenticationHelper;
-import novaminds.gradproj.domain.member.service.security.auth.PrincipalDetails;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtLoginProcessor;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
 import novaminds.gradproj.domain.member.entity.Role;
@@ -18,8 +17,8 @@ import novaminds.gradproj.domain.member.repository.MemberInterestCategoryReposit
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.service.security.auth.AuthRedisService;
 import novaminds.gradproj.domain.member.service.security.jwt.JwtCookieUtil;
-import novaminds.gradproj.domain.member.web.dto.AuthRequest;
-import novaminds.gradproj.domain.member.web.dto.AuthResponse;
+import novaminds.gradproj.domain.member.web.dto.MemberRequestDTO;
+import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -55,7 +54,7 @@ public class AuthService {
     private static final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
-    public AuthResponse.SignupResponse signup(AuthRequest.SignupRequest request, HttpServletResponse response) {
+    public MemberResponseDTO.SignupResponse signup(MemberRequestDTO.SignupRequest request, HttpServletResponse response) {
 
         // 이메일 중복 확인
         if (memberRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -76,7 +75,7 @@ public class AuthService {
                 .nickname(tempNickname)
                 .role(Role.USER)
                 .socialType(SocialType.LOCAL)
-                .isProfileCompleted(false)
+                .profileCompleted(false)
                 .build();
 
         Member savedMember = memberRepository.save(member);
@@ -87,15 +86,15 @@ public class AuthService {
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
-        return AuthResponse.SignupResponse.from(savedMember);
+        return MemberResponseDTO.SignupResponse.from(savedMember);
     }
 
 
     // 추가 정보 입력 (닉네임, 프로필 이미지)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfilePart1(
+    public MemberResponseDTO.AdditionalInfoResponse completeProfilePart1(
             Member member,
-            AuthRequest.AdditionalInfoNicknameRequest request
+            MemberRequestDTO.AdditionalInfoNicknameRequest request
     ) {
         try {
             // 닉네임 업데이트
@@ -104,7 +103,10 @@ public class AuthService {
             // 프로필 이미지 업데이트
             member.updateProfileImage(request.getProfileImgUrl());
 
-            return AuthResponse.AdditionalInfoResponse.from(member);
+            // 영속성 컨텍스트에서 DB로 정보 업데이트
+            memberRepository.flush();
+
+            return MemberResponseDTO.AdditionalInfoResponse.from(member);
         } catch (DataIntegrityViolationException e) {
             // DB constraint 위반 시 적절한 예외로 변환 - 여기서 위반할만한 건 닉네임 중복되는 예외밖에 없음
             throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
@@ -113,9 +115,10 @@ public class AuthService {
 
     // 추가 정보 입력 (관심 카테고리)
     @Transactional
-    public AuthResponse.AdditionalInfoResponse completeProfilePart2(
+    public MemberResponseDTO.AdditionalInfoResponse completeProfilePart2(
             Member member,
-            AuthRequest.AdditionalInfoInterestRequest request
+            MemberRequestDTO.AdditionalInfoInterestRequest request,
+            HttpServletResponse response
     ) {
         // 기존 관심 카테고리 삭제
         memberInterestCategoryRepository.deleteByMemberLoginId(member.getLoginId());
@@ -130,12 +133,16 @@ public class AuthService {
         // 프로필 완료 상태로 변경
         member.completeProfile();
 
-        return AuthResponse.AdditionalInfoResponse.from(member);
+        // 프로필 완성 후 새로운 JWT 토큰 발급 (profileCompleted=true)
+        Authentication authentication = authenticationHelper.setAuthentication(member);
+        jwtLoginProcessor.issueAndSetTokens(response, authentication);
+
+        return MemberResponseDTO.AdditionalInfoResponse.from(member);
     }
 
     // 로그인
     @Transactional
-    public AuthResponse.LoginResponse login(AuthRequest.LoginRequest request, HttpServletResponse response) {
+    public MemberResponseDTO.LoginResponse login(MemberRequestDTO.LoginRequest request, HttpServletResponse response) {
         // 이메일로 사용자 조회
         Member member = memberRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.EMAIL_PW_NOT_MATCHED));
@@ -149,7 +156,7 @@ public class AuthService {
 
         jwtLoginProcessor.issueAndSetTokens(response, authentication);
 
-        return AuthResponse.LoginResponse.from(member);
+        return MemberResponseDTO.LoginResponse.from(member);
     }
 
     /**
@@ -188,15 +195,20 @@ public class AuthService {
      * 비밀번호 재설정을 위한 인증 코드 발송
      * 6자리 숫자 코드를 생성하여 Redis에 저장 후 이메일로 전송
      *
-     * @param email 비밀번호를 재설정할 사용자의 이메일 주소
+     * @param email 사용자의 이메일
      * @return      성공 메시지
      */
     @Transactional
     public String sendPasswordResetEmail(String email) {
-        
+
         // 이메일로 사용자 존재 여부 확인
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        Optional<Member> maybeMember = memberRepository.findByEmail(email);
+
+        // 해당 이메일이 가입되어있는지 안되어있는지 확인 못하게 하기 위해서
+        // 이메일 존재 여부와 무관하게 동일한 응답을 반환하여 계정 유무 노출 방지
+        if (maybeMember.isEmpty()) {
+            return "비밀번호 재설정 인증을 위한 6자리 숫자코드가 이메일로 발송되었습니다.";
+        }
 
         // 기존 Redis에 저장된 인증 코드가 있다면 삭제 (중복 발송 방지)
         String existingToken = authRedisService.getPasswordResetToken(email);
@@ -207,8 +219,8 @@ public class AuthService {
         // 6자리 랜덤 숫자 코드 생성
         String token = String.format("%06d", secureRandom.nextInt(1000000));
         
-        // Redis에 24시간 TTL로 저장
-        authRedisService.savePasswordResetToken(email, token, Duration.ofHours(24));
+        // Redis에 15분 TTL로 저장
+        authRedisService.savePasswordResetToken(email, token, Duration.ofMinutes(15));
         
         // 이메일 발송
         emailService.sendPasswordResetEmail(email, token);

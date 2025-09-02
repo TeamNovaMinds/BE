@@ -32,4 +32,8 @@ public class RecipeIngredient {
 
     @Column(length = 50)
     private String amount;
+
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
+    }
 }

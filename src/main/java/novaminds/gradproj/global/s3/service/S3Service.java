@@ -15,13 +15,15 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.net.URI;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PresignedS3Service {
+public class S3Service {
 
     private final S3Presigner s3Presigner;
     private final S3Client s3Client;
@@ -62,7 +64,64 @@ public class PresignedS3Service {
     }
 
     // 파일 삭제 - 이건 우리가 직접 수행
-    public void deleteImage(String key) {
+    public void deleteImageByUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+
+        String key = extractKeyFromUrl(url);
+        if (key != null) {
+            deleteImage(key);
+        } else {
+            log.warn("S3에서 키 추출 실패 {}", url);
+        }
+    }
+
+    // url에서 key 추출
+    private String extractKeyFromUrl(String url) {
+        // 1. URL이 비어있는지 먼저 안전하게 확인
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+
+        try {
+            // 2. 표준 URI 클래스로 URL 구조를 분석
+            URI uri = URI.create(url);
+            String host = uri.getHost();
+            String path = uri.getPath(); // 경로 (항상 '/'로 시작)
+
+            // 3. S3 URL이 맞는지 기본적인 검증
+            if (host == null || !host.endsWith("amazonaws.com")) {
+                log.warn("유효하지 않은 S3 도메인입니다. URL: {}", url);
+                return null;
+            }
+
+            String expectedBucket = s3Properties.getS3().getBucket();
+
+            // 4. Virtual-hosted 스타일인지 확인 (예: bucket.s3.amazonaws.com)
+            if (host.startsWith(expectedBucket + ".")) {
+                // 경로의 맨 앞 '/'만 제거하면 바로 key가 됩니다.
+                return path.substring(1);
+            }
+
+            // 5. Path-style 스타일인지 확인 (예: s3.amazonaws.com/bucket/...)
+            String pathPrefix = "/" + expectedBucket + "/";
+            if (path.startsWith(pathPrefix)) {
+                // "/버킷이름/" 부분을 잘라내면 key가 됩니다.
+                return path.substring(pathPrefix.length());
+            }
+
+            log.warn("URL에서 버킷 정보를 찾을 수 없거나, 설정된 버킷과 다릅니다. URL: {}", url);
+            return null;
+
+        } catch (Exception e) {
+            log.warn("S3 URL을 분석하는 데 실패했습니다. URL: {}", url, e);
+            return null;
+        }
+    }
+
+    // 키를 통한 이미지 삭제
+    private void deleteImage(String key) {
         // key가 null이거나 비어있으면 예외 발생
         if (key == null || key.trim().isEmpty()) {
             throw new GeneralException(ErrorStatus.S3_FILE_DELETE_FAILED);
@@ -83,28 +142,40 @@ public class PresignedS3Service {
         }
     }
 
-    // url에서 key 추출
-    public String extractKeyFromUrl(String url) {
+    // S3 URL 목록 검증 (static)
+    public static void validateS3Urls(List<String> urls) {
+        if (urls != null) {
+            urls.forEach(S3Service::validateS3Url);
+        }
+    }
+
+    // 단일 S3 URL 검증 (static)
+    public static void validateS3Url(String url) {
         if (url == null || url.trim().isEmpty()) {
-            return null;
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
         }
 
-        // S3에 저장된 것이 맞는지 확읺
+        // S3에 저장된 것이 맞는지 확인
         if (!url.contains("amazonaws.com/") || !url.startsWith("https://")) {
-            return null;
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
         }
 
-        // amazonaws.com/ 기준으로 분할 -> 이 바로 다음 부분이 key
+        // amazonaws.com/ 기준으로 분할하여 key 추출 검증
         String[] parts = url.split("amazonaws.com/");
         if (parts.length <= 1) {
-            return null;
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
         }
 
         String key = parts[1];
-
+        
         // 만약 key 뒤에 쿼리 스트링이 있을 경우 제거
         int queryIndex = key.indexOf('?');
-        return queryIndex > 0 ? key.substring(0, queryIndex) : key;
+        key = queryIndex > 0 ? key.substring(0, queryIndex) : key;
+        
+        // key가 비어있으면 잘못된 URL
+        if (key.trim().isEmpty()) {
+            throw new GeneralException(ErrorStatus.INVALID_S3_URL);
+        }
     }
 
     private String generatePresignedUrl(String key, String contentType) {

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.recipe.web.dto.RecipeRequestDTO;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.member.entity.Member;
 
@@ -75,6 +76,21 @@ public class Recipe extends BaseEntity {
     @Builder.Default
     private List<RecipeOrder> recipeOrders = new ArrayList<>();
 
+    public void addRecipeImage(RecipeImage image) {
+        image.setRecipe(this);
+        this.recipeImages.add(image);
+    }
+
+    public void addRecipeOrder(RecipeOrder order) {
+        order.setRecipe(this);
+        this.recipeOrders.add(order);
+    }
+
+    public void addRecipeIngredient(RecipeIngredient ingredient) {
+        ingredient.setRecipe(this);
+        this.recipeIngredients.add(ingredient);
+    }
+
     private void increaseLikes() {
         this.likes++;
     }
@@ -100,27 +116,54 @@ public class Recipe extends BaseEntity {
     }
 
     //레시피 업데이트 관련 메서드들
-    public void updateTitle(String title) {
-        this.title = title;
+    public void updateRecipe(RecipeRequestDTO.CreateRecipeDTO request) {
+        this.title = request.getTitle();
+        this.description = request.getDescription();
+        this.recipeCategory = request.getRecipeCategory();
+        this.cookingTimeMinutes = request.getCookingTimeMinutes();
+        this.difficulty = request.getDifficulty();
+        this.servings = request.getServings();
     }
 
-    public void updateDescription(String description) {
-        this.description = description;
+    public void updateImages(List<RecipeImage> newImages) {
+        // 기존 자식들의 부모 참조를 null로 설정 (연관관계 정리)
+        this.recipeImages.forEach(image -> image.setRecipe(null));
+        this.recipeImages.clear();
+
+        // 새로운 자식들을 추가하고, 부모 참조를 this로 설정 (새로운 연관관계 설정)
+        if (newImages != null) {
+            newImages.forEach(image -> {
+                this.recipeImages.add(image);
+                image.setRecipe(this);
+            });
+        }
     }
 
-    public void updateRecipeCategory(RecipeCategory recipeCategory) {
-        this.recipeCategory = recipeCategory;
+    public void updateIngredients(List<RecipeIngredient> newIngredients) {
+        // 기존 자식들의 부모 참조를 null로 설정
+        this.recipeIngredients.forEach(ingredient -> ingredient.setRecipe(null));
+        this.recipeIngredients.clear();
+
+        // 새로운 자식들을 추가하고, 부모 참조를 this로 설정
+        if (newIngredients != null) {
+            newIngredients.forEach(ingredient -> {
+                this.recipeIngredients.add(ingredient);
+                ingredient.setRecipe(this);
+            });
+        }
     }
 
-    public void updateCookingTimeMinutes(Integer cookingTimeMinutes) {
-        this.cookingTimeMinutes = cookingTimeMinutes;
-    }
+    public void updateOrders(List<RecipeOrder> newOrders) {
+        // 기존 자식들의 부모 참조를 null로 설정
+        this.recipeOrders.forEach(order -> order.setRecipe(null));
+        this.recipeOrders.clear();
 
-    public void updateDifficulty(Difficulty difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public void updateServings(Integer servings) {
-        this.servings = servings;
+        // 새로운 자식들을 추가하고, 부모 참조를 this로 설정
+        if (newOrders != null) {
+            newOrders.forEach(order -> {
+                this.recipeOrders.add(order);
+                order.setRecipe(this);
+            });
+        }
     }
 }

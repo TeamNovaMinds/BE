@@ -1,29 +1,41 @@
 package novaminds.gradproj.domain.recipe.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import novaminds.gradproj.domain.recipe.repository.projection.CommentAuthorInfo;
+import novaminds.gradproj.domain.recipe.repository.projection.RecipeCommentCount;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 import novaminds.gradproj.domain.recipe.entity.RecipeComment;
 
-public interface RecipeCommentRepository extends JpaRepository<RecipeComment, Long> {
-    //특정 레시피의 댓글 목록 (페이징)
-    @EntityGraph(attributePaths = {"author", "children", "children.author"})
-    Page<RecipeComment> findByRecipeIdAndParentCommentIsNull(Long recipeId, Pageable pageable);
+public interface RecipeCommentRepository extends JpaRepository<RecipeComment, Long>, RecipeCommentRepositoryCustom {
 
-    //특정 댓글의 대댓글 목록
-    List<RecipeComment> findByParentCommentId(Long parentCommentId);
-
-    //댓글 더보기 누르기 전 미리보기로 보여줄 댓글 몇 개 리스트
-    @EntityGraph(attributePaths = {"author", "children", "children.author"})
+    //댓글 더보기 누르기 전 미리보기로 보여줄 댓글 3개 리스트 (대댓글까지 fetch join)
+    @EntityGraph(attributePaths = "children")
     List<RecipeComment> findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtDesc(Long recipeId);
 
-    //특정 레시피의 댓글 개수
-    long countByRecipeId(Long recipeId);
+    //특정 레시피의 총 댓글 수 조회 (부모 댓글 + 대댓글)
+    @Query("SELECT COUNT(c) " +
+            "FROM RecipeComment c " +
+            "WHERE c.recipe.id = :recipeId")
+    Long countCommentsByRecipeId(@Param("recipeId") Long recipeId);
 
-    //특정 사용자의 댓글 목록
-    Page<RecipeComment> findByAuthorLoginId(String loginId, Pageable pageable);
+    //댓글이 특정 레시피에 속하는지 확인
+    boolean existsByIdAndRecipeId(Long id, Long recipeId);
+
+    // 여러 레시피 ID에 대한 댓글 수를 배치 조회
+    @Query("SELECT c.recipe.id, COUNT(c) " +
+            "FROM RecipeComment c " +
+            "WHERE c.recipe.id IN :recipeIds " +
+            "GROUP BY c.recipe.id")
+    List<RecipeCommentCount> countCommentsByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
+
+    // 댓글 ID와 작성자 ID를 함께 조회 - c.author.loginId 에서 N+1 문제 발생 XXX -> JPA가 효율적인 JOIN으로 문제 해결
+    @Query("SELECT c.id as id, c.author.loginId as authorId " +
+            "FROM RecipeComment c " +
+            "WHERE c.id IN :commentIds")
+    List<CommentAuthorInfo> findCommentIdAndAuthorId(@Param("commentIds") List<Long> commentIds);
 }

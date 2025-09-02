@@ -64,6 +64,7 @@ public enum ErrorStatus implements BaseErrorCode {
     IMAGE_FORMAT_BAD_REQUEST(HttpStatus.BAD_REQUEST,"IMAGE400","이미지 파일만 업로드할 수 있습니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE501", "이미지 업로드에 실패했습니다. 다시 시도해주세요."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "지원하지 않는 파일 형식입니다. (이미지 파일만 허용됩니다.)"),
+    INVALID_S3_URL(HttpStatus.BAD_REQUEST, "S3_401", "유효하지 않은 S3 URL입니다."),
     S3_FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_500", "S3 파일 삭제에 실패했습니다."),
     S3_PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_501", "Presigned URL 생성에 실패했습니다."),
 
@@ -77,7 +78,10 @@ public enum ErrorStatus implements BaseErrorCode {
 
     //레시피 관련 에러
     RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE401", "해당 레시피를 찾을 수 없습니다."),
-    RECIPE_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "RECIPE402", "레시피 삭제 권한이 없습니다."),
+    RECIPE_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "RECIPE_402", "레시피 수정/삭제 권한이 없습니다."),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT401", "해당 댓글을 찾을 수 없습니다."),
+    COMMENT_NOT_MATCH_RECIPE(HttpStatus.BAD_REQUEST, "COMMENT402", "댓글이 해당 레시피에 속하지 않습니다."),
+    COMMENT_DEPTH_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "COMMENT403", "댓글은 2단계까지만 허용됩니다."),
     ;
 
     private final HttpStatus httpStatus;

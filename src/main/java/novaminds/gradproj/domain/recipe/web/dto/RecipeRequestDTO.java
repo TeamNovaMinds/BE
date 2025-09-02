@@ -24,6 +24,8 @@ public class RecipeRequestDTO {
 		@Size(max=100, message = "레시피 제목은 최대 100자 입니다.")
 		private String title;
 
+        private List<String> recipeImages;
+
 		private String description;
 
 		@NotNull(message = "레시피 카테고리는 필수입니다.")
@@ -63,23 +65,16 @@ public class RecipeRequestDTO {
 	public static class RecipeOrderDTO{
 		private Integer order;
 		private String description;
-		private Integer imageIndex;
+		private String imageUrl;
 	}
 
-	@Builder
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
-	public static class RecipeUpdateDTO{
-		private String title;
-		private String description;
-		private RecipeCategory recipeCategory;
-		private Integer cookingTimeMinutes;
-		private Difficulty difficulty;
-		private Integer servings;
-
-		private List<RecipeIngredientDTO> ingredients;
-		private List<RecipeOrderDTO> orders;
-		private List<Long> deletedRecipeImages;
-	}
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentCreateRequest {
+        @NotBlank(message = "댓글 내용은 필수입니다.")
+        @Size(max = 500, message = "댓글 내용은 최대 500자 입니다.")
+        private String content;
+    }
 }

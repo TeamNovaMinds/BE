@@ -83,7 +83,7 @@ public class OAuthAttributes {
                 .providerId(providerId)
                 .role(Role.USER)
                 .socialType(socialType)
-                .isProfileCompleted(false)
+                .profileCompleted(false)
                 .build();
     }
 }

@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.global.ApplicationContextProvider;
+import novaminds.gradproj.global.s3.service.S3Service;
 
 @Getter
 @AllArgsConstructor
@@ -32,15 +34,15 @@ public class RecipeImage {
     @Builder.Default
     private boolean isMain = false;
 
-    public void setAsMainImage() {
-        this.isMain = true;
+    @PreRemove
+    public void deleteFileFromS3() {
+        if (this.imageUrl != null && !this.imageUrl.isEmpty()) {
+            S3Service s3Service = ApplicationContextProvider.getBean(S3Service.class);
+            s3Service.deleteImageByUrl(this.imageUrl);
+        }
     }
 
-    public void unsetAsMainImage() {
-        this.isMain = false;
-    }
-
-    public void updateOrder(int newOrder) {
-        this.imageOrder = newOrder;
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
     }
 }
