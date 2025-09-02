@@ -195,13 +195,11 @@ public class AuthService {
      * 비밀번호 재설정을 위한 인증 코드 발송
      * 6자리 숫자 코드를 생성하여 Redis에 저장 후 이메일로 전송
      *
-     * @param request 이메일을 담고 있는 요청 DTO
+     * @param email 사용자의 이메일
      * @return      성공 메시지
      */
     @Transactional
-    public String sendPasswordResetEmail(MemberRequestDTO.PasswordResetRequest request) {
-
-        String email = request.getEmail();
+    public String sendPasswordResetEmail(String email) {
 
         // 이메일로 사용자 존재 여부 확인
         Optional<Member> maybeMember = memberRepository.findByEmail(email);

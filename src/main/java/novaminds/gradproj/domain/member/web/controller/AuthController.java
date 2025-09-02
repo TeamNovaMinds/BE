@@ -165,6 +165,6 @@ public class AuthController {
     public ApiResponse<String> sendResetPasswordToken (
             @Valid @RequestBody MemberRequestDTO.PasswordResetRequest request
     ) {
-        return ApiResponse.onSuccess(authService.sendPasswordResetEmail(request));
+        return ApiResponse.onSuccess(authService.sendPasswordResetEmail(request.getEmail()));
     }
 }
