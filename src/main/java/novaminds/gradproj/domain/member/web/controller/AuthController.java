@@ -163,7 +163,7 @@ public class AuthController {
     })
     @PostMapping("reset-password")
     public ApiResponse<String> sendResetPasswordToken (
-            @RequestBody MemberRequestDTO.PasswordResetRequest request
+            @Valid @RequestBody MemberRequestDTO.PasswordResetRequest request
     ) {
         return ApiResponse.onSuccess(authService.sendPasswordResetEmail(request));
     }
