@@ -11,6 +11,7 @@ import novaminds.gradproj.domain.refrigerator.service.command.RefrigeratorSkinCo
 import novaminds.gradproj.domain.refrigerator.service.query.RefrigeratorSkinQueryService;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorRequestDTO;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +27,7 @@ public class RefrigeratorSkinController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
     })
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public ApiResponse<Long> registerRefrigeratorSkin(
             @CurrentLoginId String memberId,

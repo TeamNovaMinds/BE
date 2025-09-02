@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentLoginId;
 import novaminds.gradproj.domain.recipe.service.command.RecipeCommandService;
 import novaminds.gradproj.domain.recipe.service.query.RecipeQueryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +34,8 @@ public class RecipeController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
-	@PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+	@PostMapping
 	public ApiResponse<Long> createRecipe(
 			@CurrentUser Member member,
 			@Valid @RequestBody RecipeRequestDTO.CreateRecipeDTO request
@@ -147,6 +149,7 @@ public class RecipeController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
     })
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/{recipeId}/comments")
     public ApiResponse<Long> createComment(
             @CurrentUser Member member,
