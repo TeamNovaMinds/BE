@@ -47,7 +47,7 @@ public class RecipeController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
     })
-    @PatchMapping("/{recipeId}")
+    @PutMapping("/{recipeId}")
     public ApiResponse<Long> updateRecipe(
             @CurrentLoginId String memberId,
             @PathVariable("recipeId") Long recipeId,
@@ -69,6 +69,25 @@ public class RecipeController {
     ) {
         recipeCommandService.deleteRecipe(member, recipeId);
         return ApiResponse.onSuccess("레시피가 성공적으로 삭제되었습니다.");
+    }
+
+    //카테고리 별 레시피.
+    @Operation(summary = "카테고리 별 레시피 목록 조회", description = "카테고리 별로 레시피 목록을 조회")
+    @Parameters({
+            @Parameter(name = "category", description = "조회하려고 하는 category 종류 (없으면 모든 카테고리 동시 조회)", required = false, example = "KOREAN"),
+            @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
+    })
+    @GetMapping
+    public ApiResponse<RecipeResponseDTO.RecipeListResponse> getRecipes(
+            @CurrentLoginId String memberId,
+            @RequestParam(required = false) RecipeCategory category,
+            @RequestParam(required = false) Long cursorId
+    ) {
+        var result = recipeQueryService.getRecipe(memberId, category, cursorId);
+        return ApiResponse.onSuccess(result);
     }
 
 	//레시피 상세 보기
@@ -99,25 +118,6 @@ public class RecipeController {
 		var result = recipeQueryService.getComments(memberId, recipeId, cursorId);
 		return ApiResponse.onSuccess(result);
 	}
-
-    //카테고리 별 레시피.
-    @Operation(summary = "카테고리 별 레시피 목록 조회", description = "카테고리 별로 레시피 목록을 조회")
-    @Parameters({
-            @Parameter(name = "category", description = "조회하려고 하는 category 종류 (없으면 모든 카테고리 동시 조회)", required = false, example = "KOREAN"),
-            @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
-    })
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
-    })
-    @GetMapping
-    public ApiResponse<RecipeResponseDTO.RecipeListResponse> getRecipes(
-            @CurrentLoginId String memberId,
-            @RequestParam(required = false) RecipeCategory category,
-            @RequestParam(required = false) Long cursorId
-    ) {
-        var result = recipeQueryService.getRecipe(memberId, category, cursorId);
-        return ApiResponse.onSuccess(result);
-    }
 
     //좋아요 추가 및 취소.
     @Operation(summary = "레시피 좋아요 토글", description = "특정 레시피에 대한 좋아요를 추가하거나 취소합니다. (토글 방식)")
