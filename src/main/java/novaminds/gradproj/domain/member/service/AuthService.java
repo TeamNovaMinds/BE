@@ -103,6 +103,9 @@ public class AuthService {
             // 프로필 이미지 업데이트
             member.updateProfileImage(request.getProfileImgUrl());
 
+            // 영속성 컨텍스트에서 DB로 정보 업데이트
+            memberRepository.flush();
+
             return MemberResponseDTO.AdditionalInfoResponse.from(member);
         } catch (DataIntegrityViolationException e) {
             // DB constraint 위반 시 적절한 예외로 변환 - 여기서 위반할만한 건 닉네임 중복되는 예외밖에 없음
@@ -201,8 +204,13 @@ public class AuthService {
         String email = request.getEmail();
 
         // 이메일로 사용자 존재 여부 확인
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+        Optional<Member> maybeMember = memberRepository.findByEmail(email);
+
+        // 해당 이메일이 가입되어있는지 안되어있는지 확인 못하게 하기 위해서
+        // 이메일 존재 여부와 무관하게 동일한 응답을 반환하여 계정 유무 노출 방지
+        if (maybeMember.isEmpty()) {
+            return "비밀번호 재설정 인증을 위한 6자리 숫자코드가 이메일로 발송되었습니다.";
+        }
 
         // 기존 Redis에 저장된 인증 코드가 있다면 삭제 (중복 발송 방지)
         String existingToken = authRedisService.getPasswordResetToken(email);
@@ -213,8 +221,8 @@ public class AuthService {
         // 6자리 랜덤 숫자 코드 생성
         String token = String.format("%06d", secureRandom.nextInt(1000000));
         
-        // Redis에 24시간 TTL로 저장
-        authRedisService.savePasswordResetToken(email, token, Duration.ofHours(24));
+        // Redis에 15분 TTL로 저장
+        authRedisService.savePasswordResetToken(email, token, Duration.ofMinutes(15));
         
         // 이메일 발송
         emailService.sendPasswordResetEmail(email, token);
