@@ -32,6 +32,9 @@ public class Ingredient extends BaseEntity {
     @Embedded
     private ShelfLife shelfLife;
 
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String image;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @ColumnDefault("'APPROVED'")
