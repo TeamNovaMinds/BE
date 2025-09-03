@@ -180,6 +180,17 @@ public class RecipeConverter {
                 .build();
     }
 
+    // 댓글 엔티티 리스트를 응답 DTO로 변환 (부모 댓글만, 대댓글 제외)
+    public static List<RecipeResponseDTO.CommentResponse> toParentCommentDTOs(
+            List<RecipeComment> comments, 
+            RecipeResponseDTO.CommentAuthor commentAuthor,
+            String memberId
+    ) {
+        return comments.stream()
+                .map(comment -> toParentCommentResponseWithAuthors(comment, commentAuthor, memberId))
+                .toList();
+    }
+
     // 댓글 목록 응답 DTO 생성
     public static RecipeResponseDTO.CommentListResponse toCommentListResponse(
             List<RecipeResponseDTO.CommentResponse> comments,
@@ -201,6 +212,31 @@ public class RecipeConverter {
         return RecipeResponseDTO.CommentAuthor.builder()
                 .commentIdToAuthorId(commentIdToAuthorId)
                 .authorInfos(authorInfos)
+                .build();
+    }
+
+    // 부모 댓글 엔티티를 응답 DTO로 변환 (대댓글 제외, 미리 조회된 작성자 정보 사용, N+1 방지)
+    public static RecipeResponseDTO.CommentResponse toParentCommentResponseWithAuthors(
+            RecipeComment comment,
+            RecipeResponseDTO.CommentAuthor commentAuthor,
+            String memberId
+    ) {
+        var commentIdToAuthorId = commentAuthor.getCommentIdToAuthorId();
+        var authorInfos = commentAuthor.getAuthorInfos();
+
+        // 부모 댓글의 작성자 정보 가져옴 (N+1 방지)
+        String commentAuthorId = commentIdToAuthorId.get(comment.getId());
+        MemberResponseDTO.AuthorInfo authorInfo = authorInfos.get(commentAuthorId);
+        boolean isWrittenByMe = (memberId != null) && memberId.equals(commentAuthorId);
+
+        // 대댓글 없이 부모 댓글만 반환
+        return RecipeResponseDTO.CommentResponse.builder()
+                .commentId(comment.getId())
+                .content(comment.getContent())
+                .authorInfo(authorInfo)
+                .writtenByMe(isWrittenByMe)
+                .createdAt(comment.getCreatedAt())
+                .replies(List.of()) // 대댓글 제외
                 .build();
     }
 
