@@ -116,17 +116,17 @@ public class RecipeQueryService {
         List<RecipeImage> images = recipeImageRepository.findByRecipeIdOrderByImageOrder(recipeId);
         List<RecipeIngredient> ingredients = recipeIngredientRepository.findByRecipeIdWithIngredient(recipeId);
         List<RecipeOrder> orders = recipeOrderRepository.findByRecipeIdOrderByOrder(recipeId);
-        List<RecipeComment> previewComments = recipeCommentRepository.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtDesc(recipeId);
+        List<RecipeComment> previewComments = recipeCommentRepository.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtAsc(recipeId);
         int totalCommentCount = recipeCommentRepository.countCommentsByRecipeId(recipeId).intValue();
 
-        // 4. 댓글 작성자들 배치 조회
-        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(previewComments);
+        // 4. 댓글 작성자들 배치 조회 (부모 댓글만)
+        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(previewComments, false);
 
         // 5. 각 컬렉션을 DTO로 변환
         var imageDTOs = RecipeConverter.toImageDTOs(images);
         var ingredientDTOs = RecipeConverter.toIngredientDTOs(ingredients);
         var orderDTOs = RecipeConverter.toOrderDTOs(orders);
-        var commentDTOs = RecipeConverter.toCommentDTOs(previewComments, commentAuthor, memberId);
+        var commentDTOs = RecipeConverter.toParentCommentDTOs(previewComments, commentAuthor, memberId);
 
         // 6. 응답 DTO 변환
         return RecipeConverter.toRecipeDetailResponse(
@@ -161,8 +161,8 @@ public class RecipeQueryService {
             return RecipeConverter.toCommentListResponse(List.of(), hasNext, nextCursor);
         }
 
-        // 3. 댓글 작성자들 배치 조회
-        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(comments);
+        // 3. 댓글 작성자들 배치 조회 (부모 댓글 + 대댓글)
+        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(comments, true);
 
         // 4. DTO로 변환
         List<RecipeResponseDTO.CommentResponse> commentResponses = 
@@ -199,22 +199,32 @@ public class RecipeQueryService {
     }
 
     /**
-     * 댓글 리스트의 모든 작성자 정보를 배치 조회
-     * @param comments 댓글 리스트 (부모 댓글 + 대댓글)
+     * 댓글 리스트의 작성자 정보를 배치 조회
+     * @param comments 댓글 리스트
+     * @param includeReplies 대댓글도 포함할지 여부 (true: 부모+대댓글, false: 부모댓글만)
      * @return Map<댓글 ID, 작성자 ID>과  Map<작성자 ID, 작성자 정보>를 담은 DTO
      */
-    private RecipeResponseDTO.CommentAuthor getCommentAuthorsData(List<RecipeComment> comments) {
+    private RecipeResponseDTO.CommentAuthor getCommentAuthorsData(List<RecipeComment> comments, boolean includeReplies) {
         if (comments.isEmpty()) {
             return RecipeConverter.createCommentAuthorData(Map.of(), Map.of());
         }
 
-        // 1. 댓글 ID들 수집 (부모 댓글 + 대댓글)
-        List<Long> commentIds = comments.stream()
-                .flatMap(comment -> Stream.concat(
-                    Stream.of(comment.getId()),
-                    comment.getChildren().stream().map(RecipeComment::getId)
-                ))
-                .toList();
+        // 1. 댓글 ID들 수집 (조건에 따라 대댓글 포함/제외)
+        List<Long> commentIds;
+        if (includeReplies) {
+            // 부모 댓글 + 대댓글 모두 수집
+            commentIds = comments.stream()
+                    .flatMap(comment -> Stream.concat(
+                        Stream.of(comment.getId()),
+                        comment.getChildren().stream().map(RecipeComment::getId)
+                    ))
+                    .toList();
+        } else {
+            // 부모 댓글만 수집
+            commentIds = comments.stream()
+                    .map(RecipeComment::getId)
+                    .toList();
+        }
 
         // 2. 댓글 ID → 작성자 ID 매핑 생성, 배치 조회 사용
         Map<Long, String> commentIdToAuthorId = recipeCommentRepository.findCommentIdAndAuthorId(commentIds).stream()
