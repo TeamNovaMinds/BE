@@ -13,7 +13,7 @@ public class IngredientConverter {
 			.id(ingredient.getId())
 			.name(ingredient.getIngredientName())
 			.category(ingredient.getIngredientCategory().getIngredientCategoryName())
-			.image(ingredient.getImage())
+			.imageUrl(ingredient.getImageUrl())
 			.build();
 	}
 

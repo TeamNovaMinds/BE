@@ -33,7 +33,7 @@ public class Ingredient extends BaseEntity {
     private ShelfLife shelfLife;
 
     @Column(name = "image_url", columnDefinition = "TEXT")
-    private String image;
+    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

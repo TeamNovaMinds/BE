@@ -17,7 +17,7 @@ public class IngredientResponseDTO {
 		private Long id;
 		private String name;
 		private String category;
-		private String image;
+		private String imageUrl;
 	}
 
 	@Builder
