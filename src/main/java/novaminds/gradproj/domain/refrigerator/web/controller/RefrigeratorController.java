@@ -39,7 +39,7 @@ public class RefrigeratorController {
     @PostMapping("/ingredients")
     public ApiResponse<String> addIngredientsToRefrigerator(
             @CurrentUser Member member,
-            @Valid @RequestBody RefrigeratorRequestDTO.AddIngredientRequest request
+            @Valid @RequestBody RefrigeratorRequestDTO.IngredientItem request
     ) {
         refrigeratorCommandService.addIngredientsToRefrigerator(member, request);
         return ApiResponse.onSuccess("재료 추가가 완료되었습니다.");
