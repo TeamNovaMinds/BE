@@ -14,6 +14,7 @@ import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -89,11 +90,13 @@ public class RefrigeratorConverter {
     public static RefrigeratorResponseDTO.StoredIngredientResponse toStoredIngredientResponse(StoredItem storedItem) {
 
         String storageType = storedItem.getStorageType().getStorageName();
+        String dDay = calculateDDay(storedItem.getExpirationDate());
 
         return RefrigeratorResponseDTO.StoredIngredientResponse.builder()
                 .id(storedItem.getId())
                 .ingredientName(storedItem.getIngredient().getIngredientName())
                 .expirationDate(storedItem.getExpirationDate())
+                .dDay(dDay)
                 .storageType(storageType)
                 .build();
     }
@@ -119,4 +122,21 @@ public class RefrigeratorConverter {
                 .roomTempCount(storageTypeCount.getRoomTempCount().intValue())
                 .build();
     }
+
+    private static String calculateDDay(LocalDate expirationDate) {
+        if (expirationDate == null) {
+            return null;
+        }
+
+        long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+
+        if (daysUntil > 0) {
+            return "D-" + daysUntil;
+        } else if (daysUntil == 0) {
+            return "D-Day";
+        } else {
+            return "D+" + Math.abs(daysUntil);
+        }
+    }
+
 }

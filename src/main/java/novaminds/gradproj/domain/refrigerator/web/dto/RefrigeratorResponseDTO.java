@@ -86,6 +86,9 @@ public class RefrigeratorResponseDTO {
 
         @Schema(description = "유통기한")
         private LocalDate expirationDate;
+
+        @Schema(description = "유통기한 D-Day")
+        private String dDay;
     }
 
     @Getter
