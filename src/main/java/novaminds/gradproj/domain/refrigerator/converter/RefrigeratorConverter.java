@@ -94,7 +94,9 @@ public class RefrigeratorConverter {
 
         return RefrigeratorResponseDTO.StoredIngredientResponse.builder()
                 .id(storedItem.getId())
+                .ingredientId(storedItem.getIngredient().getId())
                 .ingredientName(storedItem.getIngredient().getIngredientName())
+                .quantity(storedItem.getQuantity())
                 .expirationDate(storedItem.getExpirationDate())
                 .dDay(dDay)
                 .storageType(storageType)
