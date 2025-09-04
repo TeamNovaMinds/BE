@@ -78,8 +78,14 @@ public class RefrigeratorResponseDTO {
         @Schema(description = "보관된 재료 ID")
         private Long id;
 
+        @Schema(description = "재료 ID")
+        private Long ingredientId;
+
         @Schema(description = "재료명")
         private String ingredientName;
+
+        @Schema(description = "재료 개수")
+        private Integer quantity;
 
         @Schema(description = "보관 방식")
         private String storageType;
