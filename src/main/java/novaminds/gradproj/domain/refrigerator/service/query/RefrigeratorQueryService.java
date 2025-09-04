@@ -8,6 +8,7 @@ import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import novaminds.gradproj.domain.refrigerator.repository.StoredItemRepository;
+import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,5 +39,17 @@ public class RefrigeratorQueryService {
 
         // DTO 변환
         return RefrigeratorConverter.toIngredientResponse(storedItems);
+    }
+
+    public RefrigeratorResponseDTO.StoredIngredientCount getMyIngredientCount(Member member) {
+
+        Refrigerator refrigerator = member.getRefrigerator();
+        if (refrigerator == null) {
+            throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
+        }
+
+        StorageTypeCount storageTypeCount = storedItemRepository.countByStorageTypes(refrigerator.getId());
+
+        return RefrigeratorConverter.toStoredIngredientCount(storageTypeCount);
     }
 }
