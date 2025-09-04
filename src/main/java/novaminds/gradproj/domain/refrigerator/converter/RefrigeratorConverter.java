@@ -9,6 +9,7 @@ import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkinImage;
 import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
+import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
@@ -108,6 +109,14 @@ public class RefrigeratorConverter {
                 .ingredient(ingredient)
                 .expirationDate(expirationDate)
                 .storageType(storageType)
+                .build();
+    }
+
+    public static RefrigeratorResponseDTO.StoredIngredientCount toStoredIngredientCount(StorageTypeCount storageTypeCount) {
+        return RefrigeratorResponseDTO.StoredIngredientCount.builder()
+                .refrigeratorCount(storageTypeCount.getRefrigeratorCount().intValue())
+                .freezerCount(storageTypeCount.getFreezerCount().intValue())
+                .roomTempCount(storageTypeCount.getRoomTempCount().intValue())
                 .build();
     }
 }
