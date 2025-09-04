@@ -80,11 +80,28 @@ public class RefrigeratorResponseDTO {
 
         @Schema(description = "재료명")
         private String ingredientName;
-        
-        @Schema(description = "유통기한")
-        private LocalDate expirationDate;
-        
+
         @Schema(description = "보관 방식")
         private String storageType;
+
+        @Schema(description = "유통기한")
+        private LocalDate expirationDate;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StoredIngredientCount {
+
+        @Schema(description = "냉장 보관 개수")
+        private int refrigeratorCount;
+
+        @Schema(description = "냉동 보관 개수")
+        private int freezerCount;
+
+        @Schema(description = "실온 보관 개수")
+        private int roomTempCount;
+
     }
 }
