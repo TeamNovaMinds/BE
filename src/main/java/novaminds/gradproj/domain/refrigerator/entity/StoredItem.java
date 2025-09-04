@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
@@ -14,6 +16,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@DynamicInsert
+@DynamicUpdate
 @Entity
 @Table(name = "stored_items",
         uniqueConstraints = {
@@ -33,6 +37,10 @@ public class StoredItem extends BaseEntity {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
+    @Column(name = "quantity", nullable = false, columnDefinition = "int default 0")
+    @Builder.Default
+    private Integer quantity = 0;
+
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
@@ -42,5 +50,9 @@ public class StoredItem extends BaseEntity {
 
     public void updateExpirationDate(LocalDate newExpirationDate) {
         this.expirationDate = newExpirationDate;
+    }
+
+    public void updateQuantity(Integer newQuantity) {
+        this.quantity = newQuantity;
     }
 }
