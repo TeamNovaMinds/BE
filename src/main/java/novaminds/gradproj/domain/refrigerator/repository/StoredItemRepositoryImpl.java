@@ -32,6 +32,7 @@ public class StoredItemRepositoryImpl implements StoredItemRepositoryCustom {
 
         return queryFactory
                 .selectFrom(storedItem)
+                .leftJoin(storedItem.ingredient).fetchJoin()
                 .where(
                         storedItem.refrigerator.id.eq(refrigeratorId),
                         storageTypeExp,
