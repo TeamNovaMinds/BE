@@ -103,13 +103,15 @@ public class RefrigeratorConverter {
 
     public static StoredItem toStoredItem(
             Refrigerator refrigerator, 
-            Ingredient ingredient, 
-            LocalDate expirationDate, 
+            Ingredient ingredient,
+            Integer quantity,
+            LocalDate expirationDate,
             StorageType storageType
     ) {
         return StoredItem.builder()
                 .refrigerator(refrigerator)
                 .ingredient(ingredient)
+                .quantity(quantity)
                 .expirationDate(expirationDate)
                 .storageType(storageType)
                 .build();
