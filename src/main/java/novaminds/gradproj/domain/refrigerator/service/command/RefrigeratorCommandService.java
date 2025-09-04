@@ -18,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -54,10 +55,9 @@ public class RefrigeratorCommandService {
      *
      * @param member 재료를 보관할 회원
      * @param request 추가할 재료 정보
-     * @return 추가된 재료 응답
      */
     public void addIngredientsToRefrigerator(
-            Member member, RefrigeratorRequestDTO.AddIngredientRequest request
+            Member member, RefrigeratorRequestDTO.IngredientItem request
     ) {
 
         // 냉장고 조회
@@ -66,74 +66,40 @@ public class RefrigeratorCommandService {
             throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
         }
 
-        // 재료 ID들 수집
-        List<Long> ingredientIds = request.getIngredients().stream()
-                .map(RefrigeratorRequestDTO.IngredientItem::getIngredientId)
-                .toList();
-
-        // 배치 조회로 N+1 문제 해결
-        List<Ingredient> ingredients = ingredientRepository.findAllById(ingredientIds);
+        // 재료 조회
+        Ingredient ingredient = ingredientRepository.findById(request.getIngredientId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND));
         
-        // Map으로 변환
-        var ingredientMap = ingredients.stream()
-                .collect(Collectors.toMap(Ingredient::getId, ingredient -> ingredient));
-
-        // 새로 추가하거나 업데이트할 StoredItem들 저장할 리스트
-        List<StoredItem> itemsToSave = new ArrayList<>();
-
-        // 요청으로 들어온 Item들의 중복을 제거하는 과정
-        var uniqueItems = request.getIngredients().stream()
-                .collect(Collectors.toMap(
-                        // 1번 인자: Key Mapper (키 생성 규칙)
-                        item -> item.getIngredientId() + "|" + item.getStorageType().name(),
-                        // 2번 인자: Value Mapper (값 생성 규칙)
-                        item -> item,
-                        // 3번 인자: Merge Function (중복 키 처리 규칙) -> 중복 되는 키가 있을 경우 앞의 키와 값을 사용
-                        (a, b) -> a,
-                        // 4번 인자: Map Supplier (어떤 종류의 Map을 만들 것인가) -> 중복은 제거하되, 원래 요청에 들어있던 재료들의 순서는 그대로 유지하기 위해서
-                        LinkedHashMap::new
-                ))
-                .values();
-
-        for (var ingredientItem : uniqueItems) {
-            Ingredient ingredient = ingredientMap.get(ingredientItem.getIngredientId());
-            if (ingredient == null) {
-                throw new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND);
-            }
-            
-            // 새로 계산된 유통기한
-            LocalDate newExpirationDate = calculateExpirationDate(ingredient, ingredientItem.getStorageType());
-            
-            // 기존에 동일한 재료, 보관타입이 있는지 확인
-            Optional<StoredItem> existingItemOpt = storedItemRepository.findByRefrigeratorIdAndIngredientIdAndStorageType(
-                    refrigerator.getId(), ingredient.getId(), ingredientItem.getStorageType()
+        // 새로 계산된 유통기한 (요청에 유통기한이 있으면 그것을 사용, 없으면 재료의 기본 유통기한 계산)
+        LocalDate newExpirationDate = request.getExpirationDate() != null 
+                ? request.getExpirationDate()
+                : calculateExpirationDate(ingredient, request.getStorageType());
+        
+        // 기존에 동일한 재료, 보관타입이 있는지 확인
+        Optional<StoredItem> existingItemOpt = storedItemRepository.findByRefrigeratorIdAndIngredientIdAndStorageType(
+                refrigerator.getId(), ingredient.getId(), request.getStorageType()
+        );
+        
+        if (existingItemOpt.isEmpty()) {
+            // 기존 냉장고에 존재하지 않는 재료의 경우 새로 추가
+            StoredItem newItem = RefrigeratorConverter.toStoredItem(
+                    refrigerator, ingredient, request.getQuantity(), newExpirationDate, request.getStorageType()
             );
-            
-            if (existingItemOpt.isEmpty()) {
-                // 기존 냉장고에 존재하지 않는 재료의 경우 새로 추가
-                StoredItem newItem = RefrigeratorConverter.toStoredItem(
-                        refrigerator, ingredient, newExpirationDate, ingredientItem.getStorageType()
-                );
-                itemsToSave.add(newItem);
-            } else {
-                // 기존 아이템이 있는 경우 유통기한 비교하여 더 긴 것으로 업데이트
-                StoredItem existingItem = existingItemOpt.get();
+            StoredItem savedItem = storedItemRepository.save(newItem);
+            refrigerator.addStoredItem(savedItem);
+        } else {
+            // 기존 아이템이 있는 경우 유통기한 비교하여 더 긴 것으로 업데이트
+            StoredItem existingItem = existingItemOpt.get();
 
-                // 새로운 유통기한이 더 길면 기존 아이템 삭제 후 새로 추가
-                if (newExpirationDate.isAfter(existingItem.getExpirationDate())) {
-
-                    // 유통 기한을 새로 업데이트
-                    existingItem.updateExpirationDate(newExpirationDate);
-                }
-                // 기존에 재료가 존재하나 유통기한이 더 길거나 같으면 아무것도 하지 않음
+            // 새로운 유통기한이 더 길면 기존 아이템의 유통기한 업데이트
+            if (newExpirationDate.isAfter(existingItem.getExpirationDate())) {
+                existingItem.updateExpirationDate(newExpirationDate);
             }
+
+            // 기존 아이템에 수량 더하기
+            existingItem.updateQuantity(request.getQuantity() + request.getQuantity());
+            // 기존에 재료가 존재하나 유통기한이 더 길거나 같으면 아무것도 하지 않음
         }
-        
-        // 새로 추가되거나 업데이트된 아이템들만 저장
-        List<StoredItem> savedStoredItems = storedItemRepository.saveAll(itemsToSave);
-        
-        // Refrigerator 엔티티의 storedItems 리스트에 추가 (연관관계 관리)
-        savedStoredItems.forEach(refrigerator::addStoredItem);
     }
 
     /**
