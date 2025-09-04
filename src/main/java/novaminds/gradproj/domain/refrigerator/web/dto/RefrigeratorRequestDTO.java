@@ -1,12 +1,12 @@
 package novaminds.gradproj.domain.refrigerator.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class RefrigeratorRequestDTO {
@@ -33,17 +33,6 @@ public class RefrigeratorRequestDTO {
     @Getter
     @NoArgsConstructor
     @Schema(description = "냉장고에 재료 추가 요청")
-    public static class AddIngredientRequest {
-
-        @Schema(description = "재료 정보 리스트")
-        @NotEmpty(message = "재료 정보는 최소 1개 이상이어야 합니다.")
-        @Valid
-        private List<IngredientItem> ingredients;
-    }
-
-    @Getter
-    @NoArgsConstructor
-    @Schema(description = "개별 재료 정보")
     public static class IngredientItem {
 
         @Schema(description = "재료 ID")
@@ -54,5 +43,12 @@ public class RefrigeratorRequestDTO {
                 allowableValues = {"ROOM_TEMPERATURE", "REFRIGERATOR", "FREEZER"})
         @NotNull(message = "보관 방식은 필수입니다.")
         private StorageType storageType;
+
+        @Schema(description = "유통 기한 - 필수 X", example = "2025-09-04")
+        private LocalDate expirationDate;
+
+        @Schema(description = "재료 개수")
+        @NotNull(message = "재료 개수는 필수 입니다.")
+        private Integer quantity;
     }
 }
