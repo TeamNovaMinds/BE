@@ -97,7 +97,7 @@ public class RefrigeratorCommandService {
             }
 
             // 기존 아이템에 수량 더하기
-            existingItem.updateQuantity(request.getQuantity() + request.getQuantity());
+            existingItem.updateQuantity(existingItem.getQuantity() + request.getQuantity());
             // 기존에 재료가 존재하나 유통기한이 더 길거나 같으면 아무것도 하지 않음
         }
     }
