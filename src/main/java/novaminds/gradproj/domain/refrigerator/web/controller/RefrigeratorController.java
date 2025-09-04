@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -76,5 +75,20 @@ public class RefrigeratorController {
     ) {
         refrigeratorCommandService.removeMyIngredients(member, storedItemIds);
         return ApiResponse.onSuccess("재료가 성공적으로 삭제되었습니다.");
+    }
+
+    @Operation(summary = "냉장고 속 재료 개수 확인", description = "사용자의 냉장고에 보관 중인 재료의 개수를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER401", description = "사용자를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "REFRIGERATOR401", description = "냉장고를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "INGREDIENT401", description = "재료를 찾을 수 없습니다."),
+    })
+    @GetMapping("/ingredients/count")
+    public ApiResponse<RefrigeratorResponseDTO.StoredIngredientCount> getMyIngredientCount(
+            @CurrentUser Member member
+    ) {
+        var myIngredientCount = refrigeratorQueryService.getMyIngredientCount(member);
+        return ApiResponse.onSuccess(myIngredientCount);
     }
 }
