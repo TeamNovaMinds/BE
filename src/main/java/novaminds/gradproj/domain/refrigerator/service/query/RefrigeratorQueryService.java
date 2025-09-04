@@ -24,7 +24,11 @@ public class RefrigeratorQueryService {
 
     private final StoredItemRepository storedItemRepository;
 
-    public RefrigeratorResponseDTO.IngredientResponse getMyIngredients(Member member, StorageType storageType) {
+    public RefrigeratorResponseDTO.IngredientResponse getMyIngredients(
+            Member member,
+            StorageType storageType,
+            String keyword
+    ) {
 
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();
@@ -34,7 +38,7 @@ public class RefrigeratorQueryService {
 
         // 냉장고 속 저장된 재료들 조회, 보관 방법에 따라 조회
         List<StoredItem> storedItems = storedItemRepository.findStoredItems(
-                refrigerator.getId(), storageType
+                refrigerator.getId(), storageType, keyword
         );
 
         // DTO 변환

@@ -55,9 +55,10 @@ public class RefrigeratorController {
     @GetMapping("/ingredients")
     public ApiResponse<RefrigeratorResponseDTO.IngredientResponse> getMyIngredients(
             @CurrentUser Member member,
-            @RequestParam(required = false) StorageType storageType
+            @RequestParam StorageType storageType,
+            @RequestParam(required = false) String keyword
     ) {
-        var response = refrigeratorQueryService.getMyIngredients(member, storageType);
+        var response = refrigeratorQueryService.getMyIngredients(member, storageType, keyword);
         return ApiResponse.onSuccess(response);
     }
 
