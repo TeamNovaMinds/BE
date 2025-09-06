@@ -5,12 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorRequestDTO;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
 import java.time.LocalDate;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 @Getter
 @AllArgsConstructor
@@ -48,11 +51,30 @@ public class StoredItem extends BaseEntity {
     @Column(name = "storage_type", nullable = false, length = 20)
     private StorageType storageType;
 
+    @Version
+    private Long version;
+
+    public void updateFieldIfChanged(StoredItem storedItem, RefrigeratorRequestDTO.ModifyStoredItemRequest request) {
+        updateIfDifferent(storedItem.getQuantity(), request.getQuantity(), storedItem::updateQuantity);
+        updateIfDifferent(storedItem.getStorageType(), request.getStorageType(), storedItem::updateStorageType);
+        updateIfDifferent(storedItem.getExpirationDate(), request.getExpirationDate(), storedItem::updateExpirationDate);
+    }
+
     public void updateExpirationDate(LocalDate newExpirationDate) {
         this.expirationDate = newExpirationDate;
     }
 
     public void updateQuantity(Integer newQuantity) {
         this.quantity = newQuantity;
+    }
+
+    public void updateStorageType(StorageType newStorageType) {
+        this.storageType = newStorageType;
+    }
+
+    private <T> void updateIfDifferent(T current, T requested, Consumer<T> updater) {
+        if (requested != null && !Objects.equals(current, requested)) {
+            updater.accept(requested);
+        }
     }
 }
