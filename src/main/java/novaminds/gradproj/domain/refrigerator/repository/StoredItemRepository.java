@@ -1,10 +1,12 @@
 package novaminds.gradproj.domain.refrigerator.repository;
 
+import jakarta.persistence.LockModeType;
 import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 public interface StoredItemRepository extends JpaRepository<StoredItem, Long>, StoredItemRepositoryCustom {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<StoredItem> findByRefrigeratorIdAndIngredientIdAndStorageType(Long refrigeratorId, Long ingredientId, StorageType storageType);
 
     @Query("""
