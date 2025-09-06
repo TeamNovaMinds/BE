@@ -1,6 +1,7 @@
 package novaminds.gradproj.domain.ingredient.web.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,4 +31,12 @@ public class IngredientController {
 		return ApiResponse.onSuccess(response);
 	}
 
+	@Operation(summary = "재료 초기 정보 조회", description = "ID로 특정 재료의 초기 정보를 조회합니다. (냉장고 추가 페이지용)")
+	@GetMapping("/{ingredientId}")
+	public ApiResponse<IngredientResponseDTO.IngredientDetailResponse> getIngredientDetail(
+		@PathVariable Long ingredientId
+	) {
+		var response = ingredientQueryService.getIngredientDetail(ingredientId);
+		return ApiResponse.onSuccess(response);
+	}
 }
