@@ -40,9 +40,9 @@ public class StoredItem extends BaseEntity {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
-    @Column(name = "quantity", nullable = false, columnDefinition = "int default 0")
+    @Column(name = "quantity", nullable = false, columnDefinition = "int default 1")
     @Builder.Default
-    private Integer quantity = 0;
+    private Integer quantity = 1;
 
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
