@@ -23,4 +23,6 @@ public interface StoredItemRepository extends JpaRepository<StoredItem, Long>, S
       WHERE s.refrigerator.id = :refrigeratorId
       """)
     StorageTypeCount countByStorageTypes(@Param("refrigeratorId") Long refrigeratorId);
+
+    Optional<StoredItem> findByIdAndRefrigeratorId(Long id, Long refrigeratorId);
 }
