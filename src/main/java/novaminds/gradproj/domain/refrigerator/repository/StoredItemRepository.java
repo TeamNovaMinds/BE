@@ -16,9 +16,9 @@ public interface StoredItemRepository extends JpaRepository<StoredItem, Long>, S
 
     @Query("""
       SELECT
-          COALESCE(SUM(CASE WHEN s.storageType = 'REFRIGERATOR' THEN 1 ELSE 0 END), 0) AS refrigeratorCount,
-          COALESCE(SUM(CASE WHEN s.storageType = 'FREEZER' THEN 1 ELSE 0 END), 0) AS freezerCount,
-          COALESCE(SUM(CASE WHEN s.storageType = 'ROOM_TEMPERATURE' THEN 1 ELSE 0 END), 0) AS roomTempCount
+          COALESCE(SUM(CASE WHEN s.storageType = novaminds.gradproj.domain.refrigerator.entity.StorageType.REFRIGERATOR THEN 1 ELSE 0 END), 0) AS refrigeratorCount,
+          COALESCE(SUM(CASE WHEN s.storageType = novaminds.gradproj.domain.refrigerator.entity.StorageType.FREEZER THEN 1 ELSE 0 END), 0) AS freezerCount,
+          COALESCE(SUM(CASE WHEN s.storageType = novaminds.gradproj.domain.refrigerator.entity.StorageType.ROOM_TEMPERATURE THEN 1 ELSE 0 END), 0) AS roomTempCount
       FROM StoredItem s
       WHERE s.refrigerator.id = :refrigeratorId
       """)
