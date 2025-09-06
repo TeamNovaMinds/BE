@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 @Entity
 @Table(name = "stored_items",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"refrigerator_id", "ingredient_id", "expiration_date", "storage_type"})
+                @UniqueConstraint(columnNames = {"refrigerator_id", "ingredient_id", "storage_type"})
         })
 public class StoredItem extends BaseEntity {
 
