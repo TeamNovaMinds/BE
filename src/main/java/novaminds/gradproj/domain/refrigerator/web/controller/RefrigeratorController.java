@@ -54,7 +54,7 @@ public class RefrigeratorController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "INGREDIENT401", description = "재료를 찾을 수 없습니다."),
     })
     @GetMapping("/stored-items")
-    public ApiResponse<RefrigeratorResponseDTO.IngredientResponse> getMyIngredients(
+    public ApiResponse<RefrigeratorResponseDTO.IngredientResponse> getMyStoredItems(
             @CurrentUser Member member,
             @RequestParam StorageType storageType,
             @RequestParam(required = false) String keyword
