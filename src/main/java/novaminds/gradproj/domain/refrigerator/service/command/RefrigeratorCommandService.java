@@ -102,6 +102,29 @@ public class RefrigeratorCommandService {
         }
     }
 
+    public Long modifyMyStoredItem(Member member, Long storedItemId, RefrigeratorRequestDTO.ModifyStoredItemRequest request) {
+
+        // 냉장고 조회
+        Refrigerator refrigerator = member.getRefrigerator();
+        if (refrigerator == null) {
+            throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
+        }
+
+        // StoredItem 조회
+        StoredItem storedItem = storedItemRepository.findByIdAndRefrigeratorId(storedItemId, refrigerator.getId())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.STORED_ITEM_NOT_FOUND));
+
+        // 버전 체크 (동시성 제어)
+        if (!Objects.equals(storedItem.getVersion(), request.getVersion())) {
+            throw new GeneralException(ErrorStatus.OPTIMISTIC_LOCK_ERROR);
+        }
+
+        // 변경된 필드만 업데이트
+        storedItem.updateFieldIfChanged(storedItem, request);
+
+        return storedItem.getId();
+    }
+
     /**
      * 냉장고에 보관된 재료 삭제
      *
@@ -150,7 +173,7 @@ public class RefrigeratorCommandService {
      * @param storageType 보관 방식
      * @return 계산된 유통기한
      */
-    private LocalDate calculateExpirationDate(Ingredient ingredient, StorageType storageType) {
+    public LocalDate calculateExpirationDate(Ingredient ingredient, StorageType storageType) {
         LocalDate today = LocalDate.now();
 
         int shelfLifeDays = switch (storageType) {
