@@ -50,6 +50,7 @@ public class RefrigeratorRequestDTO {
 
         @Schema(description = "재료 개수")
         @NotNull(message = "재료 개수는 필수 입니다.")
+        @Min(value = 1, message = "재료 개수는 1 이상이어야 합니다.")
         private Integer quantity;
     }
 
@@ -63,6 +64,7 @@ public class RefrigeratorRequestDTO {
         private Long version;
 
         @Schema(description = "재료 개수")
+        @NotNull(message = "재료 개수는 필수 입니다.")
         @Min(value = 1, message = "재료 개수는 1 이상이어야 합니다.")
         private Integer quantity;
 
