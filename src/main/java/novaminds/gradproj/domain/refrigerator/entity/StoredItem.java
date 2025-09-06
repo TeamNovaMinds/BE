@@ -1,6 +1,7 @@
 package novaminds.gradproj.domain.refrigerator.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,7 +41,8 @@ public class StoredItem extends BaseEntity {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
-    @Column(name = "quantity", nullable = false, columnDefinition = "int default 1")
+    @Min(value = 1, message = "재료 개수는 1 이상이어야 합니다.")
+    @Column(name = "quantity", nullable = false, columnDefinition = "int default 1 check (quantity >= 1)")
     @Builder.Default
     private Integer quantity = 1;
 
