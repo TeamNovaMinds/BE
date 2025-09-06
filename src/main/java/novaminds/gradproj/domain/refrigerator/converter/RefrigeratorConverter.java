@@ -89,7 +89,6 @@ public class RefrigeratorConverter {
 
     public static RefrigeratorResponseDTO.StoredIngredientResponse toStoredIngredientResponse(StoredItem storedItem) {
 
-        String storageType = storedItem.getStorageType().getStorageName();
         String dDay = calculateDDay(storedItem.getExpirationDate());
 
         return RefrigeratorResponseDTO.StoredIngredientResponse.builder()
@@ -99,7 +98,8 @@ public class RefrigeratorConverter {
                 .quantity(storedItem.getQuantity())
                 .expirationDate(storedItem.getExpirationDate())
                 .dDay(dDay)
-                .storageType(storageType)
+                .storageType(storedItem.getStorageType())
+                .version(storedItem.getVersion())
                 .build();
     }
 
