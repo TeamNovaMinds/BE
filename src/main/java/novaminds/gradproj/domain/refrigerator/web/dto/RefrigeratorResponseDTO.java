@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -88,13 +89,16 @@ public class RefrigeratorResponseDTO {
         private Integer quantity;
 
         @Schema(description = "보관 방식")
-        private String storageType;
+        private StorageType storageType;
 
         @Schema(description = "유통기한")
         private LocalDate expirationDate;
 
         @Schema(description = "유통기한 D-Day")
         private String dDay;
+
+        @Schema(description = "버전 (동시성 제어용)")
+        private Long version;
     }
 
     @Getter
