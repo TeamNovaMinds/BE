@@ -120,7 +120,7 @@ public class RefrigeratorCommandService {
         }
 
         // 변경된 필드만 업데이트
-        storedItem.updateFieldIfChanged(storedItem, request);
+        storedItem.updateFieldIfChanged(request);
 
         return storedItem.getId();
     }

@@ -54,10 +54,10 @@ public class StoredItem extends BaseEntity {
     @Version
     private Long version;
 
-    public void updateFieldIfChanged(StoredItem storedItem, RefrigeratorRequestDTO.ModifyStoredItemRequest request) {
-        updateIfDifferent(storedItem.getQuantity(), request.getQuantity(), storedItem::updateQuantity);
-        updateIfDifferent(storedItem.getStorageType(), request.getStorageType(), storedItem::updateStorageType);
-        updateIfDifferent(storedItem.getExpirationDate(), request.getExpirationDate(), storedItem::updateExpirationDate);
+    public void updateFieldIfChanged(RefrigeratorRequestDTO.ModifyStoredItemRequest request) {
+        updateIfDifferent(this.getQuantity(), request.getQuantity(), this::updateQuantity);
+        updateIfDifferent(this.getStorageType(), request.getStorageType(), this::updateStorageType);
+        updateIfDifferent(this.getExpirationDate(), request.getExpirationDate(), this::updateExpirationDate);
     }
 
     public void updateExpirationDate(LocalDate newExpirationDate) {
