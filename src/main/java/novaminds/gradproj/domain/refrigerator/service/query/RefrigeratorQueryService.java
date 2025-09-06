@@ -112,6 +112,11 @@ public class RefrigeratorQueryService {
             Long storedItemId, 
             StorageType storageType
     ) {
+
+        if (storageType == null) {
+            throw new GeneralException(ErrorStatus._BAD_REQUEST);
+        }
+
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();
         if (refrigerator == null) {
