@@ -1,23 +1,31 @@
 package novaminds.gradproj.domain.refrigerator.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorRequestDTO;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import novaminds.gradproj.global.BaseEntity;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
 import java.time.LocalDate;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@DynamicInsert
+@DynamicUpdate
 @Entity
 @Table(name = "stored_items",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"refrigerator_id", "ingredient_id", "expiration_date", "storage_type"})
+                @UniqueConstraint(columnNames = {"refrigerator_id", "ingredient_id", "storage_type"})
         })
 public class StoredItem extends BaseEntity {
 
@@ -33,6 +41,11 @@ public class StoredItem extends BaseEntity {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
+    @Min(value = 1, message = "재료 개수는 1 이상이어야 합니다.")
+    @Column(name = "quantity", nullable = false, columnDefinition = "int default 1 check (quantity >= 1)")
+    @Builder.Default
+    private Integer quantity = 1;
+
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
@@ -40,7 +53,30 @@ public class StoredItem extends BaseEntity {
     @Column(name = "storage_type", nullable = false, length = 20)
     private StorageType storageType;
 
+    @Version
+    private Long version;
+
+    public void updateFieldIfChanged(RefrigeratorRequestDTO.ModifyStoredItemRequest request) {
+        updateIfDifferent(this.getQuantity(), request.getQuantity(), this::updateQuantity);
+        updateIfDifferent(this.getStorageType(), request.getStorageType(), this::updateStorageType);
+        updateIfDifferent(this.getExpirationDate(), request.getExpirationDate(), this::updateExpirationDate);
+    }
+
     public void updateExpirationDate(LocalDate newExpirationDate) {
         this.expirationDate = newExpirationDate;
+    }
+
+    public void updateQuantity(Integer newQuantity) {
+        this.quantity = newQuantity;
+    }
+
+    public void updateStorageType(StorageType newStorageType) {
+        this.storageType = newStorageType;
+    }
+
+    private <T> void updateIfDifferent(T current, T requested, Consumer<T> updater) {
+        if (requested != null && !Objects.equals(current, requested)) {
+            updater.accept(requested);
+        }
     }
 }

@@ -9,10 +9,12 @@ import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkinImage;
 import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
+import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -87,27 +89,58 @@ public class RefrigeratorConverter {
 
     public static RefrigeratorResponseDTO.StoredIngredientResponse toStoredIngredientResponse(StoredItem storedItem) {
 
-        String storageType = storedItem.getStorageType().getStorageName();
+        String dDay = calculateDDay(storedItem.getExpirationDate());
 
         return RefrigeratorResponseDTO.StoredIngredientResponse.builder()
                 .id(storedItem.getId())
+                .ingredientId(storedItem.getIngredient().getId())
                 .ingredientName(storedItem.getIngredient().getIngredientName())
+                .quantity(storedItem.getQuantity())
                 .expirationDate(storedItem.getExpirationDate())
-                .storageType(storageType)
+                .dDay(dDay)
+                .storageType(storedItem.getStorageType())
+                .version(storedItem.getVersion())
                 .build();
     }
 
     public static StoredItem toStoredItem(
             Refrigerator refrigerator, 
-            Ingredient ingredient, 
-            LocalDate expirationDate, 
+            Ingredient ingredient,
+            Integer quantity,
+            LocalDate expirationDate,
             StorageType storageType
     ) {
         return StoredItem.builder()
                 .refrigerator(refrigerator)
                 .ingredient(ingredient)
+                .quantity(quantity)
                 .expirationDate(expirationDate)
                 .storageType(storageType)
                 .build();
     }
+
+    public static RefrigeratorResponseDTO.StoredIngredientCount toStoredIngredientCount(StorageTypeCount storageTypeCount) {
+        return RefrigeratorResponseDTO.StoredIngredientCount.builder()
+                .refrigeratorCount(storageTypeCount.getRefrigeratorCount().intValue())
+                .freezerCount(storageTypeCount.getFreezerCount().intValue())
+                .roomTempCount(storageTypeCount.getRoomTempCount().intValue())
+                .build();
+    }
+
+    private static String calculateDDay(LocalDate expirationDate) {
+        if (expirationDate == null) {
+            return null;
+        }
+
+        long daysUntil = ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+
+        if (daysUntil > 0) {
+            return "D-" + daysUntil;
+        } else if (daysUntil == 0) {
+            return "D-Day";
+        } else {
+            return "D+" + Math.abs(daysUntil);
+        }
+    }
+
 }

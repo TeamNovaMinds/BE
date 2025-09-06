@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -78,13 +79,42 @@ public class RefrigeratorResponseDTO {
         @Schema(description = "보관된 재료 ID")
         private Long id;
 
+        @Schema(description = "재료 ID")
+        private Long ingredientId;
+
         @Schema(description = "재료명")
         private String ingredientName;
-        
+
+        @Schema(description = "재료 개수")
+        private Integer quantity;
+
+        @Schema(description = "보관 방식")
+        private StorageType storageType;
+
         @Schema(description = "유통기한")
         private LocalDate expirationDate;
-        
-        @Schema(description = "보관 방식")
-        private String storageType;
+
+        @Schema(description = "유통기한 D-Day")
+        private String dDay;
+
+        @Schema(description = "버전 (동시성 제어용)")
+        private Long version;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StoredIngredientCount {
+
+        @Schema(description = "냉장 보관 개수")
+        private int refrigeratorCount;
+
+        @Schema(description = "냉동 보관 개수")
+        private int freezerCount;
+
+        @Schema(description = "실온 보관 개수")
+        private int roomTempCount;
+
     }
 }

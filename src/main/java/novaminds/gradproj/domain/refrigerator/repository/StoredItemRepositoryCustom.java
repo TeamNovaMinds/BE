@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface StoredItemRepositoryCustom {
     
-    List<StoredItem> findStoredItems(Long refrigeratorId, StorageType storageType);
+    List<StoredItem> findStoredItems(Long refrigeratorId, StorageType storageType, String keyword);
 }
