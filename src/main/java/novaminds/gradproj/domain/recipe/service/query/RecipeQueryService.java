@@ -396,10 +396,12 @@ public class RecipeQueryService {
             List<StoredItem> storedItems = storedItemRepository.findStoredItems(refrigerator.getId(), storageType, keyword);
             return storedItems.stream()
                     .map(storedItem -> storedItem.getIngredient().getId())
+                    .distinct()
                     .toList();
         } else {
             // 특정 보관 재료만 조회
-            StoredItem storedItem = storedItemRepository.findById(storedItemId)
+            StoredItem storedItem = storedItemRepository
+                    .findByIdAndRefrigeratorId(storedItemId, refrigerator.getId())
                     .orElseThrow(() -> new GeneralException(ErrorStatus.STORED_ITEM_NOT_FOUND));
             return List.of(storedItem.getIngredient().getId());
         }
