@@ -9,6 +9,8 @@ import novaminds.gradproj.domain.refrigerator.entity.MemberRefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkin;
 import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinRepository;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
+import novaminds.gradproj.global.template.CursorPagingHelper;
+import novaminds.gradproj.global.template.CursorResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,8 @@ public class RefrigeratorSkinQueryService {
 
     private final RefrigeratorSkinRepository refrigeratorSkinRepository;
     private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
+
+    private final CursorPagingHelper cursorPagingHelper;
 
     /**
      * 특정 냉장고 스킨의 세부 정보를 조회하고 특정 회원의 구매 여부 확인 (단건 조회)
@@ -57,16 +61,14 @@ public class RefrigeratorSkinQueryService {
      */
     public RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse getRefrigeratorSkins(String memberId, Long cursorId) {
 
-        // 페이지 크기 + 1로 조회하여 다음 페이지 존재 여부 확인
-        List<RefrigeratorSkin> skins = refrigeratorSkinRepository.findSkinsWithCursor(cursorId, DEFAULT_PAGE_SIZE + 1);
+        // 페이징 로직 처리
+        CursorResult<RefrigeratorSkin> pageResult = cursorPagingHelper.getPage(
+                (size) -> refrigeratorSkinRepository.findSkinsWithCursor(cursorId, size),
+                RefrigeratorSkin::getId,
+                DEFAULT_PAGE_SIZE
+        );
 
-        // 다음 페이지 존재 여부 판단
-        boolean hasNext = skins.size() > DEFAULT_PAGE_SIZE;
-        Long nextCursor = null;
-        if (hasNext) {
-            skins.removeLast(); // 마지막 요소 제거 (페이징에서 다음 요소 유무를 확인하기 위해 가져왔던 +1 추가 데이터 삭제)
-            nextCursor = skins.getLast().getId(); // 다음 커서 값 설정
-        }
+        List<RefrigeratorSkin> skins = pageResult.content();
 
         // 배치로 소유 상태 조회
         List<Long> skinIds = skins.stream().map(RefrigeratorSkin::getId).toList();
@@ -81,11 +83,11 @@ public class RefrigeratorSkinQueryService {
                 .toList();
 
         // 무한 스크롤용 반환 DTO 생성
-        return RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse.builder()
-                .skins(skinResponses)
-                .nextCursor(nextCursor)
-                .hasNext(hasNext)
-                .build();
+        return RefrigeratorConverter.toRefrigeratorSkinsPageResponse(
+                skinResponses,
+                pageResult.nextCursor(),
+                pageResult.hasNext()
+        );
     }
 
     /**
@@ -97,17 +99,15 @@ public class RefrigeratorSkinQueryService {
      * @return 소유한 냉장고 스킨 목록과 페이징을 위한 정보를 포함하는 {@code RefrigeratorSkinsPageResponse} 객체
      */
     public RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse getOwnedRefrigeratorSkins(String memberId, Long cursorId) {
-        
-        // 페이지 크기 + 1로 조회하여 다음 페이지 존재 여부 확인
-        List<MemberRefrigeratorSkin> ownedSkins = memberRefrigeratorSkinRepository.findOwnedSkinsWithCursor(memberId, cursorId, DEFAULT_PAGE_SIZE + 1);
-        
-        // 다음 페이지 존재 여부 판단
-        boolean hasNext = ownedSkins.size() > DEFAULT_PAGE_SIZE;
-        Long nextCursor = null;
-        if (hasNext) {
-            ownedSkins.removeLast(); // 마지막 요소 제거 (페이징에서 다음 요소 유무를 확인하기 위해 가져왔던 +1 추가 데이터 삭제)
-            nextCursor = ownedSkins.getLast().getId(); // 다음 커서 값 설정
-        }
+
+        // 페이징 로직 처리
+        CursorResult<MemberRefrigeratorSkin> pageResult = cursorPagingHelper.getPage(
+                (size) -> memberRefrigeratorSkinRepository.findOwnedSkinsWithCursor(memberId, cursorId, size),
+                MemberRefrigeratorSkin::getId,
+                DEFAULT_PAGE_SIZE
+        );
+
+        List<MemberRefrigeratorSkin> ownedSkins = pageResult.content();
         
         // DTO로 변환
         var skinResponses = ownedSkins.stream()
@@ -119,11 +119,11 @@ public class RefrigeratorSkinQueryService {
                 .toList();
         
         // 페이징 응답 객체 생성
-        return RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse.builder()
-                .skins(skinResponses)
-                .nextCursor(nextCursor)
-                .hasNext(hasNext)
-                .build();
+        return RefrigeratorConverter.toRefrigeratorSkinsPageResponse(
+                skinResponses,
+                pageResult.nextCursor(),
+                pageResult.hasNext()
+        );
     }
 
     /**
