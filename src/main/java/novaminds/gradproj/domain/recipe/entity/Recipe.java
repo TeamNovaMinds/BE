@@ -34,6 +34,14 @@ public class Recipe extends BaseEntity {
     @Builder.Default
     private Integer likes = 0;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer commentCount = 0;
+
+    @Version
+    @Builder.Default
+    private Long version = 0L;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private RecipeCategory recipeCategory;
@@ -98,6 +106,16 @@ public class Recipe extends BaseEntity {
     private void decreaseLikes() {
         if (this.likes > 0) {
             this.likes--;
+        }
+    }
+
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
         }
     }
 
