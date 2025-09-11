@@ -460,7 +460,7 @@ public class RecipeQueryService {
         Map<Long, List<Recipe>> ingredientToRecipesMap = userIngredientIdSet.stream()
                 .map(id -> Map.entry(id, indexes.recipesByIngredientId().getOrDefault(id, List.of())))
                 .filter(entry -> !entry.getValue().isEmpty()) // 레시피가 없는 재료 제외
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
 
         // 재료별 레시피 그룹을 DTO로 변환
         return ingredientToRecipesMap.entrySet().stream()
