@@ -42,6 +42,27 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
         return cursorId != null ? recipe.id.lt(cursorId) : null;
     }
 
+    private BooleanExpression likesAndIdCursorCondition(Long cursorId) {
+        if (cursorId == null) {
+            return null;
+        }
+        
+        // 커서 레시피 정보를 조회하여 likes와 id 기준으로 페이징
+        return recipe.likes.lt(
+                select(recipe.likes)
+                        .from(recipe)
+                        .where(recipe.id.eq(cursorId))
+        ).or(
+                recipe.likes.eq(
+                        select(recipe.likes)
+                                .from(recipe)
+                                .where(recipe.id.eq(cursorId))
+                ).and(
+                        recipe.id.lt(cursorId)
+                )
+        );
+    }
+
     @Override
     public List<Recipe> findRecipesByIngredientIds(List<Long> ingredientIds, Long cursorId, int pageSize) {
 
@@ -59,7 +80,7 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
                                         .from(recipeIngredient)
                                         .where(recipeIngredient.ingredient.id.in(ingredientIds))
                         ),
-                        cursorCondition(cursorId)
+                        likesAndIdCursorCondition(cursorId)
                 )
                 .orderBy(recipe.likes.desc(), recipe.id.desc())
                 .limit(pageSize)
