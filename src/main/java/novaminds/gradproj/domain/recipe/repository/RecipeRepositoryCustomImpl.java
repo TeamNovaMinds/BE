@@ -1,6 +1,7 @@
 package novaminds.gradproj.domain.recipe.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.domain.recipe.entity.Recipe;
@@ -46,21 +47,22 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
         if (cursorId == null) {
             return null;
         }
-        
-        // 커서 레시피 정보를 조회하여 likes와 id 기준으로 페이징
-        return recipe.likes.lt(
-                select(recipe.likes)
-                        .from(recipe)
-                        .where(recipe.id.eq(cursorId))
-        ).or(
-                recipe.likes.eq(
-                        select(recipe.likes)
-                                .from(recipe)
-                                .where(recipe.id.eq(cursorId))
-                ).and(
-                        recipe.id.lt(cursorId)
-                )
-        );
+
+        // 1. 커서 ID로 해당 레시피의 좋아요 개수를 조회
+        Integer cursorLikes = queryFactory
+                .select(recipe.likes)
+                .from(recipe)
+                .where(recipe.id.eq(cursorId))
+                .fetchOne();
+
+        // 2. 커서에 해당하는 레시피가 없어진 경우(중간에 갑자기 삭제되거나 하는 경우), 항상 false인 조건을 반환.
+        if (cursorLikes == null) {
+            return Expressions.FALSE;
+        }
+
+        // 3. 좋아요 수와 ID를 이용한 커서 조건 생성
+        return recipe.likes.lt(cursorLikes)
+                .or(recipe.likes.eq(cursorLikes).and(recipe.id.lt(cursorId)));
     }
 
     @Override
