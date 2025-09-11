@@ -1,5 +1,6 @@
 package novaminds.gradproj.domain.recipe.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,4 +15,8 @@ public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredie
            "LEFT JOIN FETCH ri.ingredient " +
            "WHERE ri.recipe.id = :recipeId")
     List<RecipeIngredient> findByRecipeIdWithIngredient(@Param("recipeId") Long recipeId);
+
+    // 여러 레시피 ID에 대한 재료들을 배치 조회
+    @EntityGraph(attributePaths = {"ingredient"})
+    List<RecipeIngredient> findByRecipeIdIn(List<Long> recipeIds);
 }

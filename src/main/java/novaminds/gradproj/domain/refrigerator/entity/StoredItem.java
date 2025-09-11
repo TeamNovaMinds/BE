@@ -54,7 +54,8 @@ public class StoredItem extends BaseEntity {
     private StorageType storageType;
 
     @Version
-    private Long version;
+    @Builder.Default
+    private Long version = 0L;
 
     public void updateFieldIfChanged(RefrigeratorRequestDTO.ModifyStoredItemRequest request) {
         updateIfDifferent(this.getQuantity(), request.getQuantity(), this::updateQuantity);

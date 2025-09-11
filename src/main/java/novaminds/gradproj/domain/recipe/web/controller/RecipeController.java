@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentLoginId;
 import novaminds.gradproj.domain.recipe.service.command.RecipeCommandService;
 import novaminds.gradproj.domain.recipe.service.query.RecipeQueryService;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -161,5 +162,34 @@ public class RecipeController {
         return ApiResponse.onSuccess(resultCommentId);
     }
 
+    @Operation(
+            summary = "냉장고 재료 기반 레시피 추천",
+            description = """
+                    냉장고 보관 재료로 만들 수 있는 레시피를 추천합니다.
+                    • 특정 재료 선택 시: 해당 재료로 만드는 모든 레시피 추천
+                    • 재료 미선택 시: 현재 보관 중인 모든 재료로 만드는 레시피 추천
+                    """
+    )
+    @Parameters({
+            @Parameter(name = "storageType", description = "보관 방식 (REFRIGERATED, FROZEN, ROOM_TEMPERATURE)", required = true, example = "REFRIGERATOR"),
+            @Parameter(name = "keyword", description = "레시피를 추천 받고 싶은 재료 검색", required = false, example = "테스트"),
+            @Parameter(name = "storedItemId", description = "추천받고 싶은 특정 재료 ID (선택사항)", required = false, example = "1"),
+            @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다.")
+    })
+    @GetMapping("/suggest")
+    public ApiResponse<RecipeResponseDTO.SuggestedRecipeListResponse> suggestRecipesByIngredients(
+            @CurrentUser Member member,
+            @RequestParam StorageType storageType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long storedItemId,
+            @RequestParam(required = false) Long cursorId
+    ) {
+        var result = recipeQueryService.suggestRecipesByIngredients(member, storageType, keyword, storedItemId, cursorId);
+        return ApiResponse.onSuccess(result);
+    }
 
 }

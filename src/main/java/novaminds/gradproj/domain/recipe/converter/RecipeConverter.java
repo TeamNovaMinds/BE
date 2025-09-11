@@ -70,7 +70,6 @@ public class RecipeConverter {
             Recipe recipe,
             String mainImageUrl,
             MemberResponseDTO.AuthorInfo authorInfo,
-            Integer commentCount,
             boolean likedByMe,
             boolean writtenByMe
     ) {
@@ -83,7 +82,7 @@ public class RecipeConverter {
                 .cookingTimeMinutes(recipe.getCookingTimeMinutes())
                 .difficulty(recipe.getDifficulty())
                 .likeCount(recipe.getLikes())
-                .commentCount(commentCount)
+                .commentCount(recipe.getCommentCount())
                 .likedByMe(likedByMe)
                 .writtenByMe(writtenByMe)
                 .createdAt(recipe.getCreatedAt())
@@ -143,8 +142,7 @@ public class RecipeConverter {
             List<RecipeResponseDTO.RecipeImageDTO> recipeImageDTOS,
             List<RecipeResponseDTO.RecipeIngredientDTO> recipeIngredientDTOS,
             List<RecipeResponseDTO.RecipeOrderDTO> recipeOrderDTOS,
-            List<RecipeResponseDTO.CommentResponse> commentDTOs,
-            int totalCommentCount
+            List<RecipeResponseDTO.CommentResponse> commentDTOs
     ) {
 
         // 작성자 정보 DTO 생성 (fetch join으로 이미 로딩됨)
@@ -155,7 +153,7 @@ public class RecipeConverter {
 
         // 댓글 미리보기 DTO 조립
         var commentPreview = RecipeResponseDTO.CommentPreviewListResponse.builder()
-                .totalCommentCount(totalCommentCount)
+                .totalCommentCount(recipe.getCommentCount())
                 .previewComments(commentDTOs)
                 .build();
 
@@ -282,6 +280,62 @@ public class RecipeConverter {
                 .writtenByMe(isWrittenByMe)
                 .createdAt(comment.getCreatedAt())
                 .replies(replies)
+                .build();
+    }
+
+    // 추천 레시피 목록 응답 DTO 생성
+    public static RecipeResponseDTO.SuggestedRecipeListResponse toSuggestedRecipeListResponse(
+            List<RecipeResponseDTO.SuggestedRecipeGroup> recipeGroups,
+            boolean hasNext,
+            Long nextCursor
+    ) {
+        return RecipeResponseDTO.SuggestedRecipeListResponse.builder()
+                .recipes(recipeGroups)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .build();
+    }
+
+    // 재료별 레시피 그룹 DTO 생성
+    public static RecipeResponseDTO.SuggestedRecipeGroup toSuggestedRecipeGroup(
+            String ingredientName,
+            List<RecipeResponseDTO.SuggestedRecipeResponse> recipes
+    ) {
+        return RecipeResponseDTO.SuggestedRecipeGroup.builder()
+                .ingredientName(ingredientName)
+                .recipes(recipes)
+                .build();
+    }
+
+    // 추천 레시피 응답 DTO 생성
+    public static RecipeResponseDTO.SuggestedRecipeResponse toSuggestedRecipeResponse(
+            Recipe recipe,
+            String mainImageUrl,
+            List<RecipeResponseDTO.IngredientInfo> ingredients
+    ) {
+        return RecipeResponseDTO.SuggestedRecipeResponse.builder()
+                .recipeId(recipe.getId())
+                .title(recipe.getTitle())
+                .mainImageUrl(mainImageUrl)
+                .cookingTimeMinutes(recipe.getCookingTimeMinutes())
+                .difficulty(recipe.getDifficulty())
+                .likeCount(recipe.getLikes())
+                .commentCount(recipe.getCommentCount())
+                .ingredients(ingredients)
+                .createdAt(recipe.getCreatedAt())
+                .build();
+    }
+
+    // 재료 정보 DTO 생성
+    public static RecipeResponseDTO.IngredientInfo toIngredientInfo(
+            String name,
+            String amount,
+            boolean hasIngredient
+    ) {
+        return RecipeResponseDTO.IngredientInfo.builder()
+                .name(name)
+                .amount(amount)
+                .hasIngredient(hasIngredient)
                 .build();
     }
 }

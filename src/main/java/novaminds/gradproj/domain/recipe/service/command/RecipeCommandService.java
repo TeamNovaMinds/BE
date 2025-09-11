@@ -14,8 +14,11 @@ import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
 
 import static novaminds.gradproj.global.s3.service.S3Service.validateS3Urls;
 
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -150,6 +153,7 @@ public class RecipeCommandService {
      * @return 해당 레시피에 좋아요를 누르면 true, 취소하면 false 반환
      */
     @Transactional
+    @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 50))
     public boolean toggleRecipeLike(Member member, Long recipeId) {
         // 1. 레시피를 조회합니다. 없으면 예외가 발생합니다.
         Recipe recipe = recipeRepository.findById(recipeId)
@@ -336,6 +340,9 @@ public class RecipeCommandService {
 
         // 4. 댓글 저장
         RecipeComment savedComment = recipeCommentRepository.save(newComment);
+
+        // 5. 레시피 댓글 카운트 증가
+        recipe.increaseCommentCount();
 
         return savedComment.getId();
     }
