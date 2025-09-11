@@ -169,4 +169,51 @@ public class RecipeResponseDTO {
 		private Map<Long, String> commentIdToAuthorId;
 		private Map<String, MemberResponseDTO.AuthorInfo> authorInfos;
 	}
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SuggestedRecipeListResponse {
+        private List<SuggestedRecipeGroup> recipes;
+        private boolean hasNext;
+        private Long nextCursor;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SuggestedRecipeGroup {
+        private String ingredientName;
+        private List<SuggestedRecipeResponse> recipes;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SuggestedRecipeResponse {
+        private Long recipeId;
+        private String title;
+        private String mainImageUrl;
+        private Integer cookingTimeMinutes;
+        private Difficulty difficulty;
+        private int likeCount;
+        private int commentCount;
+        private List<IngredientInfo> ingredients;
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
+        private LocalDateTime createdAt;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IngredientInfo {
+        private String name;
+        private String amount;
+        private boolean hasIngredient; // 사용자가 가지고 있는 재료인지 여부
+    }
 }
