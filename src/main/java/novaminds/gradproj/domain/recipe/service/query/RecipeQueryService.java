@@ -16,7 +16,8 @@ import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
 import novaminds.gradproj.domain.refrigerator.repository.StoredItemRepository;
-import novaminds.gradproj.global.template.CursorPaginatedService;
+import novaminds.gradproj.global.template.CursorPagingHelper;
+import novaminds.gradproj.global.template.CursorResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,7 @@ public class RecipeQueryService {
     private final RecipeOrderRepository recipeOrderRepository;
     private final StoredItemRepository storedItemRepository;
 
+    private final CursorPagingHelper cursorPagingHelper;
     private final MemberQueryService memberQueryService;
 
     /**
@@ -56,20 +58,20 @@ public class RecipeQueryService {
      */
     public RecipeResponseDTO.RecipeListResponse getRecipe(String memberId, RecipeCategory category, Long cursorId){
 
-        // 1. 다음 페이지 존재 여부 확인을 위해 요청된 size보다 1개 더 조회
-        List<Recipe> recipes = recipeRepository.findRecipes(category, cursorId, DEFAULT_PAGE_SIZE + 1);
+        // 1. 페이징 로직 처리
+        CursorResult<Recipe> pageResult = cursorPagingHelper.getPage(
+                // 데이터를 어떻게 가져올지만 정의 (pageSize + 1 만큼)
+                (size) -> recipeRepository.findRecipes(category, cursorId, size),
+                // 엔티티에서 ID를 어떻게 추출할지만 정의
+                Recipe::getId,
+                DEFAULT_PAGE_SIZE
+        );
 
-        // 2. hasNext와 nextCursor 계산
-        boolean hasNext = recipes.size() > DEFAULT_PAGE_SIZE;
-        Long nextCursor = null;
-        if (hasNext) {
-            recipes.removeLast();
-            nextCursor = recipes.getLast().getId();
-        }
+        List<Recipe> recipes = pageResult.content();
 
         // 3. 조회된 레시피가 없으면 빈 페이지 반환
         if (recipes.isEmpty()) {
-            return RecipeConverter.toRecipeListResponse(List.of(), hasNext, nextCursor);
+            return RecipeConverter.toRecipeListResponse(List.of(), pageResult.hasNext(), pageResult.nextCursor());
         }
 
         // 4. 배치 조회
@@ -95,7 +97,7 @@ public class RecipeQueryService {
                 .toList();
 
         // 6. 최종 페이지 응답 DTO로 변환하여 반환
-        return RecipeConverter.toRecipeListResponse(recipeSummaries, hasNext, nextCursor);
+        return RecipeConverter.toRecipeListResponse(recipeSummaries, pageResult.hasNext(), pageResult.nextCursor());
     }
 
     /**
@@ -149,19 +151,17 @@ public class RecipeQueryService {
      */
     public RecipeResponseDTO.CommentListResponse getComments(String memberId, Long recipeId, Long cursorId) {
 
-        // 1. 다음 페이지 확인을 위해 PAGE_SIZE + 1 만큼 댓글 조회
-        List<RecipeComment> comments = recipeCommentRepository.findParentComments(recipeId, cursorId, DEFAULT_PAGE_SIZE + 1);
+        // 1. 페이징 로직 처리
+        CursorResult<RecipeComment> pageResult = cursorPagingHelper.getPage(
+                (size) -> recipeCommentRepository.findParentComments(recipeId, cursorId, size),
+                RecipeComment::getId,
+                DEFAULT_PAGE_SIZE
+        );
 
-        // 2. 다음 페이지 존재 여부 확인 및 마지막 항목 제거
-        boolean hasNext = comments.size() > DEFAULT_PAGE_SIZE;
-        Long nextCursor = null;
-        if (hasNext) {
-            comments.removeLast();
-            nextCursor = comments.getLast().getId();
-        }
+        List<RecipeComment> comments = pageResult.content();
 
         if (comments.isEmpty()) {
-            return RecipeConverter.toCommentListResponse(List.of(), hasNext, nextCursor);
+            return RecipeConverter.toCommentListResponse(List.of(), pageResult.hasNext(), pageResult.nextCursor());
         }
 
         // 3. 댓글 작성자들 배치 조회 (부모 댓글 + 대댓글)
@@ -172,7 +172,7 @@ public class RecipeQueryService {
             RecipeConverter.toCommentDTOs(comments, commentAuthor, memberId);
 
         // 4. 응답 DTO 변환
-        return RecipeConverter.toCommentListResponse(commentResponses, hasNext, nextCursor);
+        return RecipeConverter.toCommentListResponse(commentResponses, pageResult.hasNext(), pageResult.nextCursor());
     }
 
     /**
@@ -266,19 +266,17 @@ public class RecipeQueryService {
             return RecipeConverter.toSuggestedRecipeListResponse(List.of(), false, null);
         }
 
-        // 2. 레시피 조회 및 페이징 처리
-        List<Recipe> recipes = recipeRepository.findRecipesByIngredientIds(ingredientIds, cursorId, DEFAULT_PAGE_SIZE + 1);
+        // 2. 페이징 로직 처리
+        CursorResult<Recipe> pageResult = cursorPagingHelper.getPage(
+                (size) -> recipeRepository.findRecipesByIngredientIds(ingredientIds, cursorId, size),
+                Recipe::getId,
+                DEFAULT_PAGE_SIZE
+        );
 
-        // 다음 페이지 존재 여부 판단
-        boolean hasNext = recipes.size() > DEFAULT_PAGE_SIZE;
-        Long nextCursor = null;
-        if (hasNext) {
-            recipes.removeLast(); // 마지막 요소 제거 (페이징에서 다음 요소 유무를 확인하기 위해 가져왔던 +1 추가 데이터 삭제)
-            nextCursor = recipes.getLast().getId(); // 다음 커서 값 설정
-        }
+        List<Recipe> recipes = pageResult.content();
 
         if (recipes.isEmpty()) {
-            return RecipeConverter.toSuggestedRecipeListResponse(List.of(), hasNext, nextCursor);
+            return RecipeConverter.toSuggestedRecipeListResponse(List.of(), pageResult.hasNext(), pageResult.nextCursor());
         }
 
         // 3. 레시피 인덱스 구축
@@ -288,7 +286,7 @@ public class RecipeQueryService {
         List<RecipeResponseDTO.SuggestedRecipeGroup> recipeGroups = createRecipeGroups(ingredientIds, indexes);
 
         // 5. 최종 응답 DTO 생성
-        return RecipeConverter.toSuggestedRecipeListResponse(recipeGroups, hasNext, nextCursor);
+        return RecipeConverter.toSuggestedRecipeListResponse(recipeGroups, pageResult.hasNext(), pageResult.nextCursor());
     }
 
     /**
