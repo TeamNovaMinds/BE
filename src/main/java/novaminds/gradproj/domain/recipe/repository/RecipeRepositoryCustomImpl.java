@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static com.querydsl.jpa.JPAExpressions.select;
 import static novaminds.gradproj.domain.recipe.entity.QRecipe.recipe;
 import static novaminds.gradproj.domain.recipe.entity.QRecipeIngredient.recipeIngredient;
 
@@ -43,15 +44,9 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
 
     @Override
     public List<Recipe> findRecipesByIngredientIds(List<Long> ingredientIds, Long cursorId, int pageSize) {
-        // 1. 재료 ID로 레시피 ID 목록 조회
-        List<Long> recipeIds = queryFactory
-                .select(recipeIngredient.recipe.id)
-                .from(recipeIngredient)
-                .where(recipeIngredient.ingredient.id.in(ingredientIds))
-                .distinct()
-                .fetch();
 
-        if (recipeIds.isEmpty()) {
+        // 비어있으면 바로 반환
+        if (ingredientIds == null || ingredientIds.isEmpty()) {
             return List.of();
         }
 
@@ -59,8 +54,12 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
         return queryFactory
                 .selectFrom(recipe)
                 .where(
-                    recipe.id.in(recipeIds),
-                    cursorCondition(cursorId)
+                        recipe.id.in(
+                                select(recipeIngredient.recipe.id)
+                                        .from(recipeIngredient)
+                                        .where(recipeIngredient.ingredient.id.in(ingredientIds))
+                        ),
+                        cursorCondition(cursorId)
                 )
                 .orderBy(recipe.likes.desc(), recipe.id.desc())
                 .limit(pageSize)
