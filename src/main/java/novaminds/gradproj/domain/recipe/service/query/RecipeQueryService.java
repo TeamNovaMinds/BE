@@ -1,16 +1,21 @@
 package novaminds.gradproj.domain.recipe.service.query;
 
+import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
+import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.recipe.entity.*;
 import novaminds.gradproj.domain.recipe.repository.*;
 import novaminds.gradproj.domain.member.service.query.MemberQueryService;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import novaminds.gradproj.domain.recipe.repository.projection.CommentAuthorInfo;
-import novaminds.gradproj.domain.recipe.repository.projection.RecipeCommentCount;
 import novaminds.gradproj.domain.recipe.repository.projection.RecipeMainImage;
 import novaminds.gradproj.domain.recipe.web.dto.RecipeResponseDTO;
 import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
+import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
+import novaminds.gradproj.domain.refrigerator.entity.StorageType;
+import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
+import novaminds.gradproj.domain.refrigerator.repository.StoredItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,6 +41,8 @@ public class RecipeQueryService {
     private final RecipeImageRepository recipeImageRepository;
     private final RecipeIngredientRepository recipeIngredientRepository;
     private final RecipeOrderRepository recipeOrderRepository;
+    private final StoredItemRepository storedItemRepository;
+
     private final MemberQueryService memberQueryService;
 
     /**
@@ -65,16 +73,14 @@ public class RecipeQueryService {
             return RecipeConverter.toRecipeListResponse(List.of(), hasNext, nextCursor);
         }
 
-        // 4. 배치 조회로 N+1 문제 해결
+        // 4. 배치 조회
         List<Long> recipeIds = recipes.stream().map(Recipe::getId).toList();
         final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
         final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
-        final Map<Long, Long> commentCounts = recipeCommentRepository.countCommentsByRecipeIds(recipeIds).stream()
-                .collect(Collectors.toMap(RecipeCommentCount::getRecipeId, RecipeCommentCount::getCnt));
         final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
 
-        // 5. 최종 DTO 리스트로 변환 (배치 조회된 데이터 활용으로 N+1 완전 해결)
+        // 5. DTO 리스트로 변환
         var recipeSummaries = recipes.stream()
                 .map(recipe -> {
                     boolean isLiked = likedRecipeIds.contains(recipe.getId());
@@ -82,11 +88,10 @@ public class RecipeQueryService {
 
                     // 배치 조회된 데이터 사용
                     String mainImageUrl = mainImageUrls.get(recipe.getId());
-                    Integer commentCount = commentCounts.getOrDefault(recipe.getId(), 0L).intValue();
                     var authorInfo = authorInfoMap.get(recipe.getAuthor().getLoginId());
 
                     return RecipeConverter.toRecipeSummaryResponse(
-                            recipe, mainImageUrl, authorInfo, commentCount, isLiked, isWrittenByMe);
+                            recipe, mainImageUrl, authorInfo, isLiked, isWrittenByMe);
                 })
                 .toList();
 
@@ -117,7 +122,6 @@ public class RecipeQueryService {
         List<RecipeIngredient> ingredients = recipeIngredientRepository.findByRecipeIdWithIngredient(recipeId);
         List<RecipeOrder> orders = recipeOrderRepository.findByRecipeIdOrderByOrder(recipeId);
         List<RecipeComment> previewComments = recipeCommentRepository.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtAsc(recipeId);
-        int totalCommentCount = recipeCommentRepository.countCommentsByRecipeId(recipeId).intValue();
 
         // 4. 댓글 작성자들 배치 조회 (부모 댓글만)
         RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(previewComments, false);
@@ -131,7 +135,7 @@ public class RecipeQueryService {
         // 6. 응답 DTO 변환
         return RecipeConverter.toRecipeDetailResponse(
                 recipe, likedByMe, writtenByMe, imageDTOs, ingredientDTOs, 
-                orderDTOs, commentDTOs, totalCommentCount
+                orderDTOs, commentDTOs
         );
     }
 
@@ -237,5 +241,143 @@ public class RecipeQueryService {
             memberQueryService.getAuthorInfoMap(authorIds);
 
         return RecipeConverter.createCommentAuthorData(commentIdToAuthorId, authorInfos);
+    }
+
+    // 냉장고 재료 기반 레시피 추천 메소드
+    public RecipeResponseDTO.SuggestedRecipeListResponse suggestRecipesByIngredients(
+            Member member,
+            StorageType storageType,
+            Long storedItemId,
+            Long cursorId
+    ) {
+        // 1. 냉장고 조회
+        Refrigerator refrigerator = member.getRefrigerator();
+        if (refrigerator == null) {
+            log.info("Member (ID: {}) does not have a refrigerator.", member.getLoginId());
+            throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
+        }
+
+        // 2. 사용자가 보관 중인 재료의 Id 가져오기.
+        List<Long> ingredientIds;
+
+        if (storedItemId == null) {
+            List<StoredItem> storedItems = storedItemRepository.findStoredItems(refrigerator.getId(), storageType, null);
+            ingredientIds = storedItems.stream()
+                    .map(storedItem -> storedItem.getIngredient().getId())
+                    .toList();
+        } else {
+            StoredItem storedItem = storedItemRepository.findById(storedItemId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.STORED_ITEM_NOT_FOUND));
+            ingredientIds = List.of(storedItem.getIngredient().getId());
+        }
+
+        // N+1 해결: 페이징 처리하여 레시피 조회 (좋아요 순 정렬)
+        List<Recipe> recipes = recipeRepository.findRecipesByIngredientIds(ingredientIds, cursorId, DEFAULT_PAGE_SIZE + 1);
+        
+        // 페이징: hasNext와 nextCursor 계산 (기존 패턴과 동일)
+        boolean hasNext = recipes.size() > DEFAULT_PAGE_SIZE;
+        Long nextCursor = null;
+        if (hasNext) {
+            recipes.removeLast();
+            nextCursor = recipes.getLast().getId();
+        }
+
+        if (recipes.isEmpty()) {
+            return RecipeConverter.toSuggestedRecipeListResponse(List.of(), hasNext, nextCursor);
+        }
+
+        // N+1 해결: 필요한 데이터를 배치로 조회
+        List<Long> recipeIds = recipes.stream().map(Recipe::getId).toList();
+        Map<Long, List<RecipeIngredient>> recipeIngredientsMap = getRecipeIngredientsMap(recipeIds);
+        Map<Long, String> mainImageMap = getMainImageMap(recipeIds);
+
+        // 재료별 레시피 그룹핑 및 DTO 변환
+        Map<Long, List<Recipe>> ingredientToRecipesMap = groupRecipesByIngredient(recipes, recipeIngredientsMap, ingredientIds);
+        
+        List<RecipeResponseDTO.SuggestedRecipeGroup> recipeGroups = ingredientToRecipesMap.entrySet().stream()
+                .map(entry -> createRecipeGroup(entry.getKey(), entry.getValue(), ingredientIds, recipeIngredientsMap, mainImageMap))
+                .toList();
+
+        return RecipeConverter.toSuggestedRecipeListResponse(recipeGroups, hasNext, nextCursor);
+    }
+
+    // N+1 해결: 레시피들의 재료 정보를 배치로 조회
+    private Map<Long, List<RecipeIngredient>> getRecipeIngredientsMap(List<Long> recipeIds) {
+        List<RecipeIngredient> allRecipeIngredients = recipeIngredientRepository.findByRecipeIdIn(recipeIds);
+        return allRecipeIngredients.stream()
+                .collect(Collectors.groupingBy(ri -> ri.getRecipe().getId()));
+    }
+
+    // N+1 해결: 메인 이미지 URL을 배치로 조회
+    private Map<Long, String> getMainImageMap(List<Long> recipeIds) {
+        return recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
+    }
+
+    // 재료별로 레시피 그룹핑 (빈 레시피 그룹은 제외)
+    private Map<Long, List<Recipe>> groupRecipesByIngredient(
+            List<Recipe> recipes,
+            Map<Long, List<RecipeIngredient>> recipeIngredientsMap,
+            List<Long> userIngredientIds
+    ) {
+        return userIngredientIds.stream()
+                .collect(Collectors.toMap(
+                    ingredientId -> ingredientId,
+                    ingredientId -> recipes.stream()
+                            .filter(recipe -> recipeIngredientsMap.getOrDefault(recipe.getId(), List.of()).stream()
+                                    .anyMatch(ri -> ri.getIngredient().getId().equals(ingredientId)))
+                            .toList()
+                ))
+                .entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())  // 빈 레시피 리스트 제외
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private RecipeResponseDTO.SuggestedRecipeGroup createRecipeGroup(
+            Long ingredientId,
+            List<Recipe> recipes,
+            List<Long> userIngredientIds,
+            Map<Long, List<RecipeIngredient>> recipeIngredientsMap,
+            Map<Long, String> mainImageMap
+    ) {
+        // 재료 이름 가져오기
+        String ingredientName = recipes.stream()
+                .flatMap(recipe -> recipeIngredientsMap.getOrDefault(recipe.getId(), List.of()).stream())
+                .filter(ri -> ri.getIngredient().getId().equals(ingredientId))
+                .findFirst()
+                .map(ri -> ri.getIngredient().getIngredientName())
+                .orElse("알 수 없는 재료");
+        
+        log.info("CreateRecipeGroup - ingredientId: {}, ingredientName: {}, recipes count: {}", 
+                ingredientId, ingredientName, recipes.size());
+
+        // 레시피 DTO 변환
+        List<RecipeResponseDTO.SuggestedRecipeResponse> recipeResponses = recipes.stream()
+                .map(recipe -> createSuggestedRecipeResponse(recipe, userIngredientIds, recipeIngredientsMap, mainImageMap))
+                .toList();
+
+        return RecipeConverter.toSuggestedRecipeGroup(ingredientName, recipeResponses);
+    }
+
+    private RecipeResponseDTO.SuggestedRecipeResponse createSuggestedRecipeResponse(
+            Recipe recipe,
+            List<Long> userIngredientIds,
+            Map<Long, List<RecipeIngredient>> recipeIngredientsMap,
+            Map<Long, String> mainImageMap
+    ) {
+        // 재료 정보 생성
+        List<RecipeIngredient> ingredients = recipeIngredientsMap.getOrDefault(recipe.getId(), List.of());
+        List<RecipeResponseDTO.IngredientInfo> ingredientInfos = ingredients.stream()
+                .map(ri -> RecipeConverter.toIngredientInfo(
+                        ri.getIngredient().getIngredientName(),
+                        ri.getAmount(),
+                        userIngredientIds.contains(ri.getIngredient().getId())
+                ))
+                .toList();
+
+        // 메인 이미지 URL
+        String mainImageUrl = mainImageMap.get(recipe.getId());
+
+        return RecipeConverter.toSuggestedRecipeResponse(recipe, mainImageUrl, ingredientInfos);
     }
 }

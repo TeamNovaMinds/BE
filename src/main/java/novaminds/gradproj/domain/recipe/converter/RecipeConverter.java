@@ -70,7 +70,6 @@ public class RecipeConverter {
             Recipe recipe,
             String mainImageUrl,
             MemberResponseDTO.AuthorInfo authorInfo,
-            Integer commentCount,
             boolean likedByMe,
             boolean writtenByMe
     ) {
@@ -83,7 +82,7 @@ public class RecipeConverter {
                 .cookingTimeMinutes(recipe.getCookingTimeMinutes())
                 .difficulty(recipe.getDifficulty())
                 .likeCount(recipe.getLikes())
-                .commentCount(commentCount)
+                .commentCount(recipe.getCommentCount())
                 .likedByMe(likedByMe)
                 .writtenByMe(writtenByMe)
                 .createdAt(recipe.getCreatedAt())
@@ -143,8 +142,7 @@ public class RecipeConverter {
             List<RecipeResponseDTO.RecipeImageDTO> recipeImageDTOS,
             List<RecipeResponseDTO.RecipeIngredientDTO> recipeIngredientDTOS,
             List<RecipeResponseDTO.RecipeOrderDTO> recipeOrderDTOS,
-            List<RecipeResponseDTO.CommentResponse> commentDTOs,
-            int totalCommentCount
+            List<RecipeResponseDTO.CommentResponse> commentDTOs
     ) {
 
         // 작성자 정보 DTO 생성 (fetch join으로 이미 로딩됨)
@@ -155,7 +153,7 @@ public class RecipeConverter {
 
         // 댓글 미리보기 DTO 조립
         var commentPreview = RecipeResponseDTO.CommentPreviewListResponse.builder()
-                .totalCommentCount(totalCommentCount)
+                .totalCommentCount(recipe.getCommentCount())
                 .previewComments(commentDTOs)
                 .build();
 
