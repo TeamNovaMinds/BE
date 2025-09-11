@@ -284,4 +284,60 @@ public class RecipeConverter {
                 .replies(replies)
                 .build();
     }
+
+    // 추천 레시피 목록 응답 DTO 생성
+    public static RecipeResponseDTO.SuggestedRecipeListResponse toSuggestedRecipeListResponse(
+            List<RecipeResponseDTO.SuggestedRecipeGroup> recipeGroups,
+            boolean hasNext,
+            Long nextCursor
+    ) {
+        return RecipeResponseDTO.SuggestedRecipeListResponse.builder()
+                .recipes(recipeGroups)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .build();
+    }
+
+    // 재료별 레시피 그룹 DTO 생성
+    public static RecipeResponseDTO.SuggestedRecipeGroup toSuggestedRecipeGroup(
+            String ingredientName,
+            List<RecipeResponseDTO.SuggestedRecipeResponse> recipes
+    ) {
+        return RecipeResponseDTO.SuggestedRecipeGroup.builder()
+                .ingredientName(ingredientName)
+                .recipes(recipes)
+                .build();
+    }
+
+    // 추천 레시피 응답 DTO 생성
+    public static RecipeResponseDTO.SuggestedRecipeResponse toSuggestedRecipeResponse(
+            Recipe recipe,
+            String mainImageUrl,
+            List<RecipeResponseDTO.IngredientInfo> ingredients
+    ) {
+        return RecipeResponseDTO.SuggestedRecipeResponse.builder()
+                .recipeId(recipe.getId())
+                .title(recipe.getTitle())
+                .mainImageUrl(mainImageUrl)
+                .cookingTimeMinutes(recipe.getCookingTimeMinutes())
+                .difficulty(recipe.getDifficulty())
+                .likeCount(recipe.getLikes())
+                .commentCount(recipe.getCommentCount())
+                .ingredients(ingredients)
+                .createdAt(recipe.getCreatedAt())
+                .build();
+    }
+
+    // 재료 정보 DTO 생성
+    public static RecipeResponseDTO.IngredientInfo toIngredientInfo(
+            String name,
+            String amount,
+            boolean hasIngredient
+    ) {
+        return RecipeResponseDTO.IngredientInfo.builder()
+                .name(name)
+                .amount(amount)
+                .hasIngredient(hasIngredient)
+                .build();
+    }
 }
