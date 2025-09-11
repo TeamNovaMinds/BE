@@ -172,6 +172,7 @@ public class RecipeController {
     )
     @Parameters({
             @Parameter(name = "storageType", description = "보관 방식 (REFRIGERATED, FROZEN, ROOM_TEMPERATURE)", required = true, example = "REFRIGERATOR"),
+            @Parameter(name = "keyword", description = "레시피를 추천 받고 싶은 재료 검색", required = false, example = "테스트"),
             @Parameter(name = "storedItemId", description = "추천받고 싶은 특정 재료 ID (선택사항)", required = false, example = "1"),
             @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
     })
@@ -183,10 +184,11 @@ public class RecipeController {
     public ApiResponse<RecipeResponseDTO.SuggestedRecipeListResponse> suggestRecipesByIngredients(
             @CurrentUser Member member,
             @RequestParam StorageType storageType,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long storedItemId,
             @RequestParam(required = false) Long cursorId
     ) {
-        var result = recipeQueryService.suggestRecipesByIngredients(member, storageType, storedItemId, cursorId);
+        var result = recipeQueryService.suggestRecipesByIngredients(member, storageType, keyword, storedItemId, cursorId);
         return ApiResponse.onSuccess(result);
     }
 
