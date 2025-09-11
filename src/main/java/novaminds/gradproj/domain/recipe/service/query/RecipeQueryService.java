@@ -424,6 +424,7 @@ public class RecipeQueryService {
                         .map(ri -> Map.entry(ri.getIngredient().getId(), recipe)))
                 .collect(Collectors.groupingBy(
                         Map.Entry::getKey,
+                        LinkedHashMap::new,
                         Collectors.collectingAndThen(
                                 Collectors.mapping(Map.Entry::getValue, Collectors.toCollection(LinkedHashSet::new)),
                                 ArrayList::new
