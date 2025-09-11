@@ -127,6 +127,18 @@ public class RefrigeratorConverter {
                 .build();
     }
 
+    public static RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse toRefrigeratorSkinsPageResponse(
+            List<RefrigeratorResponseDTO.RefrigeratorSkinListResponse> skins,
+            Long nextCursor,
+            boolean hasNext
+    ) {
+        return RefrigeratorResponseDTO.RefrigeratorSkinsPageResponse.builder()
+                .skins(skins)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .build();
+    }
+
     private static String calculateDDay(LocalDate expirationDate) {
         if (expirationDate == null) {
             return null;
