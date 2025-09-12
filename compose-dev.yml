@@ -32,7 +32,9 @@ services:
       retries: 10
 
   elasticsearch:
-    image: elasticsearch:8.18.6
+    build:
+      context: .
+      dockerfile: Dockerfile.elasticsearch
     environment:
       - discovery.type=single-node # 단일 노드 모드 설정, 다른 노드 탐색하지 않아서 실행 시간 줄어듬
       - xpack.security.enabled=false # 개발용으로 보안 기능 비활성화
