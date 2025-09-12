@@ -6,11 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
 
-public interface IngredientRepository extends JpaRepository<Ingredient, Long> {
+public interface IngredientRepository extends JpaRepository<Ingredient, Long>, IngredientRepositoryCustom {
 
 	//전체 조회
-	List<Ingredient> findAll();
+	//List<Ingredient> findAll();
 
 	//검색
-	List<Ingredient> findByIngredientNameContainingIgnoreCase(String keyword);
+	//List<Ingredient> findByIngredientNameContainingIgnoreCase(String keyword);
 }

@@ -47,4 +47,17 @@ public class Ingredient extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    //테이블 풀 스캔을 막기 위한 별도의 정규화된 컬럼.
+    //미리 모든 띄어쓰기 없애고 소문자로 바꿔서 저장해두고 검색할 때 사용.
+    @Column(name = "ingredient_name_normalized", length = 50)
+    private String ingredientNameNormalized;
+
+    @PrePersist
+    @PreUpdate
+    private void updateNormalizedName() {
+        if (this.ingredientName != null) {
+            this.ingredientNameNormalized = this.ingredientName.toLowerCase().replaceAll("\\s+", "");
+        }
+    }
 }
