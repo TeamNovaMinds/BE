@@ -33,14 +33,9 @@ public class IngredientRepositoryCustomImpl implements IngredientRepositoryCusto
 		if (!StringUtils.hasText(keyword)) {
 			return null;
 		}
-		// DB의 ingredientName 컬럼 값에서 공백을 제거하고 소문자로 바꾸는 표현식
-		StringTemplate processedName = Expressions.stringTemplate(
-			"REPLACE(LOWER({0}), ' ', '')",
-			ingredient.ingredientName
-		);
 
 		// .contains() 대신 .like()를 사용하여 명시적으로 비교
-		return processedName.like("%" + keyword.toLowerCase() + "%");
+		return ingredient.ingredientNameNormalized.like("%" + keyword.toLowerCase() + "%");
 	}
 
 }

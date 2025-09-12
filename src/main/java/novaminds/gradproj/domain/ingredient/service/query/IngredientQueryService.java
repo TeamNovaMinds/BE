@@ -27,7 +27,7 @@ public class IngredientQueryService {
 
 		//키워드 띄워쓰기 무시하고 검색
 		if (StringUtils.hasText(keyword)) {
-			String processedKeyword = keyword.replaceAll("\\s+", "");
+			String processedKeyword = keyword.toLowerCase().replaceAll("\\s+", ""); // 소문자 변환 및 공백 제거
 			ingredients = ingredientRepository.searchIngredientsByKeyword(processedKeyword);
 		}
 		// 키워드가 없으면 전체 조회
