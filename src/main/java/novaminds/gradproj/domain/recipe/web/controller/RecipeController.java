@@ -78,6 +78,7 @@ public class RecipeController {
     @Operation(summary = "카테고리 별 레시피 목록 조회", description = "카테고리 별로 레시피 목록을 조회")
     @Parameters({
             @Parameter(name = "category", description = "조회하려고 하는 category 종류 (없으면 모든 카테고리 동시 조회)", required = false, example = "KOREAN"),
+            @Parameter(name = "keyword", description = "검색하려고 하는 레시피 이름", required = false, example = "군만두"),
             @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
     })
     @ApiResponses({
@@ -87,9 +88,10 @@ public class RecipeController {
     public ApiResponse<RecipeResponseDTO.RecipeListResponse> getRecipes(
             @CurrentLoginId String memberId,
             @RequestParam(required = false) RecipeCategory category,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long cursorId
     ) {
-        var result = recipeQueryService.getRecipe(memberId, category, cursorId);
+        var result = recipeQueryService.getRecipe(memberId, category, keyword, cursorId);
         return ApiResponse.onSuccess(result);
     }
 
