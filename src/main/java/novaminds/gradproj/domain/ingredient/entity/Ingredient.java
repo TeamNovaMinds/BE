@@ -19,7 +19,9 @@ import org.hibernate.annotations.DynamicUpdate;
 @DynamicInsert
 @Builder
 @Entity
-@Table(name = "ingredients")
+@Table(name = "ingredients", indexes = {
+        @Index(name = "idx_ingredient_name_normalized", columnList = "ingredient_name_normalized")
+})
 public class Ingredient extends BaseEntity {
 
     @Id
