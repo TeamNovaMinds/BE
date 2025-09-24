@@ -49,7 +49,7 @@ public class StoredItemRepositoryImpl implements StoredItemRepositoryCustom {
             return null;
         }
         
-        String normalizedKeyword = keyword.replaceAll("\\s", "");
+        String normalizedKeyword = keyword.toLowerCase().replaceAll("\\s", "");
         return storedItem.ingredient.ingredientNameNormalized.contains(normalizedKeyword);
     }
 }
