@@ -42,10 +42,10 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
         if (keyword == null) return null;
 
         // 검색어에 대해서 띄어쓰기를 전부 없애고 정규화
-        String normalizedKeyword = keyword.replaceAll("\\s+", "");
+        String normalizedKeyword = keyword.toLowerCase().replaceAll("\\s+", "");
 
         // 정규화된 필드와 비교 -> 이때 titleNormalized는 인덱싱돠어있어 검색 속도 빠름
-        return recipe.titleNormalized.containsIgnoreCase(normalizedKeyword);
+        return recipe.titleNormalized.contains(normalizedKeyword);
     }
 
     private BooleanExpression categoryCondition(RecipeCategory category) {
