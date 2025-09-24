@@ -17,7 +17,9 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "recipes")
+@Table(name = "recipes", indexes = {
+        @Index(name = "idx_title_normalized", columnList = "title_normalized")
+})
 public class Recipe extends BaseEntity {
 
     @Id
@@ -26,6 +28,9 @@ public class Recipe extends BaseEntity {
 
     @Column(nullable = false, length = 100)
     private String title;
+
+    @Column(name = "title_normalized", length = 100)
+    private String titleNormalized;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -83,6 +88,14 @@ public class Recipe extends BaseEntity {
     @OrderBy("order ASC")
     @Builder.Default
     private List<RecipeOrder> recipeOrders = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    private void updateNormalizedTitle() {
+        if (this.title != null) {
+            this.titleNormalized = this.title.toLowerCase().replaceAll("\\s+", "");
+        }
+    }
 
     public void addRecipeImage(RecipeImage image) {
         image.setRecipe(this);
