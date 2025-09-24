@@ -34,7 +34,7 @@ public class IngredientRepositoryCustomImpl implements IngredientRepositoryCusto
 			return null;
 		}
 
-		return ingredient.ingredientNameNormalized.contains(keyword);
+		return ingredient.ingredientNameNormalized.startsWith(keyword);
 	}
 
 }

@@ -45,7 +45,7 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
         String normalizedKeyword = keyword.toLowerCase().replaceAll("\\s+", "");
 
         // 정규화된 필드와 비교 -> 이때 titleNormalized는 인덱싱돠어있어 검색 속도 빠름
-        return recipe.titleNormalized.contains(normalizedKeyword);
+        return recipe.titleNormalized.startsWith(normalizedKeyword);
     }
 
     private BooleanExpression categoryCondition(RecipeCategory category) {
