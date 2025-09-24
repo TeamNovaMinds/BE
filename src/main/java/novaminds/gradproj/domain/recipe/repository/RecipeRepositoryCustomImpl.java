@@ -39,7 +39,7 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
     private BooleanExpression keywordCondition(String keyword) {
 
         // 검색어 없으면 모든 레시피 검색
-        if (keyword == null) return null;
+        if (keyword == null || keyword.isBlank()) return null;
 
         // 검색어에 대해서 띄어쓰기를 전부 없애고 정규화
         String normalizedKeyword = keyword.toLowerCase().replaceAll("\\s+", "");
