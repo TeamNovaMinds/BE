@@ -1,0 +1,17 @@
+{
+  "index": {
+    "max_ngram_diff": 20
+  },
+  "analysis": {
+    "filter": {
+      "edge_ngram_filter": { "type": "edge_ngram", "min_gram": 1, "max_gram": 20 }
+    },
+    "analyzer": {
+      "korean_unified_analyzer": {
+        "type": "custom",
+        "tokenizer": "nori_tokenizer",
+        "filter": [ "lowercase", "nori_readingform", "edge_ngram_filter" ]
+      }
+    }
+  }
+}
