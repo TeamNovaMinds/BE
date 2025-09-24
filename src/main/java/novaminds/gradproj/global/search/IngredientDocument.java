@@ -18,14 +18,13 @@ public class IngredientDocument {
     @Id
     private Long id; // 원본 DB의 Ingredient ID
 
-    @MultiField(
-            mainField = @Field(type = FieldType.Text, name = "ingredient_name", analyzer = "korean_nori"),
-            otherFields = {
-                    @InnerField(suffix = "auto", type = FieldType.Text, analyzer = "korean_autocomplete"),
-                    @InnerField(suffix = "kw", type = FieldType.Keyword)
-            }
-    )
+    // 모든 검색을 책임질 단 하나의 메인 필드
+    @Field(type = FieldType.Text, analyzer = "korean_unified_analyzer")
     private String ingredientName;
+
+    // 정확 일치 및 정렬을 위한 키워드 필드
+    @Field(type = FieldType.Keyword)
+    private String ingredientNameKw;
 
     @Field(type = FieldType.Keyword, name = "category_name") // 카테고리 이름은 정확히 일치해야 하므로 Keyword 타입 사용
     private String categoryName;

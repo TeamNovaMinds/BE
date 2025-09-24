@@ -1,6 +1,5 @@
 package novaminds.gradproj.global.search.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
@@ -36,6 +35,7 @@ public class IngredientIndexingService {
                 .map(ingredient -> IngredientDocument.builder()
                         .id(ingredient.getId())
                         .ingredientName(ingredient.getIngredientName())
+                        .ingredientNameKw(ingredient.getIngredientName())
                         .categoryName(ingredient.getIngredientCategory().getIngredientCategoryName())
                         .imageUrl(ingredient.getImageUrl())
                         .build())
