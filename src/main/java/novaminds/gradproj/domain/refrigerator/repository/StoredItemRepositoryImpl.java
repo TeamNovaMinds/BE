@@ -1,7 +1,6 @@
 package novaminds.gradproj.domain.refrigerator.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
@@ -50,7 +49,7 @@ public class StoredItemRepositoryImpl implements StoredItemRepositoryCustom {
             return null;
         }
         
-        String normalizedKeyword = keyword.replaceAll("\\s", "");
-        return Expressions.stringTemplate("REPLACE({0}, ' ', '')", storedItem.ingredient.ingredientName).contains(normalizedKeyword);
+        String normalizedKeyword = keyword.toLowerCase().replaceAll("\\s", "");
+        return storedItem.ingredient.ingredientNameNormalized.startsWith(normalizedKeyword);
     }
 }

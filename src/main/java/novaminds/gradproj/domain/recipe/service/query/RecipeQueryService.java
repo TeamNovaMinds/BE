@@ -51,17 +51,18 @@ public class RecipeQueryService {
      * 현재 회원의 레시피 작성 여부, 좋아요 여부 확인 (복수 조회)
      *
      * @param category  조회할 카테고리 - null이면 모든 카테고리 대상
+     * @param keyword   검색할 레시피 검색어 - null 이면 모든 레시피
      * @param cursorId  페이징을 위한 커서, null일 경우, 처음부터 조회를 시작
      * @param memberId  레시피를 조회하는 회원의 ID
      *
      * @return 레시피 목록과 페이징을 위한 정보, 현재 회원의 레시피 작성 여부, 좋아요 여부 포함 {@code RecipeListResponse} 객체
      */
-    public RecipeResponseDTO.RecipeListResponse getRecipe(String memberId, RecipeCategory category, Long cursorId){
+    public RecipeResponseDTO.RecipeListResponse getRecipe(String memberId, RecipeCategory category, String keyword, Long cursorId){
 
         // 1. 페이징 로직 처리
         CursorResult<Recipe> pageResult = cursorPagingHelper.getPage(
                 // 데이터를 어떻게 가져올지만 정의 (pageSize + 1 만큼)
-                (size) -> recipeRepository.findRecipes(category, cursorId, size),
+                (size) -> recipeRepository.findRecipes(category, keyword,  cursorId, size),
                 // 엔티티에서 ID를 어떻게 추출할지만 정의
                 Recipe::getId,
                 DEFAULT_PAGE_SIZE

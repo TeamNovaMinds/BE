@@ -21,18 +21,31 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public List<Recipe> findRecipes(RecipeCategory category, Long cursorId, int pageSize) {
+    public List<Recipe> findRecipes(RecipeCategory category, String keyword, Long cursorId, int pageSize) {
         
         return queryFactory
                 .selectFrom(recipe)
                 .leftJoin(recipe.author).fetchJoin()
                 .where(
+                        keywordCondition(keyword),
                         categoryCondition(category),
                         cursorCondition(cursorId)
                 )
                 .orderBy(recipe.id.desc())
                 .limit(pageSize)
                 .fetch();
+    }
+
+    private BooleanExpression keywordCondition(String keyword) {
+
+        // 검색어 없으면 모든 레시피 검색
+        if (keyword == null || keyword.isBlank()) return null;
+
+        // 검색어에 대해서 띄어쓰기를 전부 없애고 정규화
+        String normalizedKeyword = keyword.toLowerCase().replaceAll("\\s+", "");
+
+        // 정규화된 필드와 비교 -> 이때 titleNormalized는 인덱싱돠어있어 검색 속도 빠름
+        return recipe.titleNormalized.startsWith(normalizedKeyword);
     }
 
     private BooleanExpression categoryCondition(RecipeCategory category) {

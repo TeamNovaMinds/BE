@@ -34,8 +34,7 @@ public class IngredientRepositoryCustomImpl implements IngredientRepositoryCusto
 			return null;
 		}
 
-		// .contains() 대신 .like()를 사용하여 명시적으로 비교
-		return ingredient.ingredientNameNormalized.like("%" + keyword.toLowerCase() + "%");
+		return ingredient.ingredientNameNormalized.startsWith(keyword);
 	}
 
 }
