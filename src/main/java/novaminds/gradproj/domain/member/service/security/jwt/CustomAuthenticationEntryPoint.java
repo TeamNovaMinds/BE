@@ -1,7 +1,6 @@
 package novaminds.gradproj.domain.member.service.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +30,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
         // ApiResponse를 사용하여 일관된 에러 응답을 생성합니다.
-        ApiResponse<Object> errorResponse = ApiResponse.onFailure(ErrorStatus._UNAUTHORIZED);
+        ApiResponse<Object> errorResponse = ApiResponse.onFailure(ErrorStatus.LOGIN_REQUIRED);
 
         // ObjectMapper를 사용하여 response body에 JSON을 작성합니다.
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));

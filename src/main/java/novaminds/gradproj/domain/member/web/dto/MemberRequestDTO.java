@@ -18,8 +18,8 @@ public class MemberRequestDTO {
         private String email;
 
         @NotBlank(message = "비밀번호는 필수 입력값입니다")
-        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])(?!.*\\s)[A-Za-z\\d@$!%*?&]{8,16}$",
-                message = "비밀번호는 8-16자 사이, 영문 대/소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])(?!.*\\s)[a-z\\d@$!%*?&]{8,16}$",
+                message = "비밀번호는 8-16자 사이, 영문 소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
         private String password;
     }
 
@@ -32,8 +32,8 @@ public class MemberRequestDTO {
         private String email;
 
         @NotBlank(message = "비밀번호는 필수 입력값입니다")
-        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])(?!.*\\s)[A-Za-z\\d@$!%*?&]{8,16}$",
-                message = "비밀번호는 8-16자 사이, 영문 대/소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])(?!.*\\s)[a-z\\d@$!%*?&]{8,16}$",
+                message = "비밀번호는 8-16자 사이, 영문 소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
         private String password;
 
         @NotBlank(message = "이름은 필수 입력값입니다")
@@ -72,17 +72,13 @@ public class MemberRequestDTO {
     @Getter
     @NoArgsConstructor
     public static class PasswordResetConfirmRequest {
-        @NotBlank(message = "이메일은 필수 입력값입니다")
-        @Email(message = "유효한 이메일 형식이 아닙니다")
-        private String email;
-
         @NotBlank(message = "인증 코드는 필수 입력값입니다")
         @Pattern(regexp = "^\\d{6}$", message = "인증 코드는 6자리 숫자여야 합니다")
         private String token;
 
         @NotBlank(message = "비밀번호는 필수 입력값입니다")
-        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])(?!.*\\s)[A-Za-z\\d@$!%*?&]{8,16}$",
-                message = "비밀번호는 8-16자 사이, 영문 대/소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])(?!.*\\s)[a-z\\d@$!%*?&]{8,16}$",
+                message = "비밀번호는 8-16자 사이, 영문 소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
         private String newPassword;
     }
 }
