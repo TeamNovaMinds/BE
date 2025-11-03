@@ -155,16 +155,30 @@ public class AuthController {
         return ApiResponse.onSuccess(authService.checkNicknameDuplication(nickname));
     }
 
-    @Operation(summary = "이메일로 비밀번호 재설정",
-            description = "비밀번호를 잊어버렸을 경우, 이메일을 통해 인증 코드 6자리를 전송하는 api 입니다.")
+    @Operation(summary = "비밀번호 재설정 인증 코드 발송",
+            description = "비밀번호를 잊어버렸을 경우, 이메일을 통해 인증 코드 6자리를 전송하는 API입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
     })
-    @PostMapping("reset-password")
+    @PostMapping("/reset-password/send-code")
     public ApiResponse<String> sendResetPasswordToken (
             @Valid @RequestBody MemberRequestDTO.PasswordResetRequest request
     ) {
         return ApiResponse.onSuccess(authService.sendPasswordResetEmail(request.getEmail()));
+    }
+
+    @Operation(summary = "비밀번호 재설정",
+            description = "이메일로 받은 인증 코드를 검증하고 새로운 비밀번호로 변경합니다. " +
+                    "인증 코드는 이메일 발송 후 15분간 유효하며, 일회성으로 사용됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+    })
+    @PostMapping("/reset-password/confirm")
+    public ApiResponse<String> resetPassword(
+            @Valid @RequestBody MemberRequestDTO.PasswordResetConfirmRequest request
+    ) {
+        return ApiResponse.onSuccess(authService.resetPassword(request));
     }
 }
