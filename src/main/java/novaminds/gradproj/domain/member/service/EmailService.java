@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.config.properties.GmailProperties;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -16,8 +17,18 @@ public class EmailService {
     private final JavaMailSender emailSender;
     private final GmailProperties gmailProperties;
 
+    /**
+     * 비밀번호 재설정 이메일을 비동기로 발송
+     * 이메일 발송은 시간이 걸리는 작업이므로 별도 스레드에서 처리하여 응답 속도 개선
+     *
+     * @param email 수신자 이메일 주소
+     * @param token 6자리 인증 코드
+     */
+    @Async("taskExecutor")
     public void sendPasswordResetEmail(String email, String token) {
         try {
+            log.info("📧 [이메일 발송 시작] 수신자: {}", email);
+
             MimeMessage message = emailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -32,12 +43,13 @@ public class EmailService {
 
             // 이메일 발송
             emailSender.send(message);
+
+            log.info("✅ [이메일 발송 성공] 수신자: {}", email);
         } catch (MessagingException e) {
             log.error("❌ 비밀번호 재설정 이메일 발송 실패 - 수신자: {}, 오류: {}", email, e.getMessage());
-            throw new RuntimeException("이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
+            // 비동기 작업이므로 예외를 던지지 않고 로그만 남김
         } catch (Exception e) {
             log.error("❌ 예상하지 못한 이메일 발송 오류 - 수신자: {}, 오류: {}", email, e.getMessage(), e);
-            throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
         }
     }
 
