@@ -36,6 +36,10 @@ public class AsyncConfig {
         // 스레드 이름 접두사
         executor.setThreadNamePrefix("async-email-");
 
+        // 애플리케이션 종료 시 실행 중인 작업 완료 대기
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
+
         // 초기화
         executor.initialize();
 
