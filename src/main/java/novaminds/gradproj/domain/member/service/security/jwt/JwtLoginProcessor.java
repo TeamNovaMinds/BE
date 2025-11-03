@@ -1,6 +1,8 @@
 package novaminds.gradproj.domain.member.service.security.jwt;
 
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.config.properties.JwtProperties;
@@ -46,6 +48,46 @@ public class JwtLoginProcessor {
                 refreshToken,
                 Duration.ofMillis(jwtProperties.getRefreshExpiration())
         );
+    }
+
+    /**
+     * 토큰 생성 및 저장 + 토큰 값 반환 (모바일용 하이브리드 방식)
+     * 쿠키와 Redis에 저장하면서 동시에 토큰 값을 반환
+     */
+    public TokenPair issueAndSetTokensWithReturn(HttpServletResponse response, Authentication authentication) {
+        // JWT 토큰 생성
+        String accessToken = jwtTokenProvider.generateAccessToken(authentication);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
+
+        // 쿠키에 토큰 저장
+        long accessTokenMaxAge = jwtProperties.getExpiration(); // 24시간
+        long refreshTokenMaxAge = jwtProperties.getRefreshExpiration(); // 7일
+
+        jwtCookieUtil.addTokenToCookie(response, "accessToken", accessToken, accessTokenMaxAge);
+        jwtCookieUtil.addTokenToCookie(response, "refreshToken", refreshToken, refreshTokenMaxAge);
+
+        // Redis에 Refresh Token 저장
+        PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+        String loginId = principalDetails.getMember().getLoginId();
+
+        authRedisService.saveRefreshToken(
+                loginId,
+                refreshToken,
+                Duration.ofMillis(jwtProperties.getRefreshExpiration())
+        );
+
+        // 토큰 값 반환
+        return new TokenPair(accessToken, refreshToken);
+    }
+
+    /**
+     * 토큰 쌍을 담는 DTO
+     */
+    @Getter
+    @AllArgsConstructor
+    public static class TokenPair {
+        private final String accessToken;
+        private final String refreshToken;
     }
 
     /**

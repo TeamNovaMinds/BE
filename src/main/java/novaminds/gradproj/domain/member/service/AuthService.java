@@ -84,9 +84,10 @@ public class AuthService {
 
         Authentication authentication = authenticationHelper.setAuthentication(savedMember);
 
-        jwtLoginProcessor.issueAndSetTokens(response, authentication);
+        // 쿠키 + 응답 body에 토큰 포함 (하이브리드 방식)
+        JwtLoginProcessor.TokenPair tokens = jwtLoginProcessor.issueAndSetTokensWithReturn(response, authentication);
 
-        return MemberResponseDTO.SignupResponse.from(savedMember);
+        return MemberResponseDTO.SignupResponse.from(savedMember, tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
 
@@ -134,10 +135,11 @@ public class AuthService {
         member.completeProfile();
 
         // 프로필 완성 후 새로운 JWT 토큰 발급 (profileCompleted=true)
+        // 쿠키 + 응답 body에 토큰 포함 (하이브리드 방식)
         Authentication authentication = authenticationHelper.setAuthentication(member);
-        jwtLoginProcessor.issueAndSetTokens(response, authentication);
+        JwtLoginProcessor.TokenPair tokens = jwtLoginProcessor.issueAndSetTokensWithReturn(response, authentication);
 
-        return MemberResponseDTO.AdditionalInfoResponse.from(member);
+        return MemberResponseDTO.AdditionalInfoResponse.from(member, tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
     // 로그인
@@ -154,9 +156,10 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        jwtLoginProcessor.issueAndSetTokens(response, authentication);
+        // 쿠키 + 응답 body에 토큰 포함 (하이브리드 방식)
+        JwtLoginProcessor.TokenPair tokens = jwtLoginProcessor.issueAndSetTokensWithReturn(response, authentication);
 
-        return MemberResponseDTO.LoginResponse.from(member);
+        return MemberResponseDTO.LoginResponse.from(member, tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
     /**

@@ -21,11 +21,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * JWT 기반 인증 필터
+ * JWT 기반 인증 필터 (모바일 + 웹 하이브리드 지원)
  * <p>
  * HTTP 요청마다 실행되어 JWT 토큰을 검증하고 인증 처리를 수행:
  * <ul>
- * <li>쿠키에서 액세스/리프레시 토큰 추출</li>
+ * <li>Authorization 헤더 또는 쿠키에서 액세스/리프레시 토큰 추출</li>
  * <li>토큰 유효성 검증 및 블랙리스트 확인</li>
  * <li>토큰 만료 시 자동 재발급 처리</li>
  * <li>Spring Security 컨텍스트에 인증 정보 설정</li>
@@ -83,15 +83,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * 액세스 토큰 처리
+     * Authorization 헤더 우선, 없으면 쿠키에서 추출 (모바일 + 웹 하이브리드 지원)
      * @return 유효한 토큰인 경우 true, 그렇지 않으면 false
      */
     private boolean processAccessToken(HttpServletRequest request, HttpServletResponse response) {
-        var opt = jwtCookieUtil.resolveToken(request, ACCESS_TOKEN_COOKIE).filter(StringUtils::hasText);
-        if (opt.isEmpty()) {
-            return false;
-        }
+        // 1. Authorization 헤더에서 토큰 추출 시도 (모바일용)
+        String token = extractTokenFromHeader(request);
 
-        String token = opt.get();
+        // 2. Authorization 헤더에 토큰이 없으면 쿠키에서 추출 (웹용)
+        if (token == null) {
+            var opt = jwtCookieUtil.resolveToken(request, ACCESS_TOKEN_COOKIE).filter(StringUtils::hasText);
+            if (opt.isEmpty()) {
+                return false;
+            }
+            token = opt.get();
+        }
 
         // 1. 블랙리스트 확인 -> 블랙리스트에 있으면 쿠키를 삭제하고 실패 처리
         if (authRedisService.isBlacklisted(token)) {
@@ -186,5 +192,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void setAuthentication(String token) {
         PrincipalDetails principalDetails = jwtTokenProvider.createPrincipalFromToken(token);
         authenticationHelper.setAuthentication(principalDetails);
+    }
+
+    /**
+     * Authorization 헤더에서 Bearer 토큰 추출 (모바일용)
+     * @param request HTTP 요청
+     * @return Bearer 토큰이 있으면 토큰 값, 없으면 null
+     */
+    private String extractTokenFromHeader(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }

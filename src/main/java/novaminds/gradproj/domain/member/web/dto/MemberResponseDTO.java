@@ -17,6 +17,8 @@ public class MemberResponseDTO {
         private String name;
         private String profileImg;
         private boolean isProfileCompleted;
+        private String accessToken;  // 모바일용 토큰
+        private String refreshToken; // 모바일용 토큰
 
         public static LoginResponse from(Member member) {
             return LoginResponse.builder()
@@ -24,6 +26,17 @@ public class MemberResponseDTO {
                     .name(member.getName())
                     .profileImg(member.getProfileImage())
                     .isProfileCompleted(member.isProfileCompleted())
+                    .build();
+        }
+
+        public static LoginResponse from(Member member, String accessToken, String refreshToken) {
+            return LoginResponse.builder()
+                    .nickname(member.getNickname())
+                    .name(member.getName())
+                    .profileImg(member.getProfileImage())
+                    .isProfileCompleted(member.isProfileCompleted())
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
                     .build();
         }
     }
@@ -36,12 +49,24 @@ public class MemberResponseDTO {
         private String email;
         private String name;
         private boolean isProfileCompleted;
+        private String accessToken;  // 모바일용 토큰
+        private String refreshToken; // 모바일용 토큰
 
         public static SignupResponse from(Member member) {
             return SignupResponse.builder()
                     .email(member.getEmail())
                     .name(member.getName())
                     .isProfileCompleted(member.isProfileCompleted())
+                    .build();
+        }
+
+        public static SignupResponse from(Member member, String accessToken, String refreshToken) {
+            return SignupResponse.builder()
+                    .email(member.getEmail())
+                    .name(member.getName())
+                    .isProfileCompleted(member.isProfileCompleted())
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
                     .build();
         }
     }
@@ -55,6 +80,8 @@ public class MemberResponseDTO {
         private String nickname;
         private String profileImgUrl;
         private boolean isProfileCompleted;
+        private String accessToken;  // 모바일용 토큰 (part2에서만 사용)
+        private String refreshToken; // 모바일용 토큰 (part2에서만 사용)
 
         public static AdditionalInfoResponse from(Member member) {
             return AdditionalInfoResponse.builder()
@@ -62,6 +89,17 @@ public class MemberResponseDTO {
                 .nickname(member.getNickname())
                 .profileImgUrl(member.getProfileImage())
                 .isProfileCompleted(member.isProfileCompleted())
+                .build();
+        }
+
+        public static AdditionalInfoResponse from(Member member, String accessToken, String refreshToken) {
+            return AdditionalInfoResponse.builder()
+                .name(member.getName())
+                .nickname(member.getNickname())
+                .profileImgUrl(member.getProfileImage())
+                .isProfileCompleted(member.isProfileCompleted())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
         }
     }
