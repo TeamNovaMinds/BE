@@ -6,6 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.domain.recipe.entity.Recipe;
 import novaminds.gradproj.domain.recipe.entity.RecipeCategory;
+import novaminds.gradproj.domain.recipe.entity.RecipeSortType;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,8 +22,14 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     
     @Override
-    public List<Recipe> findRecipes(RecipeCategory category, String keyword, Long cursorId, int pageSize) {
-        
+    public List<Recipe> findRecipes(RecipeCategory category, String keyword, RecipeSortType sortBy, Long cursorId, int pageSize) {
+        return switch (sortBy) {
+            case LIKES -> findRecipesByLikes(category, keyword, cursorId, pageSize);
+            case LATEST -> findRecipesByLatest(category, keyword, cursorId, pageSize);
+        };
+    }
+
+    private List<Recipe> findRecipesByLatest(RecipeCategory category, String keyword, Long cursorId, int pageSize) {
         return queryFactory
                 .selectFrom(recipe)
                 .leftJoin(recipe.author).fetchJoin()
@@ -32,6 +39,20 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
                         cursorCondition(cursorId)
                 )
                 .orderBy(recipe.id.desc())
+                .limit(pageSize)
+                .fetch();
+    }
+
+    private List<Recipe> findRecipesByLikes(RecipeCategory category, String keyword, Long cursorId, int pageSize) {
+        return queryFactory
+                .selectFrom(recipe)
+                .leftJoin(recipe.author).fetchJoin()
+                .where(
+                        keywordCondition(keyword),
+                        categoryCondition(category),
+                        likesAndIdCursorCondition(cursorId)
+                )
+                .orderBy(recipe.likes.desc(), recipe.id.desc())
                 .limit(pageSize)
                 .fetch();
     }
