@@ -227,29 +227,44 @@ public class AuthService {
 
         return "비밀번호 재설정 인증을 위한 6자리 숫자코드가 이메일로 발송되었습니다.";
     }
-    
+
     /**
-     * 비밀번호 재설정 인증 코드 확인
-     * Redis에 저장된 코드와 사용자 입력 코드를 비교 후 일치하면 삭제
+     * 비밀번호 재설정 (인증 코드 검증 + 비밀번호 변경)
+     * 인증 코드를 검증하고, 검증 성공 시 새로운 비밀번호로 변경
      *
-     * @param email          사용자의 이메일 주소
-     * @param inputToken     사용자가 입력한 인증 코드
-     * @return               인증 성공 여부
+     * @param request 이메일, 인증 코드, 새 비밀번호를 담은 요청 DTO
+     * @return        비밀번호 재설정 성공 메시지
      */
-    public boolean verifyPasswordResetToken(String email, String inputToken) {
-        
-        // Redis에서 저장된 코드 조회
-        String storedToken = authRedisService.getPasswordResetToken(email);
-        
-        // 저장된 코드가 없거나 일치하지 않는 경우
-        if (storedToken == null || !storedToken.equals(inputToken)) {
-            log.warn("❌ [비밀번호 재설정] 인증 코드 불일치 - email: {}", email);
-            return false;
+    @Transactional
+    public String resetPassword(MemberRequestDTO.PasswordResetConfirmRequest request) {
+
+        // 1. 인증 코드 검증
+        String storedToken = authRedisService.getPasswordResetToken(request.getEmail());
+
+        if (storedToken == null || !storedToken.equals(request.getToken())) {
+            log.warn("❌ [비밀번호 재설정] 인증 코드 불일치 - email: {}", request.getEmail());
+            throw new GeneralException(ErrorStatus.INVALID_VERIFICATION_CODE);
         }
-        
-        // 인증 성공 시 Redis에서 코드 삭제 (일회성 코드)
-        authRedisService.deletePasswordResetToken(email);
-        
-        return true;
+
+        // 2. 사용자 조회
+        Member member = memberRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 3. 소셜 로그인 사용자 체크 (소셜 로그인 사용자는 비밀번호 재설정 불가)
+        if (member.getSocialType() != SocialType.LOCAL) {
+            log.warn("❌ [비밀번호 재설정] 소셜 로그인 사용자 - email: {}, socialType: {}",
+                    request.getEmail(), member.getSocialType());
+            throw new GeneralException(ErrorStatus.SOCIAL_LOGIN_USER_CANNOT_RESET_PASSWORD);
+        }
+
+        // 4. 비밀번호 변경
+        member.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+
+        // 5. Redis에서 인증 코드 삭제 (일회성 코드)
+        authRedisService.deletePasswordResetToken(request.getEmail());
+
+        log.info("✅ [비밀번호 재설정] 성공 - email: {}", request.getEmail());
+
+        return "비밀번호가 성공적으로 변경되었습니다.";
     }
 }

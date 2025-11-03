@@ -138,6 +138,10 @@ public class Member extends BaseEntity {
 		this.nickname = nickname;
 	}
 
+	public void updatePassword(String password) {
+		this.password = password;
+	}
+
     public void completeProfile() {
 		this.profileCompleted = true;
 	}

@@ -103,9 +103,7 @@ public class AuthRedisService {
         String key = BLACKLIST_PREFIX + token;
         
         // Redis에서 키 존재 여부 확인
-        Boolean exists = redisTemplate.hasKey(key);
-        
-        return Boolean.TRUE.equals(exists);
+        return redisTemplate.hasKey(key);
     }
 
     /**
@@ -118,7 +116,7 @@ public class AuthRedisService {
     public void savePasswordResetToken(String email, String token, Duration expiration) {
         // Redis 키 생성
         String key = PASSWORD_RESET_PREFIX + email;
-        
+
         // 토큰을 만료 시간과 함께 Redis에 저장
         redisTemplate.opsForValue().set(key, token, expiration);
     }
@@ -145,7 +143,7 @@ public class AuthRedisService {
     public void deletePasswordResetToken(String email) {
         // Redis 키 생성
         String key = PASSWORD_RESET_PREFIX + email;
-        
+
         // Redis에서 토큰 삭제
         redisTemplate.delete(key);
     }

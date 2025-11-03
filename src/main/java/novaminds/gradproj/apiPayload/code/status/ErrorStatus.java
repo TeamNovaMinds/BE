@@ -44,6 +44,8 @@ public enum ErrorStatus implements BaseErrorCode {
     PASSWORD_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST, "PASSWORD403", "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     PASSWORD_RESET_CODE_INVALID(HttpStatus.BAD_REQUEST, "PASSWORD404", "유효하지 않은 비밀번호 재설정 코드입니다."),
     PASSWORD_RESET_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "PASSWORD405", "만료된 비밀번호 재설정 코드입니다. 비밀번호 재설정을 다시 요청해주세요."),
+    INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "PASSWORD406", "인증 코드가 일치하지 않거나 만료되었습니다."),
+    SOCIAL_LOGIN_USER_CANNOT_RESET_PASSWORD(HttpStatus.BAD_REQUEST, "PASSWORD407", "소셜 로그인 사용자는 비밀번호 재설정을 할 수 없습니다."),
 
     // 냉장고 스킨 관련 에러
     DEFAULT_REFRIGERATOR_SKIN_NOT_FOUND(HttpStatus.NOT_FOUND, "SKIN401","기본 냉장고 스킨을 찾을 수 없습니다."),
