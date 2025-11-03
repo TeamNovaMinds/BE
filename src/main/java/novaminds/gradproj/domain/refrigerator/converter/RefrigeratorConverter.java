@@ -95,6 +95,7 @@ public class RefrigeratorConverter {
                 .id(storedItem.getId())
                 .ingredientId(storedItem.getIngredient().getId())
                 .ingredientName(storedItem.getIngredient().getIngredientName())
+                .imageUrl(storedItem.getIngredient().getImageUrl())
                 .quantity(storedItem.getQuantity())
                 .expirationDate(storedItem.getExpirationDate())
                 .dDay(dDay)

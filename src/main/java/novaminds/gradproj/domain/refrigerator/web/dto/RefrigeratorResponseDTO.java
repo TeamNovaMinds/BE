@@ -85,6 +85,9 @@ public class RefrigeratorResponseDTO {
         @Schema(description = "재료명")
         private String ingredientName;
 
+        @Schema(description = "재료 이미지 URL")
+        private String imageUrl;
+
         @Schema(description = "재료 개수")
         private Integer quantity;
 
