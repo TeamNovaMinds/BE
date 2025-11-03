@@ -230,40 +230,40 @@ public class AuthService {
 
     /**
      * 비밀번호 재설정 (인증 코드 검증 + 비밀번호 변경)
-     * 인증 코드로 이메일을 조회하고, 검증 성공 시 새로운 비밀번호로 변경
+     * 인증 코드를 검증하고, 검증 성공 시 새로운 비밀번호로 변경
      *
-     * @param request 인증 코드, 새 비밀번호를 담은 요청 DTO
+     * @param request 이메일, 인증 코드, 새 비밀번호를 담은 요청 DTO
      * @return        비밀번호 재설정 성공 메시지
      */
     @Transactional
     public String resetPassword(MemberRequestDTO.PasswordResetConfirmRequest request) {
 
-        // 1. 토큰으로 이메일 조회
-        String email = authRedisService.getEmailByPasswordResetToken(request.getToken());
+        // 1. 인증 코드 검증
+        String storedToken = authRedisService.getPasswordResetToken(request.getEmail());
 
-        if (email == null) {
-            log.warn("❌ [비밀번호 재설정] 유효하지 않은 인증 코드 - token: {}", request.getToken());
+        if (storedToken == null || !storedToken.equals(request.getToken())) {
+            log.warn("❌ [비밀번호 재설정] 인증 코드 불일치 - email: {}", request.getEmail());
             throw new GeneralException(ErrorStatus.INVALID_VERIFICATION_CODE);
         }
 
         // 2. 사용자 조회
-        Member member = memberRepository.findByEmail(email)
+        Member member = memberRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         // 3. 소셜 로그인 사용자 체크 (소셜 로그인 사용자는 비밀번호 재설정 불가)
         if (member.getSocialType() != SocialType.LOCAL) {
             log.warn("❌ [비밀번호 재설정] 소셜 로그인 사용자 - email: {}, socialType: {}",
-                    email, member.getSocialType());
+                    request.getEmail(), member.getSocialType());
             throw new GeneralException(ErrorStatus.SOCIAL_LOGIN_USER_CANNOT_RESET_PASSWORD);
         }
 
         // 4. 비밀번호 변경
         member.updatePassword(passwordEncoder.encode(request.getNewPassword()));
 
-        // 5. Redis에서 인증 코드 삭제 (일회성 코드, 양방향 매핑 모두 삭제)
-        authRedisService.deletePasswordResetToken(email);
+        // 5. Redis에서 인증 코드 삭제 (일회성 코드)
+        authRedisService.deletePasswordResetToken(request.getEmail());
 
-        log.info("✅ [비밀번호 재설정] 성공 - email: {}", email);
+        log.info("✅ [비밀번호 재설정] 성공 - email: {}", request.getEmail());
 
         return "비밀번호가 성공적으로 변경되었습니다.";
     }

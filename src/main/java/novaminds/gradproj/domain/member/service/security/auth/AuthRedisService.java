@@ -32,7 +32,6 @@ public class AuthRedisService {
     private static final String REFRESH_TOKEN_PREFIX = "refreshToken:";
     private static final String BLACKLIST_PREFIX = "blacklist:";
     private static final String PASSWORD_RESET_PREFIX = "passwordReset:";
-    private static final String PASSWORD_RESET_TOKEN_PREFIX = "passwordResetToken:";
 
     /**
      * Refresh Token을 Redis에 저장
@@ -108,21 +107,18 @@ public class AuthRedisService {
     }
 
     /**
-     * 비밀번호 재설정 토큰을 Redis에 저장 (양방향 매핑)
-     * email -> token, token -> email 모두 저장하여 양방향 조회 가능
+     * 비밀번호 재설정 토큰을 Redis에 저장
      *
      * @param email      사용자의 이메일 주소
      * @param token      비밀번호 재설정 토큰 (6자리 숫자)
      * @param expiration 토큰의 만료 시간
      */
     public void savePasswordResetToken(String email, String token, Duration expiration) {
-        // 이메일 -> 토큰 매핑
-        String emailKey = PASSWORD_RESET_PREFIX + email;
-        redisTemplate.opsForValue().set(emailKey, token, expiration);
+        // Redis 키 생성
+        String key = PASSWORD_RESET_PREFIX + email;
 
-        // 토큰 -> 이메일 역방향 매핑 (토큰으로 이메일 조회 가능)
-        String tokenKey = PASSWORD_RESET_TOKEN_PREFIX + token;
-        redisTemplate.opsForValue().set(tokenKey, email, expiration);
+        // 토큰을 만료 시간과 함께 Redis에 저장
+        redisTemplate.opsForValue().set(key, token, expiration);
     }
 
     /**
@@ -140,37 +136,15 @@ public class AuthRedisService {
     }
 
     /**
-     * 토큰으로 이메일 주소를 Redis에서 조회 (역방향 조회)
-     *
-     * @param token 비밀번호 재설정 토큰
-     * @return      해당 토큰과 연결된 이메일 주소, 없으면 null
-     */
-    public String getEmailByPasswordResetToken(String token) {
-        // Redis 키 생성
-        String key = PASSWORD_RESET_TOKEN_PREFIX + token;
-
-        // Redis에서 이메일 조회
-        return redisTemplate.opsForValue().get(key);
-    }
-
-    /**
      * 비밀번호 재설정 토큰을 Redis에서 삭제 (재설정 완료 후 사용)
-     * 양방향 매핑 모두 삭제
      *
      * @param email 사용자의 이메일 주소
      */
     public void deletePasswordResetToken(String email) {
-        // 이메일 -> 토큰 매핑 조회
-        String token = getPasswordResetToken(email);
+        // Redis 키 생성
+        String key = PASSWORD_RESET_PREFIX + email;
 
-        // 이메일 -> 토큰 매핑 삭제
-        String emailKey = PASSWORD_RESET_PREFIX + email;
-        redisTemplate.delete(emailKey);
-
-        // 토큰 -> 이메일 역방향 매핑 삭제
-        if (token != null) {
-            String tokenKey = PASSWORD_RESET_TOKEN_PREFIX + token;
-            redisTemplate.delete(tokenKey);
-        }
+        // Redis에서 토큰 삭제
+        redisTemplate.delete(key);
     }
 }
