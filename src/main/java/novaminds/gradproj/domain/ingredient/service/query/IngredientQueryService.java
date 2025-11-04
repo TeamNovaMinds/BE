@@ -11,6 +11,7 @@ import novaminds.gradproj.apiPayload.code.status.ErrorStatus;
 import novaminds.gradproj.apiPayload.exception.GeneralException;
 import novaminds.gradproj.domain.ingredient.converter.IngredientConverter;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
+import novaminds.gradproj.domain.ingredient.entity.IngredientCategory;
 import novaminds.gradproj.domain.ingredient.repository.IngredientRepository;
 import novaminds.gradproj.domain.ingredient.web.dto.IngredientResponseDTO;
 
@@ -22,15 +23,17 @@ public class IngredientQueryService {
 	private final IngredientRepository ingredientRepository;
 
 	//재료 검색
-	public IngredientResponseDTO.IngredientListDTO getIngredients(String keyword){
+	public IngredientResponseDTO.IngredientListDTO getIngredients(String keyword, IngredientCategory category){
 		List<Ingredient> ingredients;
 
-		//키워드 띄워쓰기 무시하고 검색
-		if (StringUtils.hasText(keyword)) {
-			String processedKeyword = keyword.toLowerCase().replaceAll("\\s+", ""); // 소문자 변환 및 공백 제거
-			ingredients = ingredientRepository.searchIngredientsByKeyword(processedKeyword);
+		// 키워드나 카테고리가 있으면 검색
+		if (StringUtils.hasText(keyword) || category != null) {
+			String processedKeyword = StringUtils.hasText(keyword)
+				? keyword.toLowerCase().replaceAll("\\s+", "")
+				: null;
+			ingredients = ingredientRepository.searchIngredients(processedKeyword, category);
 		}
-		// 키워드가 없으면 전체 조회
+		// 키워드와 카테고리가 모두 없으면 전체 조회
 		else {
 			ingredients = ingredientRepository.findAll();
 		}

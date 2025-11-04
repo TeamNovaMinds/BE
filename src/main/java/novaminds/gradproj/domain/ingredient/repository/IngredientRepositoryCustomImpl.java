@@ -14,6 +14,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
+import novaminds.gradproj.domain.ingredient.entity.IngredientCategory;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,10 +23,13 @@ public class IngredientRepositoryCustomImpl implements IngredientRepositoryCusto
 	private final JPAQueryFactory queryFactory;
 
 	@Override
-	public List<Ingredient> searchIngredientsByKeyword(String keyword) {
+	public List<Ingredient> searchIngredients(String keyword, IngredientCategory category) {
 		return queryFactory
 			.selectFrom(ingredient)
-			.where(ingredientNameContains(keyword))
+			.where(
+				ingredientNameContains(keyword),
+				ingredientCategoryEq(category)
+			)
 			.fetch();
 	}
 
@@ -35,6 +39,10 @@ public class IngredientRepositoryCustomImpl implements IngredientRepositoryCusto
 		}
 
 		return ingredient.ingredientNameNormalized.startsWith(keyword);
+	}
+
+	private BooleanExpression ingredientCategoryEq(IngredientCategory category) {
+		return category != null ? ingredient.ingredientCategory.eq(category) : null;
 	}
 
 }

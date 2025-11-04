@@ -50,36 +50,51 @@ public class RefrigeratorCommandService {
     }
 
     /**
-     * 냉장고에 재료를 추가
+     * 냉장고에 여러 재료를 추가
      * 기존에 동일한 재료가 이미 존재하면 유통 기한 계산 후 유통 기한이 더 긴 것으로 사용
      *
      * @param member 재료를 보관할 회원
-     * @param request 추가할 재료 정보
+     * @param requests 추가할 재료 정보 리스트
      */
     public void addIngredientsToRefrigerator(
-            Member member, RefrigeratorRequestDTO.IngredientItem request
+            Member member, List<RefrigeratorRequestDTO.IngredientItem> requests
     ) {
-
         // 냉장고 조회
         Refrigerator refrigerator = member.getRefrigerator();
         if (refrigerator == null) {
             throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
         }
 
+        // 각 재료를 순회하면서 추가
+        for (RefrigeratorRequestDTO.IngredientItem request : requests) {
+            addSingleIngredientToRefrigerator(refrigerator, request);
+        }
+    }
+
+    /**
+     * 냉장고에 단일 재료를 추가 (내부 메서드)
+     * 기존에 동일한 재료가 이미 존재하면 유통 기한 계산 후 유통 기한이 더 긴 것으로 사용
+     *
+     * @param refrigerator 재료를 보관할 냉장고
+     * @param request 추가할 재료 정보
+     */
+    private void addSingleIngredientToRefrigerator(
+            Refrigerator refrigerator, RefrigeratorRequestDTO.IngredientItem request
+    ) {
         // 재료 조회
         Ingredient ingredient = ingredientRepository.findById(request.getIngredientId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus.INGREDIENT_NOT_FOUND));
-        
+
         // 새로 계산된 유통기한 (요청에 유통기한이 있으면 그것을 사용, 없으면 재료의 기본 유통기한 계산)
-        LocalDate newExpirationDate = request.getExpirationDate() != null 
+        LocalDate newExpirationDate = request.getExpirationDate() != null
                 ? request.getExpirationDate()
                 : calculateExpirationDate(ingredient, request.getStorageType());
-        
+
         // 기존에 동일한 재료, 보관타입이 있는지 확인
         Optional<StoredItem> existingItemOpt = storedItemRepository.findByRefrigeratorIdAndIngredientIdAndStorageType(
                 refrigerator.getId(), ingredient.getId(), request.getStorageType()
         );
-        
+
         if (existingItemOpt.isEmpty()) {
             // 기존 냉장고에 존재하지 않는 재료의 경우 새로 추가
             StoredItem newItem = RefrigeratorConverter.toStoredItem(

@@ -30,7 +30,7 @@ public class RefrigeratorController {
     private final RefrigeratorCommandService refrigeratorCommandService;
     private final RefrigeratorQueryService refrigeratorQueryService;
 
-    @Operation(summary = "냉장고에 재료 추가", description = "사용자의 냉장고에 재료를 추가합니다. 한 번에 1개의 재료를 추가할 수 있습니다.")
+    @Operation(summary = "냉장고에 재료 추가", description = "사용자의 냉장고에 재료를 추가합니다. 한 번에 여러 개의 재료를 추가할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "USER401", description = "사용자를 찾을 수 없습니다."),
@@ -40,9 +40,9 @@ public class RefrigeratorController {
     @PostMapping("/stored-items")
     public ApiResponse<String> addIngredientsToRefrigerator(
             @CurrentUser Member member,
-            @Valid @RequestBody RefrigeratorRequestDTO.IngredientItem request
+            @Valid @RequestBody RefrigeratorRequestDTO.IngredientItemList request
     ) {
-        refrigeratorCommandService.addIngredientsToRefrigerator(member, request);
+        refrigeratorCommandService.addIngredientsToRefrigerator(member, request.getItems());
         return ApiResponse.onSuccess("재료 추가가 완료되었습니다.");
     }
 

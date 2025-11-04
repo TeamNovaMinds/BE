@@ -13,7 +13,7 @@ public class IngredientConverter {
 		return IngredientResponseDTO.IngredientDTO.builder()
 			.id(ingredient.getId())
 			.name(ingredient.getIngredientName())
-			.category(ingredient.getIngredientCategory().getIngredientCategoryName())
+			.category(ingredient.getIngredientCategory().getDisplayName())
 			.imageUrl(ingredient.getImageUrl())
 			.build();
 	}
@@ -33,7 +33,7 @@ public class IngredientConverter {
 		return IngredientResponseDTO.IngredientDetailResponse.builder()
 			.id(ingredient.getId())
 			.name(ingredient.getIngredientName())
-			.category(ingredient.getIngredientCategory().getIngredientCategoryName())
+			.category(ingredient.getIngredientCategory().getDisplayName())
 			.imageUrl(ingredient.getImageUrl())
 			.shelfLife(toShelfLifeDTO(ingredient.getShelfLife()))
 			.build();

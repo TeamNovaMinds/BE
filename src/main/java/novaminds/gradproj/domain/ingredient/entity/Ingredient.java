@@ -42,8 +42,8 @@ public class Ingredient extends BaseEntity {
     @ColumnDefault("'APPROVED'")
     private RegistrationStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ingredientCategory_id", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private IngredientCategory ingredientCategory;
 
     @ManyToOne(fetch = FetchType.LAZY)

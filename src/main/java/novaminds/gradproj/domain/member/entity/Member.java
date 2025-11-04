@@ -99,10 +99,6 @@ public class Member extends BaseEntity {
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
-	private List<IngredientCategory> categoryRegistration = new ArrayList<>();
-
-	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
 	private List<MemberRefrigeratorSkin> purchasedSkins = new ArrayList<>();
 
 	@OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
