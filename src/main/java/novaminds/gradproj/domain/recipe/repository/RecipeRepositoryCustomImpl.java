@@ -14,6 +14,7 @@ import java.util.List;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static novaminds.gradproj.domain.recipe.entity.QRecipe.recipe;
 import static novaminds.gradproj.domain.recipe.entity.QRecipeIngredient.recipeIngredient;
+import static novaminds.gradproj.domain.recipe.entity.QRecipeLike.recipeLike;
 
 @Repository
 @RequiredArgsConstructor
@@ -115,6 +116,82 @@ public class RecipeRepositoryCustomImpl implements RecipeRepositoryCustom {
                                 select(recipeIngredient.recipe.id)
                                         .from(recipeIngredient)
                                         .where(recipeIngredient.ingredient.id.in(ingredientIds))
+                        ),
+                        likesAndIdCursorCondition(cursorId)
+                )
+                .orderBy(recipe.likes.desc(), recipe.id.desc())
+                .limit(pageSize)
+                .fetch();
+    }
+
+    @Override
+    public List<Recipe> findMyRecipes(String authorLoginId, RecipeSortType sortBy, Long cursorId, int pageSize) {
+        return switch (sortBy) {
+            case LIKES -> findMyRecipesByLikes(authorLoginId, cursorId, pageSize);
+            case LATEST -> findMyRecipesByLatest(authorLoginId, cursorId, pageSize);
+        };
+    }
+
+    private List<Recipe> findMyRecipesByLatest(String authorLoginId, Long cursorId, int pageSize) {
+        return queryFactory
+                .selectFrom(recipe)
+                .leftJoin(recipe.author).fetchJoin()
+                .where(
+                        recipe.author.loginId.eq(authorLoginId),
+                        cursorCondition(cursorId)
+                )
+                .orderBy(recipe.id.desc())
+                .limit(pageSize)
+                .fetch();
+    }
+
+    private List<Recipe> findMyRecipesByLikes(String authorLoginId, Long cursorId, int pageSize) {
+        return queryFactory
+                .selectFrom(recipe)
+                .leftJoin(recipe.author).fetchJoin()
+                .where(
+                        recipe.author.loginId.eq(authorLoginId),
+                        likesAndIdCursorCondition(cursorId)
+                )
+                .orderBy(recipe.likes.desc(), recipe.id.desc())
+                .limit(pageSize)
+                .fetch();
+    }
+
+    @Override
+    public List<Recipe> findLikedRecipes(String memberLoginId, RecipeSortType sortBy, Long cursorId, int pageSize) {
+        return switch (sortBy) {
+            case LIKES -> findLikedRecipesByLikes(memberLoginId, cursorId, pageSize);
+            case LATEST -> findLikedRecipesByLatest(memberLoginId, cursorId, pageSize);
+        };
+    }
+
+    private List<Recipe> findLikedRecipesByLatest(String memberLoginId, Long cursorId, int pageSize) {
+        return queryFactory
+                .selectFrom(recipe)
+                .leftJoin(recipe.author).fetchJoin()
+                .where(
+                        recipe.id.in(
+                                select(recipeLike.recipe.id)
+                                        .from(recipeLike)
+                                        .where(recipeLike.member.loginId.eq(memberLoginId))
+                        ),
+                        cursorCondition(cursorId)
+                )
+                .orderBy(recipe.id.desc())
+                .limit(pageSize)
+                .fetch();
+    }
+
+    private List<Recipe> findLikedRecipesByLikes(String memberLoginId, Long cursorId, int pageSize) {
+        return queryFactory
+                .selectFrom(recipe)
+                .leftJoin(recipe.author).fetchJoin()
+                .where(
+                        recipe.id.in(
+                                select(recipeLike.recipe.id)
+                                        .from(recipeLike)
+                                        .where(recipeLike.member.loginId.eq(memberLoginId))
                         ),
                         likesAndIdCursorCondition(cursorId)
                 )

@@ -493,4 +493,108 @@ public class RecipeQueryService {
             Map<Long, List<Recipe>> recipesByIngredientId,
             Map<Long, String> ingredientNameMap
     ) {}
+
+    /**
+     * 내가 작성한 레시피 목록과 커서 기반 페이징을 위한 {@code nextCursor}, {@code hasNext} 필드를 같이 조회
+     * 현재 회원의 레시피 작성 여부, 좋아요 여부 확인 (복수 조회)
+     *
+     * @param memberId  레시피를 조회하는 회원의 ID
+     * @param sortBy    정렬 기준 - LATEST(최신순), LIKES(좋아요순)
+     * @param cursorId  페이징을 위한 커서, null일 경우, 처음부터 조회를 시작
+     *
+     * @return 내가 작성한 레시피 목록과 페이징을 위한 정보 포함 {@code RecipeListResponse} 객체
+     */
+    public RecipeResponseDTO.RecipeListResponse getMyRecipes(String memberId, RecipeSortType sortBy, Long cursorId) {
+
+        // 1. 페이징 로직 처리
+        CursorResult<Recipe> pageResult = cursorPagingHelper.getPage(
+                (size) -> recipeRepository.findMyRecipes(memberId, sortBy, cursorId, size),
+                Recipe::getId,
+                DEFAULT_PAGE_SIZE
+        );
+
+        List<Recipe> recipes = pageResult.content();
+
+        // 2. 조회된 레시피가 없으면 빈 페이지 반환
+        if (recipes.isEmpty()) {
+            return RecipeConverter.toRecipeListResponse(List.of(), pageResult.hasNext(), pageResult.nextCursor());
+        }
+
+        // 3. 배치 조회
+        List<Long> recipeIds = recipes.stream().map(Recipe::getId).toList();
+        final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
+        final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
+        final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
+
+        // 4. DTO 리스트로 변환
+        var recipeSummaries = recipes.stream()
+                .map(recipe -> {
+                    boolean isLiked = likedRecipeIds.contains(recipe.getId());
+                    boolean isWrittenByMe = true; // 내가 작성한 레시피이므로 항상 true
+
+                    // 배치 조회된 데이터 사용
+                    String mainImageUrl = mainImageUrls.get(recipe.getId());
+                    var authorInfo = authorInfoMap.get(recipe.getAuthor().getLoginId());
+
+                    return RecipeConverter.toRecipeSummaryResponse(
+                            recipe, mainImageUrl, authorInfo, isLiked, isWrittenByMe);
+                })
+                .toList();
+
+        // 5. 최종 페이지 응답 DTO로 변환하여 반환
+        return RecipeConverter.toRecipeListResponse(recipeSummaries, pageResult.hasNext(), pageResult.nextCursor());
+    }
+
+    /**
+     * 내가 좋아요 누른 레시피 목록과 커서 기반 페이징을 위한 {@code nextCursor}, {@code hasNext} 필드를 같이 조회
+     * 현재 회원의 레시피 작성 여부, 좋아요 여부 확인 (복수 조회)
+     *
+     * @param memberId  레시피를 조회하는 회원의 ID
+     * @param sortBy    정렬 기준 - LATEST(최신순), LIKES(좋아요순)
+     * @param cursorId  페이징을 위한 커서, null일 경우, 처음부터 조회를 시작
+     *
+     * @return 내가 좋아요 누른 레시피 목록과 페이징을 위한 정보 포함 {@code RecipeListResponse} 객체
+     */
+    public RecipeResponseDTO.RecipeListResponse getLikedRecipes(String memberId, RecipeSortType sortBy, Long cursorId) {
+
+        // 1. 페이징 로직 처리
+        CursorResult<Recipe> pageResult = cursorPagingHelper.getPage(
+                (size) -> recipeRepository.findLikedRecipes(memberId, sortBy, cursorId, size),
+                Recipe::getId,
+                DEFAULT_PAGE_SIZE
+        );
+
+        List<Recipe> recipes = pageResult.content();
+
+        // 2. 조회된 레시피가 없으면 빈 페이지 반환
+        if (recipes.isEmpty()) {
+            return RecipeConverter.toRecipeListResponse(List.of(), pageResult.hasNext(), pageResult.nextCursor());
+        }
+
+        // 3. 배치 조회
+        List<Long> recipeIds = recipes.stream().map(Recipe::getId).toList();
+        final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
+        final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
+        final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
+
+        // 4. DTO 리스트로 변환
+        var recipeSummaries = recipes.stream()
+                .map(recipe -> {
+                    boolean isLiked = true; // 내가 좋아요 누른 레시피이므로 항상 true
+                    boolean isWrittenByMe = isWrittenByUser(memberId, recipe.getAuthor().getLoginId());
+
+                    // 배치 조회된 데이터 사용
+                    String mainImageUrl = mainImageUrls.get(recipe.getId());
+                    var authorInfo = authorInfoMap.get(recipe.getAuthor().getLoginId());
+
+                    return RecipeConverter.toRecipeSummaryResponse(
+                            recipe, mainImageUrl, authorInfo, isLiked, isWrittenByMe);
+                })
+                .toList();
+
+        // 5. 최종 페이지 응답 DTO로 변환하여 반환
+        return RecipeConverter.toRecipeListResponse(recipeSummaries, pageResult.hasNext(), pageResult.nextCursor());
+    }
 }

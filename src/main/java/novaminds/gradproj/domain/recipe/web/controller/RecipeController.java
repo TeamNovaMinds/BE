@@ -197,4 +197,42 @@ public class RecipeController {
         return ApiResponse.onSuccess(result);
     }
 
+    //내가 작성한 레시피 조회
+    @Operation(summary = "내가 작성한 레시피 목록 조회", description = "현재 로그인한 사용자가 작성한 레시피 목록을 조회합니다.")
+    @Parameters({
+            @Parameter(name = "sortBy", description = "정렬 기준 (LATEST: 최신순, LIKES: 좋아요순, 기본값: LATEST)", required = false, example = "LATEST"),
+            @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
+    })
+    @GetMapping("/my")
+    public ApiResponse<RecipeResponseDTO.RecipeListResponse> getMyRecipes(
+            @CurrentLoginId String memberId,
+            @RequestParam(required = false, defaultValue = "LATEST") RecipeSortType sortBy,
+            @RequestParam(required = false) Long cursorId
+    ) {
+        var result = recipeQueryService.getMyRecipes(memberId, sortBy, cursorId);
+        return ApiResponse.onSuccess(result);
+    }
+
+    //내가 좋아요 누른 레시피 조회
+    @Operation(summary = "내가 좋아요 누른 레시피 목록 조회", description = "현재 로그인한 사용자가 좋아요 누른 레시피 목록을 조회합니다.")
+    @Parameters({
+            @Parameter(name = "sortBy", description = "정렬 기준 (LATEST: 최신순, LIKES: 좋아요순, 기본값: LATEST)", required = false, example = "LATEST"),
+            @Parameter(name = "cursorId", description = "커서 ID (페이징을 위한 커서, 처음에는 null)", required = false, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
+    })
+    @GetMapping("/liked")
+    public ApiResponse<RecipeResponseDTO.RecipeListResponse> getLikedRecipes(
+            @CurrentLoginId String memberId,
+            @RequestParam(required = false, defaultValue = "LATEST") RecipeSortType sortBy,
+            @RequestParam(required = false) Long cursorId
+    ) {
+        var result = recipeQueryService.getLikedRecipes(memberId, sortBy, cursorId);
+        return ApiResponse.onSuccess(result);
+    }
+
 }
