@@ -14,6 +14,7 @@ import novaminds.gradproj.domain.recipe.converter.RecipeConverter;
 
 import static novaminds.gradproj.global.s3.service.S3Service.validateS3Urls;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -274,21 +275,25 @@ public class RecipeCommandService {
 
     /**
      * RecipeLike 엔티티를 삭제하고 Recipe의 좋아요 개수를 감소
-     * .
+     * 레시피 작성자의 포인트가 감소하므로 해당 회원의 캐시를 삭제
+     *
      * @param recipe 좋아요가 취소될 레시피
      * @param recipeLike 삭제할 RecipeLike 엔티티
      */
+    @CacheEvict(value = "memberInfo", key = "#recipe.author.loginId")
     private void deleteRecipeLike(Recipe recipe, RecipeLike recipeLike) {
         recipeLikeRepository.delete(recipeLike);
         recipe.removeRecipeLike(recipeLike); // 좋아요 수 및 작성자 포인트 감소 로직 호출
     }
 
     /**
-     * 새로운 RecipeLike 엔티티를 생성 및 저장하고 Recipe의 좋아요 개수를 증가시.
+     * 새로운 RecipeLike 엔티티를 생성 및 저장하고 Recipe의 좋아요 개수를 증가
+     * 레시피 작성자의 포인트가 증가하므로 해당 회원의 캐시를 삭제
      *
      * @param recipe 좋아요가 추가될 레시피
      * @param member 좋아요를 누른 회원
      */
+    @CacheEvict(value = "memberInfo", key = "#recipe.author.loginId")
     private void createAndSaveRecipeLike(Recipe recipe, Member member) {
         RecipeLike newLike = RecipeLike.builder()
                 .member(member)

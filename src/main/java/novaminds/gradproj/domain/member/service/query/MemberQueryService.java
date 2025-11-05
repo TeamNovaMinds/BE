@@ -1,9 +1,11 @@
 package novaminds.gradproj.domain.member.service.query;
 
 import novaminds.gradproj.domain.member.converter.MemberConverter;
+import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
 import novaminds.gradproj.domain.member.repository.projection.AuthorInfoProjection;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,5 +37,15 @@ public class MemberQueryService {
                         AuthorInfoProjection::getLoginId,
                         proj -> MemberConverter.toAuthorInfo(proj.getNickname(), proj.getProfileImage()))
                 );
+    }
+
+    /**
+     * 내 정보를 조회합니다. (캐싱 적용)
+     * @param member 현재 로그인한 사용자
+     * @return 내 정보 응답 DTO
+     */
+    @Cacheable(value = "memberInfo", key = "#member.loginId")
+    public MemberResponseDTO.MyInfoResponse getMyInfo(Member member) {
+        return MemberResponseDTO.MyInfoResponse.from(member);
     }
 }

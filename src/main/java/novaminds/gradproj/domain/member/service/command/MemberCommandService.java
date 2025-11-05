@@ -1,5 +1,6 @@
 package novaminds.gradproj.domain.member.service.command;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 @Transactional
 public class MemberCommandService {
 
+    @CacheEvict(value = "memberInfo", key = "#member.loginId")
     public MemberResponseDTO.UpdateProfileImageResponse updateProfileImage(
             Member member,
             MemberRequestDTO.UpdateProfileImageRequest request

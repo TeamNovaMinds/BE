@@ -13,6 +13,7 @@ import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
 import novaminds.gradproj.domain.member.service.AuthService;
 import novaminds.gradproj.domain.member.service.command.MemberCommandService;
+import novaminds.gradproj.domain.member.service.query.MemberQueryService;
 import novaminds.gradproj.domain.member.web.dto.MemberRequestDTO;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final MemberCommandService memberCommandService;
+    private final MemberQueryService memberQueryService;
 
     @Operation(summary = "회원가입 (기본 정보)",
             description = "이메일, 비밀번호, 이름으로 기본 회원가입을 진행합니다. " +
@@ -199,10 +201,11 @@ public class AuthController {
         return ApiResponse.onSuccess(memberCommandService.updateProfileImage(member, request));
     }
 
-    @Operation(summary = "내 정보 조회",
+    @Operation(summary = "내 정보 조회 (캐싱 적용)",
             description = "로그인한 사용자의 정보를 조회합니다. " +
                     "닉네임, 팔로잉 수, 팔로워 수, 포인트, 프로필 이미지 URL을 반환합니다. " +
-                    "JWT 토큰이 필요합니다.")
+                    "JWT 토큰이 필요합니다. " +
+                    "자주 조회되는 API이므로 5분간 Redis 캐시가 적용됩니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
@@ -211,6 +214,6 @@ public class AuthController {
     public ApiResponse<MemberResponseDTO.MyInfoResponse> getMyInfo(
             @CurrentUser Member member
     ) {
-        return ApiResponse.onSuccess(MemberResponseDTO.MyInfoResponse.from(member));
+        return ApiResponse.onSuccess(memberQueryService.getMyInfo(member));
     }
 }

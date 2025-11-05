@@ -14,6 +14,7 @@ import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorSkinImage;
 import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinImageRepository;
 import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorSkinRepository;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorRequestDTO;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,6 +82,7 @@ public class RefrigeratorSkinCommandService {
      * 냉장고 스킨 구매
      * <br>회원이 충분한 포인트를 가지고 있는지, 스킨을 이미 소유하고 있는지 확인
      * <br>구매할 때는 포인트를 차감하고 스킨을 회원에게 연결한 뒤, 해당 관계를 저장합니다.
+     * <br>포인트가 차감되므로 해당 회원의 캐시를 삭제합니다.
      *
      * @param memberId 냉장고 스킨을 구매하는 회원의 ID
      * @param skinId 구매할 냉장고 스킨의 ID
@@ -92,6 +94,7 @@ public class RefrigeratorSkinCommandService {
      * <li>회원의 포인트가 부족한 경우({@code INSUFFICIENT_POINTS})</li>
      * </ul>
      */
+    @CacheEvict(value = "memberInfo", key = "#memberId")
     public void purchaseRefrigeratorSkin(String memberId, Long skinId) {
 
         // 해당 냉장고 스킨의 구매 여부 확인

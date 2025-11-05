@@ -67,18 +67,20 @@ public class RedisConfig {
     // Spring Cache를 사용하기 위한 설정
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        // GenericJackson2JsonRedisSerializer의 기본 생성자를 사용하면
+        // 자동으로 @class 타입 정보를 포함하여 직렬화/역직렬화
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
 
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
                 .disableCachingNullValues();
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
                 "refreshToken", defaultConfig.entryTtl(Duration.ofMillis(jwtProperties.getRefreshExpiration())),
                 "blacklist", defaultConfig.entryTtl(Duration.ofHours(2)),
-                "passwordReset", defaultConfig.entryTtl(Duration.ofMinutes(30))
+                "passwordReset", defaultConfig.entryTtl(Duration.ofMinutes(30)),
+                "memberInfo", defaultConfig.entryTtl(Duration.ofMinutes(5))
         );
 
         return RedisCacheManager.builder(connectionFactory)
