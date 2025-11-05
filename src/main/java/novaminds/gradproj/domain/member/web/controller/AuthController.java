@@ -12,6 +12,7 @@ import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
 import novaminds.gradproj.domain.member.service.AuthService;
+import novaminds.gradproj.domain.member.service.command.MemberCommandService;
 import novaminds.gradproj.domain.member.web.dto.MemberRequestDTO;
 import novaminds.gradproj.domain.member.web.dto.MemberResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ import java.io.IOException;
 public class AuthController {
 
     private final AuthService authService;
+    private final MemberCommandService memberCommandService;
 
     @Operation(summary = "회원가입 (기본 정보)",
             description = "이메일, 비밀번호, 이름으로 기본 회원가입을 진행합니다. " +
@@ -180,5 +182,35 @@ public class AuthController {
             @Valid @RequestBody MemberRequestDTO.PasswordResetConfirmRequest request
     ) {
         return ApiResponse.onSuccess(authService.resetPassword(request));
+    }
+
+    @Operation(summary = "프로필 이미지 수정",
+            description = "로그인한 사용자의 프로필 이미지를 수정합니다. " +
+                    "JWT 토큰이 필요합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+    })
+    @PatchMapping("/profile-image")
+    public ApiResponse<MemberResponseDTO.UpdateProfileImageResponse> updateProfileImage(
+            @CurrentUser Member member,
+            @Valid @RequestBody MemberRequestDTO.UpdateProfileImageRequest request
+    ) {
+        return ApiResponse.onSuccess(memberCommandService.updateProfileImage(member, request));
+    }
+
+    @Operation(summary = "내 정보 조회",
+            description = "로그인한 사용자의 정보를 조회합니다. " +
+                    "닉네임, 팔로잉 수, 팔로워 수, 포인트, 프로필 이미지 URL을 반환합니다. " +
+                    "JWT 토큰이 필요합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+    })
+    @GetMapping("/me")
+    public ApiResponse<MemberResponseDTO.MyInfoResponse> getMyInfo(
+            @CurrentUser Member member
+    ) {
+        return ApiResponse.onSuccess(MemberResponseDTO.MyInfoResponse.from(member));
     }
 }

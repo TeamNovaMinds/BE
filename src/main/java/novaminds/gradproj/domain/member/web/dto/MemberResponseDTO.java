@@ -112,4 +112,40 @@ public class MemberResponseDTO {
         private String nickname;
         private String profileImageUrl;
     }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateProfileImageResponse {
+        private String profileImgUrl;
+
+        public static UpdateProfileImageResponse from(Member member) {
+            return UpdateProfileImageResponse.builder()
+                .profileImgUrl(member.getProfileImage())
+                .build();
+        }
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MyInfoResponse {
+        private String nickname;
+        private Integer followingCount;
+        private Integer followerCount;
+        private Integer point;
+        private String profileImgUrl;
+
+        public static MyInfoResponse from(Member member) {
+            return MyInfoResponse.builder()
+                .nickname(member.getNickname())
+                .followingCount(member.getFollowings().size())
+                .followerCount(member.getFollowers().size())
+                .point(member.getPoint())
+                .profileImgUrl(member.getProfileImage())
+                .build();
+        }
+    }
 }

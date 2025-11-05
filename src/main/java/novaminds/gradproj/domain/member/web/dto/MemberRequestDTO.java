@@ -85,4 +85,11 @@ public class MemberRequestDTO {
                 message = "비밀번호는 8-16자 사이, 영문 소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 하며 공백은 포함할 수 없습니다.")
         private String newPassword;
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class UpdateProfileImageRequest {
+        @NotBlank(message = "프로필 이미지 URL은 필수 입력값입니다")
+        private String profileImgUrl;
+    }
 }
