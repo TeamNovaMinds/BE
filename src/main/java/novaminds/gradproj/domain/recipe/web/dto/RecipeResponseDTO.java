@@ -35,6 +35,7 @@ public class RecipeResponseDTO {
         private MemberResponseDTO.AuthorInfo authorInfo; // 작성자 정보 (공용 DTO 활용)
         private Integer cookingTimeMinutes;
         private Difficulty difficulty;
+        private Integer servings;
         private int likeCount;
         private int commentCount;
 
@@ -199,6 +200,7 @@ public class RecipeResponseDTO {
         private String mainImageUrl;
         private Integer cookingTimeMinutes;
         private Difficulty difficulty;
+        private Integer servings;
         private int likeCount;
         private int commentCount;
         private List<IngredientInfo> ingredients;
