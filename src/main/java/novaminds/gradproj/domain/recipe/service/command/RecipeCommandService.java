@@ -281,7 +281,7 @@ public class RecipeCommandService {
      * @param recipeLike 삭제할 RecipeLike 엔티티
      */
     @CacheEvict(value = "memberInfo", key = "#recipe.author.loginId")
-    private void deleteRecipeLike(Recipe recipe, RecipeLike recipeLike) {
+    public void deleteRecipeLike(Recipe recipe, RecipeLike recipeLike) {
         recipeLikeRepository.delete(recipeLike);
         recipe.removeRecipeLike(recipeLike); // 좋아요 수 및 작성자 포인트 감소 로직 호출
     }
@@ -294,7 +294,7 @@ public class RecipeCommandService {
      * @param member 좋아요를 누른 회원
      */
     @CacheEvict(value = "memberInfo", key = "#recipe.author.loginId")
-    private void createAndSaveRecipeLike(Recipe recipe, Member member) {
+    public void createAndSaveRecipeLike(Recipe recipe, Member member) {
         RecipeLike newLike = RecipeLike.builder()
                 .member(member)
                 .recipe(recipe)
@@ -350,5 +350,58 @@ public class RecipeCommandService {
         recipe.increaseCommentCount();
 
         return savedComment.getId();
+    }
+
+    /**
+     * 댓글을 수정
+     *
+     * @param memberId 댓글을 수정하는 회원의 ID
+     * @param commentId 수정할 댓글의 ID
+     * @param request 수정할 댓글 내용
+     *
+     * @return 수정된 댓글의 ID
+     */
+    public Long updateComment(
+            String memberId,
+            Long commentId,
+            RecipeRequestDTO.CommentCreateRequest request
+    ) {
+        // 1. 댓글 존재 확인
+        RecipeComment comment = recipeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
+
+        // 2. 댓글 수정 권한 확인 (작성자만 수정 가능)
+        if (!comment.getAuthor().getLoginId().equals(memberId)) {
+            throw new GeneralException(ErrorStatus.COMMENT_NOT_AUTHORIZED);
+        }
+
+        // 3. 댓글 내용 수정
+        comment.updateContent(request.getContent());
+
+        return comment.getId();
+    }
+
+    /**
+     * 댓글을 삭제
+     *
+     * @param memberId 댓글을 삭제하는 회원의 ID
+     * @param commentId 삭제할 댓글의 ID
+     */
+    public void deleteComment(String memberId, Long commentId) {
+        // 1. 댓글 존재 확인
+        RecipeComment comment = recipeCommentRepository.findById(commentId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.COMMENT_NOT_FOUND));
+
+        // 2. 댓글 삭제 권한 확인 (작성자만 삭제 가능)
+        if (!comment.getAuthor().getLoginId().equals(memberId)) {
+            throw new GeneralException(ErrorStatus.COMMENT_NOT_AUTHORIZED);
+        }
+
+        // 3. 레시피의 댓글 카운트 감소
+        Recipe recipe = comment.getRecipe();
+        recipe.decreaseCommentCount();
+
+        // 4. 댓글 삭제
+        recipeCommentRepository.delete(comment);
     }
 }

@@ -45,4 +45,13 @@ public class RecipeComment extends BaseEntity {
     @Builder.Default
     private List<RecipeComment> children = new ArrayList<>();
 
+    /**
+     * 댓글 내용을 수정
+     *
+     * @param content 수정할 댓글 내용
+     */
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
 }

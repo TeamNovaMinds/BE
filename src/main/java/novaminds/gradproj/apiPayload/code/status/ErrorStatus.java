@@ -84,6 +84,7 @@ public enum ErrorStatus implements BaseErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT401", "해당 댓글을 찾을 수 없습니다."),
     COMMENT_NOT_MATCH_RECIPE(HttpStatus.BAD_REQUEST, "COMMENT402", "댓글이 해당 레시피에 속하지 않습니다."),
     COMMENT_DEPTH_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "COMMENT403", "댓글은 2단계까지만 허용됩니다."),
+    COMMENT_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "COMMENT404", "댓글 수정/삭제 권한이 없습니다."),
 
     //버전 에러
     OPTIMISTIC_LOCK_ERROR(HttpStatus.CONFLICT, "VERSION401", "버전이 일치하지 않습니다. 다시 시도해주세요."),

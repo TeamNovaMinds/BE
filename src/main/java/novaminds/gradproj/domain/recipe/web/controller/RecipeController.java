@@ -167,6 +167,47 @@ public class RecipeController {
         return ApiResponse.onSuccess(resultCommentId);
     }
 
+    @Operation(summary = "레시피 댓글 수정 API", description = "레시피 댓글을 수정합니다.")
+    @Parameters({
+            @Parameter(name = "recipeId", description = "레시피 ID", required = true, example = "1"),
+            @Parameter(name = "commentId", description = "수정할 댓글 ID", required = true, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "댓글을 찾을 수 없습니다.")
+    })
+    @PutMapping("/{recipeId}/comments/{commentId}")
+    public ApiResponse<Long> updateComment(
+            @CurrentLoginId String memberId,
+            @PathVariable Long recipeId,
+            @PathVariable Long commentId,
+            @Valid @RequestBody RecipeRequestDTO.CommentCreateRequest request
+    ) {
+        Long resultCommentId = recipeCommandService.updateComment(memberId, commentId, request);
+        return ApiResponse.onSuccess(resultCommentId);
+    }
+
+    @Operation(summary = "레시피 댓글 삭제 API", description = "레시피 댓글을 삭제합니다.")
+    @Parameters({
+            @Parameter(name = "recipeId", description = "레시피 ID", required = true, example = "1"),
+            @Parameter(name = "commentId", description = "삭제할 댓글 ID", required = true, example = "10")
+    })
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "댓글을 찾을 수 없습니다.")
+    })
+    @DeleteMapping("/{recipeId}/comments/{commentId}")
+    public ApiResponse<String> deleteComment(
+            @CurrentLoginId String memberId,
+            @PathVariable Long recipeId,
+            @PathVariable Long commentId
+    ) {
+        recipeCommandService.deleteComment(memberId, commentId);
+        return ApiResponse.onSuccess("댓글이 성공적으로 삭제되었습니다.");
+    }
+
     @Operation(
             summary = "냉장고 재료 기반 레시피 추천",
             description = """
