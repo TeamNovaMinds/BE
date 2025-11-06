@@ -95,7 +95,8 @@ public class AuthService {
     @Transactional
     public MemberResponseDTO.AdditionalInfoResponse completeProfilePart1(
             Member member,
-            MemberRequestDTO.AdditionalInfoNicknameRequest request
+            MemberRequestDTO.AdditionalInfoNicknameRequest request,
+            HttpServletResponse response
     ) {
         try {
             // 닉네임 업데이트
@@ -107,7 +108,12 @@ public class AuthService {
             // 영속성 컨텍스트에서 DB로 정보 업데이트
             memberRepository.flush();
 
-            return MemberResponseDTO.AdditionalInfoResponse.from(member);
+            // 프로필 정보 업데이트 후 새로운 JWT 토큰 발급 (닉네임, 프로필 이미지 반영)
+            // 쿠키 + 응답 body에 토큰 포함 (하이브리드 방식)
+            Authentication authentication = authenticationHelper.setAuthentication(member);
+            JwtLoginProcessor.TokenPair tokens = jwtLoginProcessor.issueAndSetTokensWithReturn(response, authentication);
+
+            return MemberResponseDTO.AdditionalInfoResponse.from(member, tokens.getAccessToken(), tokens.getRefreshToken());
         } catch (DataIntegrityViolationException e) {
             // DB constraint 위반 시 적절한 예외로 변환 - 여기서 위반할만한 건 닉네임 중복되는 예외밖에 없음
             throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);

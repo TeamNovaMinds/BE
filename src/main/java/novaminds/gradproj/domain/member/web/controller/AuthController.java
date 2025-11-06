@@ -60,9 +60,10 @@ public class AuthController {
     @PostMapping(value = "/additional-info-part1")
     public ApiResponse<MemberResponseDTO.AdditionalInfoResponse> completeProfile(
             @CurrentUser Member member,
-            @Valid @RequestBody MemberRequestDTO.AdditionalInfoNicknameRequest request
+            @Valid @RequestBody MemberRequestDTO.AdditionalInfoNicknameRequest request,
+            HttpServletResponse response
     ) {
-        return ApiResponse.onSuccess(authService.completeProfilePart1(member, request));
+        return ApiResponse.onSuccess(authService.completeProfilePart1(member, request, response));
     }
 
     @Operation(summary = "추가 정보 입력",
