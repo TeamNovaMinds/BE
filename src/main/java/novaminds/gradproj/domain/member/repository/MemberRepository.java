@@ -23,4 +23,7 @@ public interface MemberRepository extends JpaRepository<Member, String> {
             "FROM Member m " +
             "WHERE m.loginId IN :memberIds")
     List<AuthorInfoProjection> findAuthorInfoByLoginIds(@Param("memberIds") List<String> memberIds);
+
+    @Query("select m.loginId from Member m where m.nickname = :nickname")
+    Optional<String> findIdByNickname(@Param("nickname") String nickname);
 }

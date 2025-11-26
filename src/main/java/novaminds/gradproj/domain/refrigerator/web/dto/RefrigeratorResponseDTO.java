@@ -120,4 +120,22 @@ public class RefrigeratorResponseDTO {
         private int roomTempCount;
 
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class FollowingMemberIngredientResponse {
+        @Schema(description = "팔로잉 회원 닉네임")
+        private String nickname;
+
+        @Schema(description = "팔로잉 회원 프로필 이미지 URL")
+        private String profileImage;
+
+        @Schema(description = "보관 중인 재료 개수")
+        private int addedCount;
+
+        @Schema(description = "재료 정보 리스트")
+        private List<StoredIngredientResponse> storedIngredients;
+    }
 }

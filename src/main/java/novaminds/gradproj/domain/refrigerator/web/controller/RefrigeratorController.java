@@ -143,4 +143,22 @@ public class RefrigeratorController {
         var myIngredientCount = refrigeratorQueryService.getMyStoredItemsCount(member);
         return ApiResponse.onSuccess(myIngredientCount);
     }
+
+    @Operation(summary = "팔로잉 회원의 냉장고 속 재료 조회", description = "팔로잉 중인 회원의 냉장고에 보관 중인 재료들을 조회합니다. 회원의 닉네임과 프로필 이미지도 함께 반환됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "MEMBER402", description = "사용자를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "FOLLOW_402", description = "팔로우 중이지 않은 회원입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "REFRIGERATOR401", description = "냉장고를 찾을 수 없습니다."),
+    })
+    @GetMapping("/following/{nickname}/stored-items")
+    public ApiResponse<RefrigeratorResponseDTO.FollowingMemberIngredientResponse> getFollowingMemberStoredItems(
+            @CurrentUser Member member,
+            @PathVariable String nickname,
+            @RequestParam StorageType storageType,
+            @RequestParam(required = false) String keyword
+    ) {
+        var response = refrigeratorQueryService.getFollowingMemberStoredItems(member, nickname, storageType, keyword);
+        return ApiResponse.onSuccess(response);
+    }
 }

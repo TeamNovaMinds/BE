@@ -87,6 +87,22 @@ public class RefrigeratorConverter {
                 .build();
     }
 
+    public static RefrigeratorResponseDTO.FollowingMemberIngredientResponse toFollowingMemberIngredientResponse(
+            Member followingMember,
+            List<StoredItem> storedItems
+    ) {
+        var storedIngredientResponses = storedItems.stream()
+                .map(RefrigeratorConverter::toStoredIngredientResponse)
+                .toList();
+
+        return RefrigeratorResponseDTO.FollowingMemberIngredientResponse.builder()
+                .nickname(followingMember.getNickname())
+                .profileImage(followingMember.getProfileImage())
+                .addedCount(storedItems.size())
+                .storedIngredients(storedIngredientResponses)
+                .build();
+    }
+
     public static RefrigeratorResponseDTO.StoredIngredientResponse toStoredIngredientResponse(StoredItem storedItem) {
 
         String dDay = calculateDDay(storedItem.getExpirationDate());

@@ -31,6 +31,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
     PROFILE_NOT_COMPLETED(HttpStatus.FORBIDDEN, "PROFILE403", "프로필 정보를 먼저 완성해주세요."),
 
+    MEMBER_NOT_FOLLOWING(HttpStatus.BAD_REQUEST, "FOLLOW_402", "팔로우 중이지 않은 회원입니다."),
+    MEMBER_CANNOT_FOLLOW_SELF(HttpStatus.BAD_REQUEST, "FOLLOW_400", "자기 자신을 팔로잉할 수 없습니다."),
+    MEMBER_ALREADY_FOLLOWING(HttpStatus.BAD_REQUEST, "FOLLOW_401", "이미 팔로잉 중인 회원입니다."),
     NICKNAME_NOT_EXIST(HttpStatus.BAD_REQUEST, "MEMBER400", "닉네임은 필수 입니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "MEMBER401", "이미 동일한 닉네임이 존재합니다."),
     MEMBER_NOT_FOUND(HttpStatus.BAD_REQUEST, "MEMBER402", "사용자를 찾을 수 없습니다."),

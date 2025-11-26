@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 import novaminds.gradproj.domain.member.entity.Follow;
+import org.springframework.data.jpa.repository.Modifying;
 
 public interface FollowRepository extends JpaRepository<Follow, Long> {
     // 특정 유저'가' 팔로우하는 사람들
@@ -18,4 +19,9 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     // 팔로잉 수
     long countByFollowerLoginId(String followerLoginId);
+
+    boolean existsByFollowerIdAndFollowingId(String followerId, String followingId);
+
+    @Modifying
+    void deleteByFollowerIdAndFollowingId(String followerId, String followingId);
 }
