@@ -154,11 +154,15 @@ public class RefrigeratorSkinCommandService {
             throw new GeneralException(ErrorStatus.ALREADY_EQUIPPED);
         }
 
-        // 현재 장착된 스킨 해제
+        // 현재 장착된 스킨 해제 및 저장
         memberRefrigeratorSkinRepository.findByMemberLoginIdAndEquippedTrue(memberId)
-                .ifPresent(MemberRefrigeratorSkin::unEquip);
+                .ifPresent(currentEquipped -> {
+                    currentEquipped.unEquip();
+                    memberRefrigeratorSkinRepository.save(currentEquipped);
+                });
 
-        // 새 스킨 장착
+        // 새 스킨 장착 및 저장
         skinToEquip.equip();
+        memberRefrigeratorSkinRepository.save(skinToEquip);
     }
 }
