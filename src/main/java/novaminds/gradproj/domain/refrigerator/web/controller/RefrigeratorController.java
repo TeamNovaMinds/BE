@@ -144,7 +144,7 @@ public class RefrigeratorController {
         return ApiResponse.onSuccess(myIngredientCount);
     }
 
-    @Operation(summary = "특정 회원의 냉장고 속 재료 조회", description = "특정 회원의 냉장고에 보관 중인 재료들을 조회합니다. 회원의 닉네임, 프로필 이미지, 팔로우 여부, 본인 여부도 함께 반환됩니다.")
+    @Operation(summary = "특정 회원의 냉장고 속 재료 조회", description = "특정 회원의 냉장고에 보관 중인 재료들을 조회합니다. 회원의 닉네임, 프로필 이미지, 팔로우 여부, 본인 여부, 장착 스킨 ID도 함께 반환됩니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "MEMBER402", description = "사용자를 찾을 수 없습니다."),
@@ -159,5 +159,19 @@ public class RefrigeratorController {
     ) {
         var response = refrigeratorQueryService.getMemberStoredItems(member, nickname, storageType, keyword);
         return ApiResponse.onSuccess(response);
+    }
+
+    @Operation(summary = "특정 회원의 냉장고 요약본 조회", description = "특정 회원의 냉장고 요약 정보를 조회합니다. 닉네임, 프로필 이미지, 팔로우 여부, 장착 스킨 ID, 레시피 개수, 팔로워/팔로잉 수, 포인트 등수를 반환합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "MEMBER402", description = "사용자를 찾을 수 없습니다."),
+    })
+    @GetMapping("/members/{nickname}/summary")
+    public ApiResponse<RefrigeratorResponseDTO.MemberRefrigeratorSummary> getMemberRefrigeratorSummary(
+            @CurrentUser Member member,
+            @PathVariable String nickname
+    ) {
+        var summary = refrigeratorQueryService.getMemberRefrigeratorSummary(member, nickname);
+        return ApiResponse.onSuccess(summary);
     }
 }

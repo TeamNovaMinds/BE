@@ -9,6 +9,7 @@ import novaminds.gradproj.domain.refrigerator.converter.RefrigeratorConverter;
 import novaminds.gradproj.domain.refrigerator.entity.Refrigerator;
 import novaminds.gradproj.domain.refrigerator.entity.StoredItem;
 import novaminds.gradproj.domain.refrigerator.entity.StorageType;
+import novaminds.gradproj.domain.refrigerator.repository.MemberRefrigeratorSkinRepository;
 import novaminds.gradproj.domain.refrigerator.repository.StoredItemRepository;
 import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import novaminds.gradproj.domain.refrigerator.service.command.RefrigeratorCommandService;
@@ -30,6 +31,7 @@ public class RefrigeratorQueryService {
     private final RefrigeratorCommandService refrigeratorCommandService;
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
+    private final MemberRefrigeratorSkinRepository memberRefrigeratorSkinRepository;
 
     /**
      * 냉장고 속 재료 조회
@@ -178,7 +180,61 @@ public class RefrigeratorQueryService {
         // 본인 여부 확인
         boolean myself = currentMember.getLoginId().equals(targetMember.getLoginId());
 
-        // DTO 변환 (닉네임, 프로필 이미지, 팔로우 여부, 본인 여부 포함)
-        return RefrigeratorConverter.toMemberRefrigeratorResponse(targetMember, storedItems, following, myself);
+        // 장착 중인 스킨 조회
+        Long equippedSkinId = memberRefrigeratorSkinRepository
+                .findByMemberLoginIdAndEquippedTrue(targetMember.getLoginId())
+                .map(memberSkin -> memberSkin.getSkin().getId())
+                .orElse(null);
+
+        // DTO 변환 (닉네임, 프로필 이미지, 팔로우 여부, 본인 여부, 장착 스킨 ID 포함)
+        return RefrigeratorConverter.toMemberRefrigeratorResponse(targetMember, storedItems, following, myself, equippedSkinId);
+    }
+
+    /**
+     * 특정 회원의 냉장고 요약본 조회
+     * 레시피 개수, 팔로워/팔로잉 수, 포인트 등수 등을 조회
+     * 회원의 닉네임, 프로필 이미지, 팔로우 여부, 장착 스킨 ID도 함께 반환
+     *
+     * @param currentMember 현재 로그인한 회원
+     * @param targetNickname 조회할 회원의 닉네임
+     * @return 회원 냉장고 요약 정보 DTO
+     */
+    public RefrigeratorResponseDTO.MemberRefrigeratorSummary getMemberRefrigeratorSummary(
+            Member currentMember,
+            String targetNickname
+    ) {
+        // 조회할 회원 조회
+        Member targetMember = memberRepository.findByNickname(targetNickname)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
+
+        // 팔로우 여부 확인
+        boolean following = followRepository.existsByFollowerLoginIdAndFollowingLoginId(
+                currentMember.getLoginId(),
+                targetMember.getLoginId()
+        );
+
+        // 장착 중인 스킨 조회
+        Long equippedSkinId = memberRefrigeratorSkinRepository
+                .findByMemberLoginIdAndEquippedTrue(targetMember.getLoginId())
+                .map(memberSkin -> memberSkin.getSkin().getId())
+                .orElse(null);
+
+        // 레시피 개수 조회
+        long recipeCount = targetMember.getRecipes().size();
+
+        // 팔로워 수 조회
+        long followerCount = followRepository.countByFollowingLoginId(targetMember.getLoginId());
+
+        // 팔로잉 수 조회
+        long followingCount = followRepository.countByFollowerLoginId(targetMember.getLoginId());
+
+        // 포인트 등수 조회
+        long pointRank = memberRepository.countMembersWithHigherPoint(targetMember.getPoint());
+
+        // DTO 변환
+        return RefrigeratorConverter.toMemberRefrigeratorSummary(
+                targetMember, following, equippedSkinId,
+                recipeCount, followerCount, followingCount, pointRank
+        );
     }
 }

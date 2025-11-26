@@ -138,10 +138,43 @@ public class RefrigeratorResponseDTO {
         @Schema(description = "현재 조회하는 사람이 이 회원 본인인지")
         private boolean myself;
 
+        @Schema(description = "회원이 장착 중인 냉장고 스킨 ID (장착 안 함 시 null)")
+        private Long equippedSkinId;
+
         @Schema(description = "보관 중인 재료 개수")
         private int addedCount;
 
         @Schema(description = "재료 정보 리스트")
         private List<StoredIngredientResponse> storedIngredients;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MemberRefrigeratorSummary {
+        @Schema(description = "회원 닉네임")
+        private String nickname;
+
+        @Schema(description = "회원 프로필 이미지 URL")
+        private String profileImage;
+
+        @Schema(description = "현재 조회하는 사람이 이 회원을 팔로우 중인지")
+        private boolean following;
+
+        @Schema(description = "회원이 장착 중인 냉장고 스킨 ID (장착 안 함 시 null)")
+        private Long equippedSkinId;
+
+        @Schema(description = "작성한 레시피 개수")
+        private long recipeCount;
+
+        @Schema(description = "팔로워 수")
+        private long followerCount;
+
+        @Schema(description = "팔로잉 수")
+        private long followingCount;
+
+        @Schema(description = "포인트 등수")
+        private long pointRank;
     }
 }

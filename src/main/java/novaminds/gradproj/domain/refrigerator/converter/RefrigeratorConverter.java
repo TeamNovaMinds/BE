@@ -91,7 +91,8 @@ public class RefrigeratorConverter {
             Member targetMember,
             List<StoredItem> storedItems,
             boolean following,
-            boolean myself
+            boolean myself,
+            Long equippedSkinId
     ) {
         var storedIngredientResponses = storedItems.stream()
                 .map(RefrigeratorConverter::toStoredIngredientResponse)
@@ -102,6 +103,7 @@ public class RefrigeratorConverter {
                 .profileImage(targetMember.getProfileImage())
                 .following(following)
                 .myself(myself)
+                .equippedSkinId(equippedSkinId)
                 .addedCount(storedItems.size())
                 .storedIngredients(storedIngredientResponses)
                 .build();
@@ -145,6 +147,27 @@ public class RefrigeratorConverter {
                 .refrigeratorCount(storageTypeCount.getRefrigeratorCount().intValue())
                 .freezerCount(storageTypeCount.getFreezerCount().intValue())
                 .roomTempCount(storageTypeCount.getRoomTempCount().intValue())
+                .build();
+    }
+
+    public static RefrigeratorResponseDTO.MemberRefrigeratorSummary toMemberRefrigeratorSummary(
+            Member targetMember,
+            boolean following,
+            Long equippedSkinId,
+            long recipeCount,
+            long followerCount,
+            long followingCount,
+            long pointRank
+    ) {
+        return RefrigeratorResponseDTO.MemberRefrigeratorSummary.builder()
+                .nickname(targetMember.getNickname())
+                .profileImage(targetMember.getProfileImage())
+                .following(following)
+                .equippedSkinId(equippedSkinId)
+                .recipeCount(recipeCount)
+                .followerCount(followerCount)
+                .followingCount(followingCount)
+                .pointRank(pointRank)
                 .build();
     }
 

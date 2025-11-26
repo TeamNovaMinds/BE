@@ -26,4 +26,7 @@ public interface MemberRepository extends JpaRepository<Member, String> {
 
     @Query("select m.loginId from Member m where m.nickname = :nickname")
     Optional<String> findIdByNickname(@Param("nickname") String nickname);
+
+    @Query("SELECT COUNT(m) + 1 FROM Member m WHERE m.point > :point")
+    long countMembersWithHigherPoint(@Param("point") Integer point);
 }
