@@ -140,17 +140,12 @@ public class RecipeConverter {
             Recipe recipe,
             boolean likedByMe,
             boolean writtenByMe,
+            MemberResponseDTO.AuthorInfo authorInfo,
             List<RecipeResponseDTO.RecipeImageDTO> recipeImageDTOS,
             List<RecipeResponseDTO.RecipeIngredientDTO> recipeIngredientDTOS,
             List<RecipeResponseDTO.RecipeOrderDTO> recipeOrderDTOS,
             List<RecipeResponseDTO.CommentResponse> commentDTOs
     ) {
-
-        // 작성자 정보 DTO 생성 (fetch join으로 이미 로딩됨)
-        var authorInfo = MemberResponseDTO.AuthorInfo.builder()
-                .nickname(recipe.getAuthor().getNickname())
-                .profileImageUrl(recipe.getAuthor().getProfileImage())
-                .build();
 
         // 댓글 미리보기 DTO 조립
         var commentPreview = RecipeResponseDTO.CommentPreviewListResponse.builder()
@@ -312,12 +307,14 @@ public class RecipeConverter {
     public static RecipeResponseDTO.SuggestedRecipeResponse toSuggestedRecipeResponse(
             Recipe recipe,
             String mainImageUrl,
+            MemberResponseDTO.AuthorInfo authorInfo,
             List<RecipeResponseDTO.IngredientInfo> ingredients
     ) {
         return RecipeResponseDTO.SuggestedRecipeResponse.builder()
                 .recipeId(recipe.getId())
                 .title(recipe.getTitle())
                 .mainImageUrl(mainImageUrl)
+                .authorInfo(authorInfo)
                 .cookingTimeMinutes(recipe.getCookingTimeMinutes())
                 .difficulty(recipe.getDifficulty())
                 .servings(recipe.getServings())

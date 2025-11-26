@@ -198,6 +198,7 @@ public class RecipeResponseDTO {
         private Long recipeId;
         private String title;
         private String mainImageUrl;
+        private MemberResponseDTO.AuthorInfo authorInfo; // 작성자 정보
         private Integer cookingTimeMinutes;
         private Difficulty difficulty;
         private Integer servings;
