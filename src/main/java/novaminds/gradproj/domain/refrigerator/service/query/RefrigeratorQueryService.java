@@ -159,7 +159,7 @@ public class RefrigeratorQueryService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
         // 팔로잉 관계 확인
-        if (!followRepository.existsByFollowerIdAndFollowingId(
+        if (!followRepository.existsByFollowerLoginIdAndFollowingLoginId(
                 currentMember.getLoginId(),
                 followingMember.getLoginId()
         )) {

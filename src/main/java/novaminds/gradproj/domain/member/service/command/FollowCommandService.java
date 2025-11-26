@@ -29,7 +29,7 @@ public class FollowCommandService {
             throw new GeneralException(ErrorStatus.MEMBER_CANNOT_FOLLOW_SELF);
         }
 
-        if (followRepository.existsByFollowerIdAndFollowingId(follower.getLoginId(), following.getLoginId())) {
+        if (followRepository.existsByFollowerLoginIdAndFollowingLoginId(follower.getLoginId(), following.getLoginId())) {
             throw new GeneralException(ErrorStatus.MEMBER_ALREADY_FOLLOWING);
         }
 
@@ -46,10 +46,10 @@ public class FollowCommandService {
         String followingId = memberRepository.findIdByNickname(followingNickname)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
-        if (!followRepository.existsByFollowerIdAndFollowingId(followerId, followingId)) {
+        if (!followRepository.existsByFollowerLoginIdAndFollowingLoginId(followerId, followingId)) {
             throw new GeneralException(ErrorStatus.MEMBER_NOT_FOLLOWING);
         }
 
-        followRepository.deleteByFollowerIdAndFollowingId(followerId, followingId);
+        followRepository.deleteByFollowerLoginIdAndFollowingLoginId(followerId, followingId);
     }
 }
