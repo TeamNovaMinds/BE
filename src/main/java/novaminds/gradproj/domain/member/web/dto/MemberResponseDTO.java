@@ -1,5 +1,6 @@
 package novaminds.gradproj.domain.member.web.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -149,5 +150,34 @@ public class MemberResponseDTO {
                 .profileImgUrl(member.getProfileImage())
                 .build();
         }
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PointRankingResponse {
+        private Long rank;
+        private String nickname;
+        private String profileImgUrl;
+        private Integer point;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Top8RankingResponse {
+        private List<PointRankingResponse> rankings;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AllRankingResponse {
+        private List<PointRankingResponse> rankings;
+        private String nextCursor;
+        private Boolean hasNext;
     }
 }
