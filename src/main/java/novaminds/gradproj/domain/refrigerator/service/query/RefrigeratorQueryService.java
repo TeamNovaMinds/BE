@@ -138,36 +138,28 @@ public class RefrigeratorQueryService {
     }
 
     /**
-     * 팔로잉 중인 회원의 냉장고 속 재료 조회
+     * 특정 회원의 냉장고 속 재료 조회
      * 보관 방법에 따라 필터링하고, 키워드로 재료명 검색 가능
-     * 회원의 닉네임과 프로필 이미지도 함께 반환
+     * 회원의 닉네임, 프로필 이미지, 팔로우 여부, 본인 여부도 함께 반환
      *
      * @param currentMember 현재 로그인한 회원
-     * @param followingNickname 팔로잉 회원의 닉네임
+     * @param targetNickname 조회할 회원의 닉네임
      * @param storageType 보관 방법 (ROOM_TEMPERATURE, REFRIGERATOR, FREEZER)
      * @param keyword 재료명 검색 키워드 (null일 경우 전체 조회)
-     * @return 팔로잉 회원의 냉장고 재료 정보 (닉네임, 프로필 이미지, 재료 목록 포함)
+     * @return 회원의 냉장고 재료 정보 (닉네임, 프로필 이미지, 팔로우 여부, 본인 여부, 재료 목록 포함)
      */
-    public RefrigeratorResponseDTO.FollowingMemberIngredientResponse getFollowingMemberStoredItems(
+    public RefrigeratorResponseDTO.MemberRefrigeratorResponse getMemberStoredItems(
             Member currentMember,
-            String followingNickname,
+            String targetNickname,
             StorageType storageType,
             String keyword
     ) {
-        // 팔로잉 회원 조회
-        Member followingMember = memberRepository.findByNickname(followingNickname)
+        // 조회할 회원 조회
+        Member targetMember = memberRepository.findByNickname(targetNickname)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
 
-        // 팔로잉 관계 확인
-        if (!followRepository.existsByFollowerLoginIdAndFollowingLoginId(
-                currentMember.getLoginId(),
-                followingMember.getLoginId()
-        )) {
-            throw new GeneralException(ErrorStatus.MEMBER_NOT_FOLLOWING);
-        }
-
-        // 팔로잉 회원의 냉장고 조회
-        Refrigerator refrigerator = followingMember.getRefrigerator();
+        // 조회할 회원의 냉장고 조회
+        Refrigerator refrigerator = targetMember.getRefrigerator();
         if (refrigerator == null) {
             throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
         }
@@ -177,7 +169,16 @@ public class RefrigeratorQueryService {
                 refrigerator.getId(), storageType, keyword
         );
 
-        // DTO 변환 (닉네임, 프로필 이미지 포함)
-        return RefrigeratorConverter.toFollowingMemberIngredientResponse(followingMember, storedItems);
+        // 팔로우 여부 확인
+        boolean following = followRepository.existsByFollowerLoginIdAndFollowingLoginId(
+                currentMember.getLoginId(),
+                targetMember.getLoginId()
+        );
+
+        // 본인 여부 확인
+        boolean myself = currentMember.getLoginId().equals(targetMember.getLoginId());
+
+        // DTO 변환 (닉네임, 프로필 이미지, 팔로우 여부, 본인 여부 포함)
+        return RefrigeratorConverter.toMemberRefrigeratorResponse(targetMember, storedItems, following, myself);
     }
 }

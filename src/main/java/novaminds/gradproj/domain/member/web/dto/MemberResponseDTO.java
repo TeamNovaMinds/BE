@@ -111,6 +111,8 @@ public class MemberResponseDTO {
     public static class AuthorInfo {
         private String nickname;
         private String profileImageUrl;
+        private boolean following;  // 현재 조회하는 사람이 이 작성자를 팔로우 중인지
+        private boolean myself;     // 현재 조회하는 사람이 이 작성자 본인인지
     }
 
     @Builder

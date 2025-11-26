@@ -81,7 +81,7 @@ public class RecipeQueryService {
         final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
         final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
-        final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
+        final var authorInfoMap = memberQueryService.getAuthorInfoMap(memberId, recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
 
         // 5. DTO 리스트로 변환
         var recipeSummaries = recipes.stream()
@@ -127,7 +127,7 @@ public class RecipeQueryService {
         List<RecipeComment> previewComments = recipeCommentRepository.findTop3ByRecipeIdAndParentCommentIsNullOrderByCreatedAtAsc(recipeId);
 
         // 4. 댓글 작성자들 배치 조회 (부모 댓글만)
-        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(previewComments, false);
+        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(memberId, previewComments, false);
 
         // 5. 각 컬렉션을 DTO로 변환
         var imageDTOs = RecipeConverter.toImageDTOs(images);
@@ -167,7 +167,7 @@ public class RecipeQueryService {
         }
 
         // 3. 댓글 작성자들 배치 조회 (부모 댓글 + 대댓글)
-        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(comments, true);
+        RecipeResponseDTO.CommentAuthor commentAuthor = getCommentAuthorsData(memberId, comments, true);
 
         // 4. DTO로 변환
         List<RecipeResponseDTO.CommentResponse> commentResponses = 
@@ -205,11 +205,12 @@ public class RecipeQueryService {
 
     /**
      * 댓글 리스트의 작성자 정보를 배치 조회
+     * @param memberId 현재 조회하는 회원 ID
      * @param comments 댓글 리스트
      * @param includeReplies 대댓글도 포함할지 여부 (true: 부모+대댓글, false: 부모댓글만)
      * @return Map<댓글 ID, 작성자 ID>과  Map<작성자 ID, 작성자 정보>를 담은 DTO
      */
-    private RecipeResponseDTO.CommentAuthor getCommentAuthorsData(List<RecipeComment> comments, boolean includeReplies) {
+    private RecipeResponseDTO.CommentAuthor getCommentAuthorsData(String memberId, List<RecipeComment> comments, boolean includeReplies) {
         if (comments.isEmpty()) {
             return RecipeConverter.createCommentAuthorData(Map.of(), Map.of());
         }
@@ -237,9 +238,9 @@ public class RecipeQueryService {
 
         List<String> authorIds = commentIdToAuthorId.values().stream().toList();
 
-        // 3. 작성자 정보 배치 조회
-        Map<String, MemberResponseDTO.AuthorInfo> authorInfos = 
-            memberQueryService.getAuthorInfoMap(authorIds);
+        // 3. 작성자 정보 배치 조회 (팔로잉 여부, 본인 여부 포함)
+        Map<String, MemberResponseDTO.AuthorInfo> authorInfos =
+            memberQueryService.getAuthorInfoMap(memberId, authorIds);
 
         return RecipeConverter.createCommentAuthorData(commentIdToAuthorId, authorInfos);
     }
@@ -525,7 +526,7 @@ public class RecipeQueryService {
         final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
         final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
-        final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
+        final var authorInfoMap = memberQueryService.getAuthorInfoMap(memberId, recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
 
         // 4. DTO 리스트로 변환
         var recipeSummaries = recipes.stream()
@@ -577,7 +578,7 @@ public class RecipeQueryService {
         final Set<Long> likedRecipeIds = getLikedRecipeIds(memberId, recipes);
         final Map<Long, String> mainImageUrls = recipeImageRepository.findMainImageUrlsByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeMainImage::getRecipeId, RecipeMainImage::getImageUrl));
-        final var authorInfoMap = memberQueryService.getAuthorInfoMap(recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
+        final var authorInfoMap = memberQueryService.getAuthorInfoMap(memberId, recipes.stream().map(recipe -> recipe.getAuthor().getLoginId()).toList());
 
         // 4. DTO 리스트로 변환
         var recipeSummaries = recipes.stream()

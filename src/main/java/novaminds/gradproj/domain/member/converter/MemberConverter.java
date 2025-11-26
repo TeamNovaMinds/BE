@@ -6,11 +6,15 @@ public class MemberConverter {
 
     public static MemberResponseDTO.AuthorInfo toAuthorInfo(
             String nickname,
-            String profileImageUrl
+            String profileImageUrl,
+            boolean following,
+            boolean myself
     ) {
         return MemberResponseDTO.AuthorInfo.builder()
                 .nickname(nickname)
                 .profileImageUrl(profileImageUrl)
+                .following(following)
+                .myself(myself)
                 .build();
     }
 }
