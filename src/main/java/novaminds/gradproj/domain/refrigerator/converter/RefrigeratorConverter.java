@@ -87,17 +87,21 @@ public class RefrigeratorConverter {
                 .build();
     }
 
-    public static RefrigeratorResponseDTO.FollowingMemberIngredientResponse toFollowingMemberIngredientResponse(
-            Member followingMember,
-            List<StoredItem> storedItems
+    public static RefrigeratorResponseDTO.MemberRefrigeratorResponse toMemberRefrigeratorResponse(
+            Member targetMember,
+            List<StoredItem> storedItems,
+            boolean following,
+            boolean myself
     ) {
         var storedIngredientResponses = storedItems.stream()
                 .map(RefrigeratorConverter::toStoredIngredientResponse)
                 .toList();
 
-        return RefrigeratorResponseDTO.FollowingMemberIngredientResponse.builder()
-                .nickname(followingMember.getNickname())
-                .profileImage(followingMember.getProfileImage())
+        return RefrigeratorResponseDTO.MemberRefrigeratorResponse.builder()
+                .nickname(targetMember.getNickname())
+                .profileImage(targetMember.getProfileImage())
+                .following(following)
+                .myself(myself)
                 .addedCount(storedItems.size())
                 .storedIngredients(storedIngredientResponses)
                 .build();

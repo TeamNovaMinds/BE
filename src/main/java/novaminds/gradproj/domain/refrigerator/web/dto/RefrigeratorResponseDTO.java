@@ -125,12 +125,18 @@ public class RefrigeratorResponseDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class FollowingMemberIngredientResponse {
-        @Schema(description = "팔로잉 회원 닉네임")
+    public static class MemberRefrigeratorResponse {
+        @Schema(description = "회원 닉네임")
         private String nickname;
 
-        @Schema(description = "팔로잉 회원 프로필 이미지 URL")
+        @Schema(description = "회원 프로필 이미지 URL")
         private String profileImage;
+
+        @Schema(description = "현재 조회하는 사람이 이 회원을 팔로우 중인지")
+        private boolean following;
+
+        @Schema(description = "현재 조회하는 사람이 이 회원 본인인지")
+        private boolean myself;
 
         @Schema(description = "보관 중인 재료 개수")
         private int addedCount;
