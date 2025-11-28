@@ -32,10 +32,10 @@ public class AuthController {
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
 
-    @Operation(summary = "회원가입 (기본 정보)",
-            description = "이메일, 비밀번호, 이름으로 기본 회원가입을 진행합니다. " +
-                    "회원가입 완료 시 JWT 토큰이 발급되며, " +
-                    "isProfileCompleted가 false이므로 추가 정보 입력 페이지로 이동해야 합니다.")
+    @Operation(summary = "회원가입",
+            description = "이메일, 비밀번호, 이름, 닉네임, 프로필 이미지, 관심 카테고리를 모두 포함하여 회원가입을 진행합니다. " +
+                    "모든 필수 정보를 한 번에 받아 처리하며, 회원가입 완료 시 JWT 토큰이 발급됩니다. " +
+                    "isProfileCompleted가 true로 설정되어 바로 서비스 이용이 가능합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
@@ -47,39 +47,6 @@ public class AuthController {
             HttpServletResponse response
     ) {
         return ApiResponse.onSuccess(authService.signup(request, response));
-    }
-
-
-    @Operation(summary = "추가 정보 입력",
-            description = "프로필 이미지와 닉네임을 입력합니다. " +
-                    "JWT 토큰이 필요합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
-    })
-    @PostMapping(value = "/additional-info-part1")
-    public ApiResponse<MemberResponseDTO.AdditionalInfoResponse> completeProfile(
-            @CurrentUser Member member,
-            @Valid @RequestBody MemberRequestDTO.AdditionalInfoNicknameRequest request,
-            HttpServletResponse response
-    ) {
-        return ApiResponse.onSuccess(authService.completeProfilePart1(member, request, response));
-    }
-
-    @Operation(summary = "추가 정보 입력",
-            description = "관심 카테고리(1~3개)를 입력합니다. " +
-                    "JWT 토큰이 필요합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
-    })
-    @PostMapping(value = "/additional-info-part2")
-    public ApiResponse<MemberResponseDTO.AdditionalInfoResponse> completeProfile(
-            @CurrentUser Member member,
-            @Valid @RequestBody MemberRequestDTO.AdditionalInfoInterestRequest request,
-            HttpServletResponse response
-    ) {
-        return ApiResponse.onSuccess(authService.completeProfilePart2(member, request, response));
     }
 
     @Operation(summary = "로그인",

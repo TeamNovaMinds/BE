@@ -61,27 +61,39 @@ public class AuthService {
             throw new GeneralException(ErrorStatus.EMAIL_ALREADY_EXISTS);
         }
 
+        // 닉네임 중복 확인
+        if (memberRepository.findByNickname(request.getNickname()).isPresent()) {
+            throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
+        }
+
         // loginId 생성 (LOCAL_UUID앞8자리)
         String loginId = "LOCAL_" + UUID.randomUUID().toString().substring(0, 8);
 
-        // 임시 닉네임 생성
-        String tempNickname = "user_" + UUID.randomUUID().toString().substring(0, 8);
-
+        // Member 생성 (모든 정보 포함, profileCompleted=true)
         Member member = Member.builder()
                 .loginId(loginId)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .nickname(tempNickname)
+                .nickname(request.getNickname())
+                .profileImage(request.getProfileImgUrl())
                 .role(Role.USER)
                 .socialType(SocialType.LOCAL)
-                .profileCompleted(false)
+                .profileCompleted(true)  // 모든 정보를 한 번에 받으므로 true
                 .build();
 
         Member savedMember = memberRepository.save(member);
 
+        // 관심 카테고리 저장
+        for (RecipeCategory category : request.getInterestCategories()) {
+            MemberInterestCategory interestCategory = MemberInterestCategory.create(savedMember, category);
+            memberInterestCategoryRepository.save(interestCategory);
+        }
+
+        // 기본 리소스 설정 (냉장고, 스킨 등)
         memberOnboardingService.setupDefaultResources(savedMember);
 
+        // 인증 처리
         Authentication authentication = authenticationHelper.setAuthentication(savedMember);
 
         // 쿠키 + 응답 body에 토큰 포함 (하이브리드 방식)

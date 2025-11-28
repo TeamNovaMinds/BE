@@ -39,6 +39,17 @@ public class MemberRequestDTO {
         @NotBlank(message = "이름은 필수 입력값입니다")
         @Size(min = 2, max = 50, message = "이름은 2-50자 사이여야 합니다")
         private String name;
+
+        @NotBlank(message = "닉네임은 필수 입력값입니다")
+        @Size(min = 2, max = 20, message = "닉네임은 2-20자 사이여야 합니다")
+        @Pattern(regexp = "^[가-힣a-zA-Z0-9_-]+$", message = "닉네임은 한글, 영문, 숫자, 언더스코어(_), 하이픈(-)만 사용할 수 있습니다")
+        private String nickname;
+
+        private String profileImgUrl;
+
+        @NotNull(message = "관심 카테고리는 필수 입력값입니다")
+        @Size(min = 1, max = 3, message = "관심 카테고리는 1개 이상 3개 이하로 선택해야 합니다")
+        private List<RecipeCategory> interestCategories;
     }
 
     @Getter
