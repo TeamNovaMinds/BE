@@ -39,7 +39,6 @@ public class RefrigeratorCommandService {
 
         // 냉장고 생성
         Refrigerator refrigerator = Refrigerator.builder()
-                .member(member)
                 .build();
 
         // 냉장고 저장
