@@ -12,6 +12,7 @@ import novaminds.gradproj.domain.refrigerator.repository.RefrigeratorRepository;
 import novaminds.gradproj.domain.refrigerator.repository.StoredItemRepository;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorRequestDTO;
 import novaminds.gradproj.domain.refrigerator.converter.RefrigeratorConverter;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Transactional
 public class RefrigeratorCommandService {
+
+    private final SimpMessagingTemplate messagingTemplate; // 웹소켓 메시지 전송 도구
 
     private final RefrigeratorRepository refrigeratorRepository;
     private final StoredItemRepository storedItemRepository;
@@ -68,6 +71,8 @@ public class RefrigeratorCommandService {
         for (RefrigeratorRequestDTO.IngredientItem request : requests) {
             addSingleIngredientToRefrigerator(refrigerator, request);
         }
+
+        sendRefreshSignal(refrigerator.getId());
     }
 
     /**
@@ -136,6 +141,7 @@ public class RefrigeratorCommandService {
         // 변경된 필드만 업데이트
         storedItem.updateFieldIfChanged(request);
 
+        sendRefreshSignal(refrigerator.getId());
         return storedItem.getId();
     }
 
@@ -177,6 +183,8 @@ public class RefrigeratorCommandService {
 
         // Refrigerator 엔티티의 storedItems 리스트에서 제거
         storedItemsToDelete.forEach(refrigerator::removeStoredItem);
+
+        sendRefreshSignal(refrigerator.getId());
     }
 
 
@@ -198,4 +206,18 @@ public class RefrigeratorCommandService {
 
         return today.plusDays(shelfLifeDays);
     }
+
+    /**
+     * 해당 냉장고를 구독 중인 모든 사용자에게 새로고침을 위한 메시지 전송
+     */
+    private void sendRefreshSignal(Long refrigeratorId) {
+
+        String destination = "/sub/refrigerator/" + refrigeratorId;
+        SocketMessage message = new SocketMessage("INGREDIENT_UPDATE", "재료가 변경되었습니다.");
+
+        messagingTemplate.convertAndSend(destination, message);
+    }
+
+    // 웹소켓 메시지용 내부 클래스
+    public record SocketMessage(String type, String message) {}
 }
