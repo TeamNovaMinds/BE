@@ -23,7 +23,7 @@ public class Refrigerator extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "refrigerator", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "refrigerator", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Member> memberList = new ArrayList<>();
 
