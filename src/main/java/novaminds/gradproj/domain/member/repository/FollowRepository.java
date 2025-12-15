@@ -7,7 +7,7 @@ import java.util.List;
 import novaminds.gradproj.domain.member.entity.Follow;
 import org.springframework.data.jpa.repository.Modifying;
 
-public interface FollowRepository extends JpaRepository<Follow, Long> {
+public interface FollowRepository extends JpaRepository<Follow, Long>, FollowRepositoryCustom {
     // 특정 유저'가' 팔로우하는 사람들
     List<Follow> findByFollowerLoginId(String followerLoginId);
 

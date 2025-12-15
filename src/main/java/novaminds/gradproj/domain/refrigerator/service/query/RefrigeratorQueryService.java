@@ -60,7 +60,7 @@ public class RefrigeratorQueryService {
         );
 
         // DTO 변환
-        return RefrigeratorConverter.toIngredientResponse(storedItems);
+        return RefrigeratorConverter.toIngredientResponse(refrigerator.getId(), storedItems);
     }
 
     /**
@@ -79,7 +79,7 @@ public class RefrigeratorQueryService {
 
         StorageTypeCount storageTypeCount = storedItemRepository.countByStorageTypes(refrigerator.getId());
 
-        return RefrigeratorConverter.toStoredIngredientCount(storageTypeCount);
+        return RefrigeratorConverter.toStoredIngredientCount(refrigerator.getId(), storageTypeCount);
     }
 
     /**

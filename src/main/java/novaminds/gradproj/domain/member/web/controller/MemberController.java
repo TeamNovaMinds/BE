@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import novaminds.gradproj.apiPayload.ApiResponse;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.service.command.FollowCommandService;
+import novaminds.gradproj.domain.member.service.query.FollowQueryService;
 import novaminds.gradproj.domain.member.service.query.MemberQueryService;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentLoginId;
 import novaminds.gradproj.domain.member.service.security.auth.CurrentUser;
@@ -26,6 +27,7 @@ public class MemberController {
 
     private final FollowCommandService followCommandService;
     private final MemberQueryService memberQueryService;
+    private final FollowQueryService followQueryService;
 
     @Operation(summary = "팔로잉",
             description = "특정 회원을 팔로잉합니다.")
@@ -93,6 +95,46 @@ public class MemberController {
             @RequestParam(defaultValue = "20") int size
     ) {
         MemberResponseDTO.AllRankingResponse response = memberQueryService.getAllRanking(cursor, size);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @Operation(summary = "내 팔로워 목록 조회 API",
+            description = """
+                    나를 팔로우하는 사람들의 목록을 조회합니다.
+                    각 팔로워에 대해 냉장고 초대 가능 여부를 판단하여 반환합니다.
+                    - MUTUAL_FOLLOW_INVITE: 맞팔이고 초대 가능
+                    - ALREADY_SAME_REFRIGERATOR: 이미 같은 냉장고 사용 중
+                    - INVITATION_PENDING: 이미 초대장 보냄 (대기 중)
+                    - NOT_MUTUAL: 맞팔 아님 (버튼 없음)""")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인이 필요한 서비스 입니다.")
+    })
+    @GetMapping("/followers")
+    public ApiResponse<MemberResponseDTO.FollowersResponse> getFollowers(
+            @CurrentUser Member currentMember
+    ) {
+        MemberResponseDTO.FollowersResponse response = followQueryService.getFollowers(currentMember);
+        return ApiResponse.onSuccess(response);
+    }
+
+    @Operation(summary = "내 팔로잉 목록 조회 API",
+            description = """
+                    내가 팔로우하는 사람들의 목록을 조회합니다.
+                    각 팔로잉에 대해 냉장고 초대 가능 여부를 판단하여 반환합니다.
+                    - MUTUAL_FOLLOW_INVITE: 맞팔이고 초대 가능
+                    - ALREADY_SAME_REFRIGERATOR: 이미 같은 냉장고 사용 중
+                    - INVITATION_PENDING: 이미 초대장 보냄 (대기 중)
+                    - NOT_MUTUAL: 맞팔 아님 (버튼 없음)""")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "로그인이 필요한 서비스 입니다.")
+    })
+    @GetMapping("/followings")
+    public ApiResponse<MemberResponseDTO.FollowingsResponse> getFollowings(
+            @CurrentUser Member currentMember
+    ) {
+        MemberResponseDTO.FollowingsResponse response = followQueryService.getFollowings(currentMember);
         return ApiResponse.onSuccess(response);
     }
 }

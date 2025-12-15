@@ -12,6 +12,7 @@ import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
+import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorInvitation;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -76,12 +77,13 @@ public class RefrigeratorConverter {
                 .build();
     }
 
-    public static RefrigeratorResponseDTO.IngredientResponse toIngredientResponse(List<StoredItem> storedItems) {
+    public static RefrigeratorResponseDTO.IngredientResponse toIngredientResponse(Long refrigeratorId, List<StoredItem> storedItems) {
         var storedIngredientResponses = storedItems.stream()
                 .map(RefrigeratorConverter::toStoredIngredientResponse)
                 .toList();
 
         return RefrigeratorResponseDTO.IngredientResponse.builder()
+                .refrigeratorId(refrigeratorId)
                 .addedCount(storedItems.size())
                 .storedIngredients(storedIngredientResponses)
                 .build();
@@ -142,8 +144,9 @@ public class RefrigeratorConverter {
                 .build();
     }
 
-    public static RefrigeratorResponseDTO.StoredIngredientCount toStoredIngredientCount(StorageTypeCount storageTypeCount) {
+    public static RefrigeratorResponseDTO.StoredIngredientCount toStoredIngredientCount(Long refrigeratorId, StorageTypeCount storageTypeCount) {
         return RefrigeratorResponseDTO.StoredIngredientCount.builder()
+                .refrigeratorId(refrigeratorId)
                 .refrigeratorCount(storageTypeCount.getRefrigeratorCount().intValue())
                 .freezerCount(storageTypeCount.getFreezerCount().intValue())
                 .roomTempCount(storageTypeCount.getRoomTempCount().intValue())
@@ -199,4 +202,39 @@ public class RefrigeratorConverter {
         }
     }
 
+    public static RefrigeratorInvitation toRefrigeratorInvitation(
+            Refrigerator refrigerator,
+            Member inviter,
+            Member invitee
+    ) {
+        return RefrigeratorInvitation.builder()
+                .refrigerator(refrigerator)
+                .inviter(inviter)
+                .invitee(invitee)
+                .status(RefrigeratorInvitation.InvitationStatus.PENDING)
+                .build();
+    }
+
+    public static RefrigeratorResponseDTO.InvitationListResponse toInvitationListResponse(
+            List<RefrigeratorInvitation> invitations
+    ) {
+        List<RefrigeratorResponseDTO.InvitationResponse> invitationResponses = invitations.stream()
+                .map(RefrigeratorConverter::toInvitationResponse)
+                .toList();
+
+        return RefrigeratorResponseDTO.InvitationListResponse.builder()
+                .invitations(invitationResponses)
+                .build();
+    }
+
+    private static RefrigeratorResponseDTO.InvitationResponse toInvitationResponse(RefrigeratorInvitation invitation) {
+        return RefrigeratorResponseDTO.InvitationResponse.builder()
+                .id(invitation.getId())
+                .inviterNickname(invitation.getInviter().getNickname())
+                .inviterProfileImage(invitation.getInviter().getProfileImage())
+                .inviteeNickname(invitation.getInvitee().getNickname())
+                .inviteeProfileImage(invitation.getInvitee().getProfileImage())
+                .status(invitation.getStatus().name())
+                .build();
+    }
 }

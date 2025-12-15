@@ -16,24 +16,29 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "refrigerators",
-        uniqueConstraints = @UniqueConstraint(columnNames = "member_id"))
+@Table(name = "refrigerators")
 public class Refrigerator extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
-    private Member member;
+    @OneToMany(mappedBy = "refrigerator")
+    @Builder.Default
+    private List<Member> memberList = new ArrayList<>();
 
     @OneToMany(mappedBy = "refrigerator", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<StoredItem> storedItems = new ArrayList<>();
 
-    public void setMember(Member member) {
-        this.member = member;
+    public void addMember(Member member) {
+        if (!memberList.contains(member)) {
+            memberList.add(member);
+        }
+    }
+
+    public void removeMember(Member member) {
+        memberList.remove(member);
     }
 
     public void addStoredItem(StoredItem storedItem) {

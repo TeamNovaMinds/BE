@@ -81,6 +81,14 @@ public enum ErrorStatus implements BaseErrorCode {
     STORED_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "REFRIGERATOR403", "냉장고 재료를 찾을 수 없습니다."),
     STORED_ITEM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "REFRIGERATOR404", "해당 냉장고 재료에 대한 접근 권한이 없습니다."),
 
+    // 냉장고 초대 관련 에러
+    INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "INVITATION401", "초대를 찾을 수 없습니다."),
+    INVITATION_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "INVITATION402", "이미 초대를 보낸 사용자입니다."),
+    INVITATION_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "INVITATION403", "이미 처리된 초대입니다."),
+    INVITATION_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "INVITATION404", "초대에 대한 권한이 없습니다."),
+    CANNOT_INVITE_SELF(HttpStatus.BAD_REQUEST, "INVITATION405", "자기 자신을 초대할 수 없습니다."),
+    ALREADY_IN_SAME_REFRIGERATOR(HttpStatus.BAD_REQUEST, "INVITATION406", "이미 같은 냉장고를 사용 중입니다."),
+
     //레시피 관련 에러
     RECIPE_NOT_FOUND(HttpStatus.NOT_FOUND, "RECIPE401", "해당 레시피를 찾을 수 없습니다."),
     RECIPE_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "RECIPE_402", "레시피 수정/삭제 권한이 없습니다."),

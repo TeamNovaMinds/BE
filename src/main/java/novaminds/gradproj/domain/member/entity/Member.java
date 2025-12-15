@@ -66,8 +66,9 @@ public class Member extends BaseEntity {
 	@Builder.Default
 	private Integer point = 0;
 
-    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Refrigerator refrigerator;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "refrigerator_id", nullable = false)
+    private Refrigerator refrigerator;
 
 	@OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
@@ -155,17 +156,17 @@ public class Member extends BaseEntity {
 	}
 
 	public void setRefrigerator(Refrigerator refrigerator) {
-		// 기존 냉장고가 있고 새 냉장고와 다르면 기존 냉장고의 member 참조 해제
+		// 기존 냉장고가 있고 새 냉장고와 다르면 기존 냉장고의 memberList에서 제거
 		if (this.refrigerator != null && this.refrigerator != refrigerator) {
-			this.refrigerator.setMember(null);
+			this.refrigerator.removeMember(this);
 		}
-		
+
 		// 새 냉장고 할당
 		this.refrigerator = refrigerator;
-		
-		// 새 냉장고가 null이 아니면 양방향 연관관계 설정
+
+		// 새 냉장고가 null이 아니면 양방향 연관관계 설정 (memberList에 추가)
 		if (refrigerator != null) {
-			refrigerator.setMember(this);
+			refrigerator.addMember(this);
 		}
 	}
 }
