@@ -25,4 +25,10 @@ public interface RefrigeratorInvitationRepository extends JpaRepository<Refriger
             Member inviter,
             InvitationStatus status
     );
+
+    List<RefrigeratorInvitation> findByInviterAndInviteeInAndStatus(
+            Member inviter,
+            List<Member> invitees,
+            InvitationStatus status
+    );
 }

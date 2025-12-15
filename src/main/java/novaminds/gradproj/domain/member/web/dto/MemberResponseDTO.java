@@ -180,4 +180,37 @@ public class MemberResponseDTO {
         private String nextCursor;
         private Boolean hasNext;
     }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FollowMemberInfo {
+        private String nickname;
+        private String profileImgUrl;
+        private InvitationStatus invitationStatus;
+
+        public enum InvitationStatus {
+            MUTUAL_FOLLOW_INVITE,        // 맞팔이고 초대 가능
+            ALREADY_SAME_REFRIGERATOR,   // 이미 같은 냉장고 사용 중
+            INVITATION_PENDING,           // 이미 초대장 보냄 (대기 중)
+            NOT_MUTUAL                    // 맞팔 아님 (버튼 없음)
+        }
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FollowersResponse {
+        private List<FollowMemberInfo> followers;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FollowingsResponse {
+        private List<FollowMemberInfo> followings;
+    }
 }
