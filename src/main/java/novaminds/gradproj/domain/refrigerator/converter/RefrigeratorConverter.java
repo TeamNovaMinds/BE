@@ -77,12 +77,13 @@ public class RefrigeratorConverter {
                 .build();
     }
 
-    public static RefrigeratorResponseDTO.IngredientResponse toIngredientResponse(List<StoredItem> storedItems) {
+    public static RefrigeratorResponseDTO.IngredientResponse toIngredientResponse(Long refrigeratorId, List<StoredItem> storedItems) {
         var storedIngredientResponses = storedItems.stream()
                 .map(RefrigeratorConverter::toStoredIngredientResponse)
                 .toList();
 
         return RefrigeratorResponseDTO.IngredientResponse.builder()
+                .refrigeratorId(refrigeratorId)
                 .addedCount(storedItems.size())
                 .storedIngredients(storedIngredientResponses)
                 .build();
@@ -143,8 +144,9 @@ public class RefrigeratorConverter {
                 .build();
     }
 
-    public static RefrigeratorResponseDTO.StoredIngredientCount toStoredIngredientCount(StorageTypeCount storageTypeCount) {
+    public static RefrigeratorResponseDTO.StoredIngredientCount toStoredIngredientCount(Long refrigeratorId, StorageTypeCount storageTypeCount) {
         return RefrigeratorResponseDTO.StoredIngredientCount.builder()
+                .refrigeratorId(refrigeratorId)
                 .refrigeratorCount(storageTypeCount.getRefrigeratorCount().intValue())
                 .freezerCount(storageTypeCount.getFreezerCount().intValue())
                 .roomTempCount(storageTypeCount.getRoomTempCount().intValue())

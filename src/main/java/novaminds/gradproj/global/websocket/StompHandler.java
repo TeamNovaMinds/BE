@@ -31,10 +31,16 @@ public class StompHandler implements ChannelInterceptor {
 
             log.info("WebSocket 연결 요청: token 존재 여부 = {}", jwtToken != null);
 
-            // 유효성 검증 (예외 발생 시 연결 거부됨)
-            // 실제 구현 시에는 예외 처리를 꼼꼼히 하거나, 유효하지 않으면 메시지를 null로 리턴하여 차단
-            if (jwtToken == null || !jwtTokenProvider.validateToken(jwtToken)) {
-                throw new IllegalArgumentException("유효하지 않은 웹소켓 연결 토큰입니다.");
+            // 토큰 검증 with 예외 처리
+            try {
+                if (jwtToken == null || !jwtTokenProvider.validateToken(jwtToken)) {
+                    log.warn("❌ WebSocket 연결 실패: 유효하지 않은 토큰");
+                    throw new IllegalArgumentException("유효하지 않은 웹소켓 연결 토큰입니다.");
+                }
+                log.info("✅ WebSocket 연결 성공: 토큰 검증 완료");
+            } catch (Exception e) {
+                log.error("❌ WebSocket 토큰 검증 실패: {}", e.getMessage());
+                throw new IllegalArgumentException("유효하지 않은 웹소켓 연결 토큰입니다.", e);
             }
         }
         return message;

@@ -62,6 +62,7 @@ public class SecurityConfig {
                                 "/api/auth/login/naver", //TODO : 이건 없애고 프론트에서 바로 직접 접근하는게 나은 구조
                                 "/api/auth/reset-password/**",
                                 "/login/oauth2/**",
+                                "/ws-stomp/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"

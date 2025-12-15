@@ -32,6 +32,7 @@ public class ProfileCompletionFilter extends OncePerRequestFilter {
             "/api/auth/additional-info-part2",
             "/api/auth/check-email",
             "/api/s3/image/upload-url",
+            "/ws-stomp/**",
             "/swagger-ui/**",
             "/v3/api-docs/**"
     );

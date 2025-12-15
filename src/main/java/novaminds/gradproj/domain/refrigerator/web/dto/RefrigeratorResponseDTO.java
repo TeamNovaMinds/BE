@@ -63,6 +63,9 @@ public class RefrigeratorResponseDTO {
     @AllArgsConstructor
     @Builder
     public static class IngredientResponse {
+
+        private Long refrigeratorId;
+
         @Schema(description = "보관 중인 재료 개수")
         private int addedCount;
         
@@ -109,6 +112,8 @@ public class RefrigeratorResponseDTO {
     @AllArgsConstructor
     @Builder
     public static class StoredIngredientCount {
+
+        private Long refrigeratorId;
 
         @Schema(description = "냉장 보관 개수")
         private int refrigeratorCount;
