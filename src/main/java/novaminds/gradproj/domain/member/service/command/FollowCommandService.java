@@ -7,6 +7,8 @@ import novaminds.gradproj.domain.member.entity.Follow;
 import novaminds.gradproj.domain.member.entity.Member;
 import novaminds.gradproj.domain.member.repository.FollowRepository;
 import novaminds.gradproj.domain.member.repository.MemberRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +20,11 @@ public class FollowCommandService {
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
 
-    public void following(Member follower, String followingNickName) {
+    @Caching(evict = {
+            @CacheEvict(value = "memberInfo", key = "#follower.loginId"),
+            @CacheEvict(value = "memberInfo", key = "#result.loginId")
+    })
+    public Member following(Member follower, String followingNickName) {
 
         Member following = memberRepository.findByNickname(followingNickName)
                 .orElseThrow(
@@ -39,9 +45,15 @@ public class FollowCommandService {
                 .build();
 
         followRepository.save(follow);
+
+        return following;
     }
 
-    public void unfollowing(String followerId, String followingNickname) {
+    @Caching(evict = {
+            @CacheEvict(value = "memberInfo", key = "#followerId"),
+            @CacheEvict(value = "memberInfo", key = "#result")
+    })
+    public String unfollowing(String followerId, String followingNickname) {
 
         String followingId = memberRepository.findIdByNickname(followingNickname)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.MEMBER_NOT_FOUND));
@@ -51,5 +63,7 @@ public class FollowCommandService {
         }
 
         followRepository.deleteByFollowerLoginIdAndFollowingLoginId(followerId, followingId);
+
+        return followingId;
     }
 }
