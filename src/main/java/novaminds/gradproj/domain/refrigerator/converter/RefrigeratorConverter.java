@@ -12,6 +12,7 @@ import novaminds.gradproj.domain.refrigerator.entity.StorageType;
 import novaminds.gradproj.domain.refrigerator.repository.projection.StorageTypeCount;
 import novaminds.gradproj.domain.refrigerator.web.dto.RefrigeratorResponseDTO;
 import novaminds.gradproj.domain.ingredient.entity.Ingredient;
+import novaminds.gradproj.domain.refrigerator.entity.RefrigeratorInvitation;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -199,4 +200,39 @@ public class RefrigeratorConverter {
         }
     }
 
+    public static RefrigeratorInvitation toRefrigeratorInvitation(
+            Refrigerator refrigerator,
+            Member inviter,
+            Member invitee
+    ) {
+        return RefrigeratorInvitation.builder()
+                .refrigerator(refrigerator)
+                .inviter(inviter)
+                .invitee(invitee)
+                .status(RefrigeratorInvitation.InvitationStatus.PENDING)
+                .build();
+    }
+
+    public static RefrigeratorResponseDTO.InvitationListResponse toInvitationListResponse(
+            List<RefrigeratorInvitation> invitations
+    ) {
+        List<RefrigeratorResponseDTO.InvitationResponse> invitationResponses = invitations.stream()
+                .map(RefrigeratorConverter::toInvitationResponse)
+                .toList();
+
+        return RefrigeratorResponseDTO.InvitationListResponse.builder()
+                .invitations(invitationResponses)
+                .build();
+    }
+
+    private static RefrigeratorResponseDTO.InvitationResponse toInvitationResponse(RefrigeratorInvitation invitation) {
+        return RefrigeratorResponseDTO.InvitationResponse.builder()
+                .id(invitation.getId())
+                .inviterNickname(invitation.getInviter().getNickname())
+                .inviterProfileImage(invitation.getInviter().getProfileImage())
+                .inviteeNickname(invitation.getInvitee().getNickname())
+                .inviteeProfileImage(invitation.getInvitee().getProfileImage())
+                .status(invitation.getStatus().name())
+                .build();
+    }
 }

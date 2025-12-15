@@ -87,4 +87,14 @@ public class RefrigeratorRequestDTO {
         @FutureOrPresent(message = "유통기한은 현재 날짜 이후여야 합니다.")
         private LocalDate expirationDate;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @Schema(description = "냉장고 초대 요청")
+    public static class InvitationRequest {
+
+        @Schema(description = "초대할 사용자 닉네임")
+        @NotBlank(message = "초대할 사용자 닉네임은 필수입니다.")
+        private String inviteeNickname;
+    }
 }

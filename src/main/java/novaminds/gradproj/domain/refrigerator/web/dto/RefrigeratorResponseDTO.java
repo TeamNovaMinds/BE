@@ -177,4 +177,41 @@ public class RefrigeratorResponseDTO {
         @Schema(description = "포인트 등수")
         private long pointRank;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @Schema(description = "냉장고 초대 응답")
+    public static class InvitationResponse {
+
+        @Schema(description = "초대 ID")
+        private Long id;
+
+        @Schema(description = "초대한 사람 닉네임")
+        private String inviterNickname;
+
+        @Schema(description = "초대한 사람 프로필 이미지")
+        private String inviterProfileImage;
+
+        @Schema(description = "초대받은 사람 닉네임")
+        private String inviteeNickname;
+
+        @Schema(description = "초대받은 사람 프로필 이미지")
+        private String inviteeProfileImage;
+
+        @Schema(description = "초대 상태", allowableValues = {"PENDING", "ACCEPTED", "REJECTED", "CANCELED"})
+        private String status;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @Schema(description = "냉장고 초대 목록 응답")
+    public static class InvitationListResponse {
+
+        @Schema(description = "초대 목록")
+        private List<InvitationResponse> invitations;
+    }
 }
