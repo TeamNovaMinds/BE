@@ -47,7 +47,7 @@ public class RefrigeratorInvitationCommandService {
             throw new GeneralException(ErrorStatus.REFRIGERATOR_NOT_FOUND);
         }
 
-        if (inviterRefrigerator.getId().equals(inviteeRefrigerator.getId())) {
+        if (inviteeRefrigerator != null && inviterRefrigerator.getId().equals(inviteeRefrigerator.getId())) {
             throw new GeneralException(ErrorStatus.ALREADY_IN_SAME_REFRIGERATOR);
         }
 
