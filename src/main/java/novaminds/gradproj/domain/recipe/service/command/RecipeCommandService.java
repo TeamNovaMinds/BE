@@ -37,6 +37,7 @@ public class RecipeCommandService {
     private final IngredientRepository ingredientRepository;
     private final RecipeLikeRepository recipeLikeRepository;
     private final RecipeCommentRepository recipeCommentRepository;
+    private final novaminds.gradproj.domain.notification.service.command.NotificationCommandService notificationCommandService;
 
     /**
      * 새로운 레시피를 생성하고 데이터베이스에 저장
@@ -301,6 +302,21 @@ public class RecipeCommandService {
                 .build();
         recipeLikeRepository.save(newLike);
         recipe.addRecipeLike(newLike); // 좋아요 수 및 작성자 포인트 증가 로직 호출
+
+        // 자기 자신의 레시피가 아닌 경우에만 알림 발송
+        if (!recipe.getAuthor().getLoginId().equals(member.getLoginId())) {
+            try {
+                notificationCommandService.createAndSendNotification(
+                        recipe.getAuthor(),
+                        "레시피 좋아요",
+                        member.getNickname() + "님이 회원님의 \"" + recipe.getTitle() + "\" 레시피를 좋아합니다!",
+                        "/recipe/" + recipe.getId(),
+                        novaminds.gradproj.domain.notification.entity.NotificationType.RECIPE_LIKE
+                );
+            } catch (Exception e) {
+                // 알림 발송 실패해도 좋아요는 정상 처리
+            }
+        }
     }
 
     /**
@@ -349,7 +365,43 @@ public class RecipeCommandService {
         // 5. 레시피 댓글 카운트 증가
         recipe.increaseCommentCount();
 
+        // 6. 알림 발송
+        sendCommentNotification(recipe, member, parentComment);
+
         return savedComment.getId();
+    }
+
+    /**
+     * 댓글/대댓글 작성 시 알림 발송
+     */
+    private void sendCommentNotification(Recipe recipe, Member commenter, RecipeComment parentComment) {
+        try {
+            if (parentComment != null) {
+                // 대댓글인 경우: 부모 댓글 작성자에게 알림 (자기 자신 제외)
+                if (!parentComment.getAuthor().getLoginId().equals(commenter.getLoginId())) {
+                    notificationCommandService.createAndSendNotification(
+                            parentComment.getAuthor(),
+                            "답글 알림",
+                            commenter.getNickname() + "님이 회원님의 댓글에 답글을 달았습니다.",
+                            "/recipe/comments/" + recipe.getId(),
+                            novaminds.gradproj.domain.notification.entity.NotificationType.RECIPE_COMMENT_REPLY
+                    );
+                }
+            } else {
+                // 일반 댓글인 경우: 레시피 작성자에게 알림 (자기 자신 제외)
+                if (!recipe.getAuthor().getLoginId().equals(commenter.getLoginId())) {
+                    notificationCommandService.createAndSendNotification(
+                            recipe.getAuthor(),
+                            "댓글 알림",
+                            commenter.getNickname() + "님이 회원님의 \"" + recipe.getTitle() + "\" 레시피에 댓글을 달았습니다.",
+                            "/recipe/comments/" + recipe.getId(),
+                            novaminds.gradproj.domain.notification.entity.NotificationType.RECIPE_COMMENT
+                    );
+                }
+            }
+        } catch (Exception e) {
+            // 알림 발송 실패해도 댓글은 정상 처리
+        }
     }
 
     /**

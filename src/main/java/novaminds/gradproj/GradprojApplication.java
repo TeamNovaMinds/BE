@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(
 		exclude = {
@@ -15,6 +16,7 @@ import org.springframework.retry.annotation.EnableRetry;
 )
 @EnableJpaAuditing
 @EnableRetry
+@EnableScheduling
 public class GradprojApplication {
 
 	public static void main(String[] args) {

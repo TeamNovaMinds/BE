@@ -20,6 +20,7 @@ public class FollowCommandService {
     private final CacheManager cacheManager;
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
+    private final novaminds.gradproj.domain.notification.service.command.NotificationCommandService notificationCommandService;
 
     public void following(Member follower, String followingNickName) {
 
@@ -45,6 +46,19 @@ public class FollowCommandService {
 
         evictMemberCache(follower.getLoginId());
         evictMemberCache(following.getLoginId());
+
+        // 알림 발송
+        try {
+            notificationCommandService.createAndSendNotification(
+                    following,
+                    "새 팔로워",
+                    follower.getNickname() + "님이 회원님을 팔로우하기 시작했습니다.",
+                    "/member/" + follower.getNickname() + "/refrigerator",
+                    novaminds.gradproj.domain.notification.entity.NotificationType.FOLLOW
+            );
+        } catch (Exception e) {
+            // 알림 발송 실패해도 팔로우는 정상 처리
+        }
     }
 
     public void unfollowing(String followerId, String followingNickname) {

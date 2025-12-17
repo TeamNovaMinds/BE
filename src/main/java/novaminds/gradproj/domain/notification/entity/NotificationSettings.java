@@ -59,5 +59,20 @@ public class NotificationSettings extends BaseEntity {
 	@Builder.Default
 	private boolean enableLikeNotification = true;
 
+	//냉장고 초대 알림
+	@Column(nullable = false)
+	@Builder.Default
+	private boolean enableRefrigeratorInvitation = true;
+
+	//팔로우 알림
+	@Column(nullable = false)
+	@Builder.Default
+	private boolean enableFollow = true;
+
+	//냉장고 재료 추가 알림
+	@Column(nullable = false)
+	@Builder.Default
+	private boolean enableRefrigeratorItemAdded = true;
+
 	//TODO : 랭킹 알림은 일단 좀 더 고민해봐야 할 듯
 }

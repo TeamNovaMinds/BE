@@ -32,6 +32,7 @@ public class RefrigeratorCommandService {
     private final RefrigeratorRepository refrigeratorRepository;
     private final StoredItemRepository storedItemRepository;
     private final IngredientRepository ingredientRepository;
+    private final novaminds.gradproj.domain.notification.service.command.NotificationCommandService notificationCommandService;
 
     /**
      * 회원에게 새로운 냉장고를 생성하고 연결하고 저장
@@ -68,11 +69,60 @@ public class RefrigeratorCommandService {
         }
 
         // 각 재료를 순회하면서 추가
+        List<String> addedIngredientNames = new ArrayList<>();
         for (RefrigeratorRequestDTO.IngredientItem request : requests) {
+            Ingredient ingredient = ingredientRepository.findById(request.getIngredientId())
+                    .orElse(null);
+            if (ingredient != null) {
+                addedIngredientNames.add(ingredient.getIngredientName());
+            }
             addSingleIngredientToRefrigerator(refrigerator, request);
         }
 
         sendRefreshSignal(refrigerator.getId());
+
+        // 공유 냉장고의 다른 멤버들에게 알림 발송
+        sendItemAddedNotification(member, refrigerator, addedIngredientNames);
+    }
+
+    /**
+     * 공유 냉장고 멤버들에게 재료 추가 알림 발송
+     */
+    private void sendItemAddedNotification(Member adder, Refrigerator refrigerator, List<String> ingredientNames) {
+        if (ingredientNames.isEmpty()) {
+            return;
+        }
+
+        // 공유 냉장고가 아니면 알림 발송하지 않음
+        if (refrigerator.getMemberList().size() <= 1) {
+            return;
+        }
+
+        String ingredientText;
+        if (ingredientNames.size() == 1) {
+            ingredientText = ingredientNames.get(0);
+        } else {
+            ingredientText = ingredientNames.get(0) + " 외 " + (ingredientNames.size() - 1) + "개";
+        }
+
+        // 자기 자신을 제외한 다른 멤버들에게 알림 발송
+        for (Member member : refrigerator.getMemberList()) {
+            if (member.getLoginId().equals(adder.getLoginId())) {
+                continue;
+            }
+
+            try {
+                notificationCommandService.createAndSendNotification(
+                        member,
+                        "냉장고 업데이트",
+                        adder.getNickname() + "님이 " + ingredientText + "을(를) 추가했습니다.",
+                        "/home",
+                        novaminds.gradproj.domain.notification.entity.NotificationType.REFRIGERATOR_ITEM_ADDED
+                );
+            } catch (Exception e) {
+                // 알림 발송 실패해도 재료 추가는 정상 처리
+            }
+        }
     }
 
     /**

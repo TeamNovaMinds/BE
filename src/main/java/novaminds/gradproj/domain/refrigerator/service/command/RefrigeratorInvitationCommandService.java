@@ -22,6 +22,7 @@ public class RefrigeratorInvitationCommandService {
     private final RefrigeratorInvitationRepository invitationRepository;
     private final RefrigeratorRepository refrigeratorRepository;
     private final MemberRepository memberRepository;
+    private final novaminds.gradproj.domain.notification.service.command.NotificationCommandService notificationCommandService;
 
     /**
      * 냉장고 초대 보내기
@@ -62,6 +63,19 @@ public class RefrigeratorInvitationCommandService {
                 inviterRefrigerator, inviter, invitee
         );
         invitationRepository.save(invitation);
+
+        // 알림 발송
+        try {
+            notificationCommandService.createAndSendNotification(
+                    invitee,
+                    "냉장고 초대",
+                    inviter.getNickname() + "님이 회원님을 공유 냉장고에 초대했습니다.",
+                    "/refrigerator/invitation/" + invitation.getId(),
+                    novaminds.gradproj.domain.notification.entity.NotificationType.REFRIGERATOR_INVITATION
+            );
+        } catch (Exception e) {
+            // 알림 발송 실패해도 초대는 정상 처리
+        }
     }
 
     /**

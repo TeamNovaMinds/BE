@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface StoredItemRepository extends JpaRepository<StoredItem, Long>, StoredItemRepositoryCustom {
@@ -28,4 +30,7 @@ public interface StoredItemRepository extends JpaRepository<StoredItem, Long>, S
     StorageTypeCount countByStorageTypes(@Param("refrigeratorId") Long refrigeratorId);
 
     Optional<StoredItem> findByIdAndRefrigeratorId(Long id, Long refrigeratorId);
+
+    @Query("SELECT s FROM StoredItem s JOIN FETCH s.refrigerator r JOIN FETCH r.memberList WHERE s.expirationDate <= :targetDate")
+    List<StoredItem> findItemsExpiringBefore(@Param("targetDate") LocalDate targetDate);
 }
